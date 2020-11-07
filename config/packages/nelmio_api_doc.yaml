@@ -1,0 +1,20 @@
+nelmio_api_doc:
+    documentation:
+        host: api.comercio.com.ar
+        info:
+            title: DESARROLLO DE SOFTWARE Rest API
+            description: Esta es la API REST desarrollada para el COMERCIO
+            version: 1.1.0
+        securityDefinitions:
+            Bearer:
+                type: apiKey
+                description: 'Value: Bearer {jwt}'
+                name: Authorization
+                in: header
+        security:
+            - Bearer: []
+    routes: # to filter documented routes
+        path_patterns:
+            - ^/api(?!/doc$) # Accepts routes under /api except /api/doc
+    models: { use_jms: false }
+#    default_sections_opened: false
