@@ -29,8 +29,8 @@ security:
         register:
             pattern: ^/api/register
             anonymous: true
-        get_productos:
-            pattern: ^/api/get_productos
+        get_publicaciones:
+            pattern: ^/api/get_publicaciones
             anonymous: true    
         swagger:
             pattern: ^/api/doc
@@ -53,7 +53,7 @@ security:
         - { path: ^/api/doc,       roles: ROLE_USER }
         - { path: ^/api/login_check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/get_productos, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_publicaciones, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/v1,       roles: IS_AUTHENTICATED_FULLY }
 

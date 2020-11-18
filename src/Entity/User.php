@@ -3,6 +3,7 @@
 namespace App\Entity;
  
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use DateTime;
 use JMS\Serializer\Annotation as Serializer;
@@ -73,10 +74,16 @@ class User implements UserInterface
      */
     protected $updatedAt;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Publicacion", mappedBy="IDusuario")
+     */
+    private $publicaciones;
+
 
  
     public function __construct()
     {
+        $this->publicaciones = new ArrayCollection();
     }
  
     /**
@@ -313,6 +320,37 @@ class User implements UserInterface
         if ($this->getCreatedAt() === null) {
             $this->setCreatedAt($dateTimeNow);
         }
+    }
+
+    /**
+     * @return Collection|Publicacion[]
+     */
+    public function getPublicaciones(): Collection
+    {
+        return $this->publicaciones;
+    }
+
+    public function addPublicacione(Publicacion $publicacione): self
+    {
+        if (!$this->publicaciones->contains($publicacione)) {
+            $this->publicaciones[] = $publicacione;
+            $publicacione->setIDusuario($this);
+        }
+
+        return $this;
+    }
+
+    public function removePublicacione(Publicacion $publicacione): self
+    {
+        if ($this->publicaciones->contains($publicacione)) {
+            $this->publicaciones->removeElement($publicacione);
+            // set the owning side to null (unless already changed)
+            if ($publicacione->getIDusuario() === $this) {
+                $publicacione->setIDusuario(null);
+            }
+        }
+
+        return $this;
     }
 
 

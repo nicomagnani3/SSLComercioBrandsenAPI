@@ -20,7 +20,8 @@ class UserController extends AbstractFOSRestController
     private $permission;
 
 
-    public function __construct (Permission $permission) {
+    public function __construct(Permission $permission)
+    {
         $this->permission = $permission;
     }
     /**
@@ -61,21 +62,20 @@ class UserController extends AbstractFOSRestController
      *
      * @SWG\Tag(name="User")
      */
-    public function login(EntityManagerInterface $em,UserPasswordEncoderInterface $passwordEncoder, JWTEncoderInterface $encode, Request $request)
+    public function login(EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder, JWTEncoderInterface $encode, Request $request)
     {
 
-      
-        
+
+
         $email      = $request->request->get("email");
         $password   = $request->request->get("password");
         $errors = [];
 
-      
-           /*  var_dump( password_hash('nico', PASSWORD_BCRYPT));
-            die();  */
+
+       
         $user = $em->getRepository(User::class)
-                    ->findOneBy(['email' => $email]);
-   
+            ->findOneBy(['email' => $email]);
+
         if (!$user) {
             $errors[] = "Usuario o contraseña incorrecta";
         };
@@ -88,7 +88,7 @@ class UserController extends AbstractFOSRestController
 
                 $token =  $encode->encode([
                     'username' => $user->getUsername(),
-                    'email' => $user->getEmail(),                   
+                    'email' => $user->getEmail(),
                     'grupos' => $user->getGrupos(),
                     'id' => $user->getId(),
                     'exp' => time() + (3600 * getenv('TOKEN_EXPIRATION')) // 3600 = 1 hour expiration
@@ -96,21 +96,20 @@ class UserController extends AbstractFOSRestController
 
                 return $this->json([
                     'username' => $user->getUsername(),
-                    'token'  => $token,               
+                    'token'  => $token,
                     'grupos' => $user->getGrupos(),
-                    'permission' => $permisos
+                    'permission' => $permisos,
+                    'userId'=>$user->getId()
 
-                ],200);
+                ], 200);
             } else {
-               $errors[] = "Usuario o contraseña incorrecta";
+                $errors[] = "Usuario o contraseña incorrecta";
             }
         };
-    
+
         return $this->json([
             'errors' => $errors
-        ],400); 
-
-     
+        ], 400);
     }
 
 
@@ -131,19 +130,19 @@ class UserController extends AbstractFOSRestController
      */
     public function test(Request $request)
     {
-     
-        $hasPermission = $this->permission->hasPermission ('VER_DIRECCION',$request->attributes->get('authorization'));
-        if (!$hasPermission) {return $this->permission->permissionDenied(); }; 
+
+        $hasPermission = $this->permission->hasPermission('VER_DIRECCION', $request->attributes->get('authorization'));
+        if (!$hasPermission) {
+            return $this->permission->permissionDenied();
+        };
 
 
 
         return $this->json([
             'authorization' => $request->attributes->get('authorization')
-            ],Response::HTTP_OK);
-
-
+        ], Response::HTTP_OK);
     }
-    
+
     /**
      * @Rest\Post("/register", name="register")
      *
@@ -187,28 +186,25 @@ class UserController extends AbstractFOSRestController
     {
 
 
-       
-       
+
+
         $user = new User();
         $email                  = $request->request->get("email");
         $password               = $request->request->get("password");
         $passwordConfirmation   = $request->request->get("password_confirmation");
         $errors = [];
-        if($password != $passwordConfirmation)
-        {
+        if ($password != $passwordConfirmation) {
             $errors[] = "La contraseña no coincide con la confirmacion de contraseña.";
         }
-        if(strlen($password) < 6)
-        {
+        if (strlen($password) < 6) {
             $errors[] = "La contraseña debe contener un minimo de 6 caracteres";
         }
-        if(!$errors)
-        {
+        if (!$errors) {
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
             $user->setEmail($email);
             $user->setUsername($email);
             $user->setPassword($encodedPassword);
-      
+
             $user->addGrupos('PROFESIONAL');
 
             try {
@@ -216,19 +212,15 @@ class UserController extends AbstractFOSRestController
                 $em->flush();
                 return $this->json([
                     'user' => $user
-                ]);                    
-            }
-            catch(UniqueConstraintViolationException $e)
-            {
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
                 $errors[] = "Ya existe un usuario con el mail provisto";
-            }
-            catch(\Exception $e)
-            {
+            } catch (\Exception $e) {
                 //$errors[] = $e;
                 $errors[] = "Error. No se pudo crear usuario.";
             }
         }
-        
+
         return $this->json([
             'errors' => $errors
         ], 400);
