@@ -48,10 +48,7 @@ class Publicacion extends PublicacionAbstract
      */
     private $IDusuario;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\CategoriasPublicacion", mappedBy="IDPublicacion")
-     */
-    private $categoriaspublicacion;
+    
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\ImagenesPublicacion", mappedBy="idpublicacion")
@@ -64,7 +61,6 @@ class Publicacion extends PublicacionAbstract
 
     public function __construct()
     {
-        $this->categoriaspublicacion = new ArrayCollection();
         $this->imagenesPublicacion = new ArrayCollection();
       
     }
@@ -159,28 +155,7 @@ class Publicacion extends PublicacionAbstract
         return $this->categoriaspublicacion;
     }
 
-    public function addCategoriaspublicacion(CategoriasPublicacion $categoriaspublicacion): self
-    {
-        if (!$this->categoriaspublicacion->contains($categoriaspublicacion)) {
-            $this->categoriaspublicacion[] = $categoriaspublicacion;
-            $categoriaspublicacion->setIDPublicacion($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCategoriaspublicacion(CategoriasPublicacion $categoriaspublicacion): self
-    {
-        if ($this->categoriaspublicacion->contains($categoriaspublicacion)) {
-            $this->categoriaspublicacion->removeElement($categoriaspublicacion);
-            // set the owning side to null (unless already changed)
-            if ($categoriaspublicacion->getIDPublicacion() === $this) {
-                $categoriaspublicacion->setIDPublicacion(null);
-            }
-        }
-
-        return $this;
-    }
+    
 
     /**
      * @return Collection|ImagenesPublicacion[]

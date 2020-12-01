@@ -15,7 +15,7 @@ class Permission {
 
     /************ GRUPOS  *************/
 
-    public const USUARIO = [
+    public const CLIENTE = [
         'VER_PRODUCTOS',
         'CREAR_PRODUCTOS',
      
@@ -29,7 +29,7 @@ class Permission {
         'ADMINISTRADOR'
     ];
     public const GRUPOS = [
-        'USUARIO' => self::USUARIO,
+        'CLIENTE' => self::CLIENTE,
         'EMPRESA' => self::EMPRESA,       
         'ADMINISTRADOR' => self::ADMINISTRADOR
     ];

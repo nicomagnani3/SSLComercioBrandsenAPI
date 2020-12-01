@@ -12,9 +12,11 @@ use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
+use App\Entity\Empresa;
+use App\Entity\Cliente;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Swagger\Annotations as SWG;
-
+use Symfony\Component\HttpFoundation\JsonResponse;
 class UserController extends AbstractFOSRestController
 {
     private $permission;
@@ -173,56 +175,180 @@ class UserController extends AbstractFOSRestController
      * )
      *
      * @SWG\Parameter(
-     *     name="password_confirmation",
+     *     name="grupo",
      *     in="body",
      *     type="string",
-     *     description="The password_confirmation",
+     *     description="The grupo user",
      *     schema={}
      * )
-     *
+        * @SWG\Parameter(
+     *     name="nombre",
+     *     in="body",
+     *     type="string",
+     *     description="The nombre persona",
+     *     schema={}
+     * )
+     *    * @SWG\Parameter(
+     *     name="apellido",
+     *     in="body",
+     *     type="string",
+     *     description="The apellido",
+     *     schema={}
+     * )
+     *     @SWG\Parameter(
+     *     name="DNI",
+     *     in="body",
+     *     type="integer",
+     *     description="The DNI",
+     *     schema={}
+     * )
+     *   @SWG\Parameter(
+     *     name="celular",
+     *     in="body",
+     *     type="integer",
+     *     description="celular",
+     *     schema={}
+     * )
+     * @throws \InvalidArgumentException 
      * @SWG\Tag(name="User")
      */
     public function register(EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder, Request $request)
     {
 
-
-
+        $user = new User();
+        $email     = $request->request->get("email");
+        $password  = $request->request->get("password");
+        $grupo   = $request->request->get("grupo");
+        $nombre   = $request->request->get("nombre");
+        $apellido   = $request->request->get("apellido");
+        $DNI   = $request->request->get("DNI");
+        $celular   = $request->request->get("celular");
+        $code = 200;  
+        $error=false;  
+        try {           
+            $existeUser =$em->getRepository(User::class)->findOneBy(['email' => $email]); 
+            if ($existeUser != NULL){
+                throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
+                $error=true;
+            }           
+                $encodedPassword = $passwordEncoder->encodePassword($user, $password);
+                $user->setEmail($email);
+                $user->setUsername($email);
+                $user->setPassword($encodedPassword);
+                $user->addGrupos($grupo); 
+                    $em->persist($user);
+                    $em->flush();   
+                    $cliente = new Cliente();            
+                    $cliente->setUsuarios($user);
+                    $cliente->setNombre($nombre);
+                    $cliente->setApellido($apellido);
+                    $cliente->setDNI($DNI);
+                    $cliente->setCelular($celular);  
+                    $em->persist($cliente);
+                    $em->flush();  
+                
+            } catch (\Exception $ex) {
+                $code = 500;
+                $error = true;
+                $message = "Atencion: {$ex->getMessage()}";
+            }        
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $user->getEmail() : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+        
+    /**
+     * @Rest\Post("/register_empresa", name="register_empresa")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="User was successfully registered"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="User was not successfully registered"
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="email",
+     *     in="body",
+     *     type="string",
+     *     description="The email",
+     *     schema={}
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="password",
+     *     in="body",
+     *     type="string",
+     *     description="The password",
+     *     schema={}
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="grupo",
+     *     in="body",
+     *     type="string",
+     *     description="The grupo user",
+     *     schema={}
+     * )
+        * @SWG\Parameter(
+     *     name="nombre",
+     *     in="body",
+     *     type="string",
+     *     description="The nombre persona",
+     *     schema={}
+     * )     
+     * @throws \InvalidArgumentException 
+     * @SWG\Tag(name="User")
+     */
+    public function registerEmpresa(EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder, Request $request)
+    {
 
         $user = new User();
-        $email                  = $request->request->get("email");
-        $password               = $request->request->get("password");
-        $passwordConfirmation   = $request->request->get("password_confirmation");
-        $errors = [];
-        if ($password != $passwordConfirmation) {
-            $errors[] = "La contraseña no coincide con la confirmacion de contraseña.";
-        }
-        if (strlen($password) < 6) {
-            $errors[] = "La contraseña debe contener un minimo de 6 caracteres";
-        }
-        if (!$errors) {
-            $encodedPassword = $passwordEncoder->encodePassword($user, $password);
-            $user->setEmail($email);
-            $user->setUsername($email);
-            $user->setPassword($encodedPassword);
-
-            $user->addGrupos('PROFESIONAL');
-
-            try {
-                $em->persist($user);
-                $em->flush();
-                return $this->json([
-                    'user' => $user
-                ]);
-            } catch (UniqueConstraintViolationException $e) {
-                $errors[] = "Ya existe un usuario con el mail provisto";
-            } catch (\Exception $e) {
-                //$errors[] = $e;
-                $errors[] = "Error. No se pudo crear usuario.";
-            }
-        }
-
-        return $this->json([
-            'errors' => $errors
-        ], 400);
+        $email     = $request->request->get("email");
+        $password  = $request->request->get("password");
+        $grupo   = $request->request->get("grupo");
+        $nombre   = $request->request->get("nombre");       
+        $code = 200;  
+        $error=false;  
+        try {           
+            $existeUser =$em->getRepository(User::class)->findOneBy(['email' => $email]); 
+            if ($existeUser != NULL){
+                throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
+                $error=true;
+            }           
+                $encodedPassword = $passwordEncoder->encodePassword($user, $password);
+                $user->setEmail($email);
+                $user->setUsername($email);
+                $user->setPassword($encodedPassword);
+                $user->addGrupos($grupo); 
+                    $em->persist($user);
+                    $em->flush();   
+                    $empresa = new Empresa();            
+                    $empresa->setUsuarios($user);
+                    $empresa->setNombre($nombre);                  
+                    $em->persist($empresa);
+                    $em->flush();  
+                
+            } catch (\Exception $ex) {
+                $code = 500;
+                $error = true;
+                $message = "Atencion: {$ex->getMessage()}";
+            }        
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $user->getEmail() : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
     }
 }

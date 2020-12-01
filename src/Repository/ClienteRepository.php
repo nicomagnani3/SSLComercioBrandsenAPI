@@ -2,25 +2,25 @@
 
 namespace App\Repository;
 
-use App\Entity\CategoriasPublicacion;
+use App\Entity\Cliente;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
- * @method CategoriasPublicacion|null find($id, $lockMode = null, $lockVersion = null)
- * @method CategoriasPublicacion|null findOneBy(array $criteria, array $orderBy = null)
- * @method CategoriasPublicacion[]    findAll()
- * @method CategoriasPublicacion[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Cliente|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Cliente|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Cliente[]    findAll()
+ * @method Cliente[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class CategoriasPublicacionRepository extends ServiceEntityRepository
+class ClienteRepository extends ServiceEntityRepository
 {
     public function __construct(RegistryInterface $registry)
     {
-        parent::__construct($registry, CategoriasPublicacion::class);
+        parent::__construct($registry, Cliente::class);
     }
 
     // /**
-    //  * @return CategoriasPublicacion[] Returns an array of CategoriasPublicacion objects
+    //  * @return Cliente[] Returns an array of Cliente objects
     //  */
     /*
     public function findByExampleField($value)
@@ -37,7 +37,7 @@ class CategoriasPublicacionRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?CategoriasPublicacion
+    public function findOneBySomeField($value): ?Cliente
     {
         return $this->createQueryBuilder('c')
             ->andWhere('c.exampleField = :val')

@@ -18,6 +18,25 @@ class CategoriasRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Categorias::class);
     }
+    public function categoriasHijas($categoria,$em)
+    {       
+       
+        $query = $em->getConnection()->prepare("EXEC GetPublicacionesByCatHija @catHija = ?)");
+        $params = array(
+            2
+        );
+       
+        $stmt = $em->getConnection()->executeQuery($query, $params);
+        $stmt->execute();
+        return $stmt->fetchAll();
+
+
+/* 
+        $con = $em->entityManager->getConnection();
+
+return $con->executeQuery($query, $params); */
+    }
+    
 
     // /**
     //  * @return Categorias[] Returns an array of Categorias objects

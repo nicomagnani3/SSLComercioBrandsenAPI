@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Controller;
-use App\Entity\Publicacion;
-use App\Entity\Categoria;
+use App\Entity\CategoriasHijas;
+use App\Entity\Categorias;
 use App\Security\Permission;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
@@ -48,8 +48,55 @@ class CategoriaController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $categorias = $em->getRepository(Categoria::class)->findAll();
+            $categorias = $em->getRepository(Categorias::class)->findAll();
         
+            $array = array_map(function ($item) {               
+                    return $item->getArray();               
+               
+            }, $categorias);
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    /**
+     * Retorna el listado de categorias hijas de una categoria en particular
+     * @Rest\Get("/get_categoriasHijas/{categoria}", name="/get_categoriasHijas/{categoria}")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de categorias"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de categorias"
+     * )
+     *
+     * @SWG\Tag(name="categorias")
+     */
+    public function categoriasHijasDeUnaCategoria(EntityManagerInterface $em, Request $request,$categoria)
+    {
+      
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+     
+
+            //$categorias = $em->getRepository(CategoriasHijas::class)->categoriasHijas($categoria,$em);
+            $categorias = $em->getRepository(CategoriasHijas::class)->findBy(['categoriapadreId' => $categoria]);    
             $array = array_map(function ($item) {               
                     return $item->getArray();               
                
