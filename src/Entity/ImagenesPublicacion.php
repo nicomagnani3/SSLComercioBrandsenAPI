@@ -1,13 +1,13 @@
 <?php
 
 namespace App\Entity;
-use App\AbstractClass\ImagenesPublicacionAbstract;
+
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ImagenesPublicacionRepository")
  */
-class ImagenesPublicacion extends ImagenesPublicacionAbstract
+class ImagenesPublicacion
 {
     /**
      * @ORM\Id()
@@ -17,91 +17,40 @@ class ImagenesPublicacion extends ImagenesPublicacionAbstract
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Publicacion", inversedBy="imagenesPublicacion")
+     * @ORM\OneToOne(targetEntity="App\Entity\Publicacion", cascade={"persist", "remove"})
      */
-    private $idpublicacion;
+    private $publicacionId;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
-    private $tipoarchivo;
-
-    /**
-     * @ORM\Column(type="blob", nullable=true)
-     */
-    private $archivo;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     */
-    private $contenttype;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     */
-    private $filename;
+    private $ubicacion;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getIdpublicacion(): ?Publicacion
+    public function getPublicacionId(): ?Publicacion
     {
-        return $this->idpublicacion;
+        return $this->publicacionId;
     }
 
-    public function setIdpublicacion(?Publicacion $idpublicacion): self
+    public function setPublicacionId(?Publicacion $publicacionId): self
     {
-        $this->idpublicacion = $idpublicacion;
+        $this->publicacionId = $publicacionId;
 
         return $this;
     }
 
-    public function getTipoarchivo(): ?int
+    public function getUbicacion(): ?string
     {
-        return $this->tipoarchivo;
+        return $this->ubicacion;
     }
 
-    public function setTipoarchivo(?int $tipoarchivo): self
+    public function setUbicacion(?string $ubicacion): self
     {
-        $this->tipoarchivo = $tipoarchivo;
-
-        return $this;
-    }
-
-    public function getArchivo()
-    {
-        return $this->archivo;
-    }
-
-    public function setArchivo($archivo): self
-    {
-        $this->archivo = $archivo;
-
-        return $this;
-    }
-
-    public function getContenttype(): ?string
-    {
-        return $this->contenttype;
-    }
-
-    public function setContenttype(?string $contenttype): self
-    {
-        $this->contenttype = $contenttype;
-
-        return $this;
-    }
-
-    public function getFilename(): ?string
-    {
-        return $this->filename;
-    }
-
-    public function setFilename(?string $filename): self
-    {
-        $this->filename = $filename;
+        $this->ubicacion = $ubicacion;
 
         return $this;
     }

@@ -72,7 +72,7 @@ class CategoriaController extends AbstractFOSRestController
     }
     /**
      * Retorna el listado de categorias hijas de una categoria en particular
-     * @Rest\Get("/get_categoriasHijas/{categoria}", name="/get_categoriasHijas/{categoria}")
+     * @Rest\Get("/get_categoriasHijas", name="/get_categoriasHijas")
      *
      * @SWG\Response(
      *     response=200,
@@ -86,17 +86,14 @@ class CategoriaController extends AbstractFOSRestController
      *
      * @SWG\Tag(name="categorias")
      */
-    public function categoriasHijasDeUnaCategoria(EntityManagerInterface $em, Request $request,$categoria)
+    public function categoriasHijas(EntityManagerInterface $em, Request $request)
     {
       
         $errors = [];
         try {
             $code = 200;
-            $error = false;
-     
-
-            //$categorias = $em->getRepository(CategoriasHijas::class)->categoriasHijas($categoria,$em);
-            $categorias = $em->getRepository(CategoriasHijas::class)->findBy(['categoriapadreId' => $categoria]);    
+            $error = false;     
+            $categorias = $em->getRepository(CategoriasHijas::class)->findAll();    
             $array = array_map(function ($item) {               
                     return $item->getArray();               
                

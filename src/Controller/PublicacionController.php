@@ -3,8 +3,8 @@
 namespace App\Controller;
 use App\Entity\Publicacion;
 use App\Entity\User;
-use App\Entity\CategoriasPublicacion;
-use App\Entity\Categoria;
+use App\Entity\CategoriasHijas;
+use App\Entity\Categorias;
 use App\Entity\ImagenesPublicacion;
 use App\Security\Permission;
 use Doctrine\ORM\EntityManagerInterface;
@@ -124,69 +124,85 @@ class PublicacionController extends AbstractFOSRestController
      *   @SWG\Parameter(
      *     name="imagenes",
      *       in="body",
-     *     type="array",
+     *     type="Array",
      *     description="imagenes  ",
      *      schema={
      *     }
      * )  
-     * *   @SWG\Parameter(
-     *     name="categorias",
+     *   @SWG\Parameter(
+     *     name="categoria",
      *       in="body",
      *     type="array",
-     *     description="categorias  ",
+     *     description="categoria principal  ",
+     *      schema={
+     *     }
+     * ) 
+     *  @SWG\Parameter(
+     *     name="categoriasHija",
+     *       in="body",
+     *     type="array",
+     *     description="categoriasHija elegida  ",
      *      schema={
      *     }
      * )   
      * @SWG\Tag(name="Publicacion")
      */
-    public function nueva_publicacion(EntityManagerInterface $em, Request $request, ValidatorInterface $validator)
+    public function nueva_publicacion(EntityManagerInterface $em, Request $request)
     {
         $titulo = $request->request->get("titulo");
         $importe = $request->request->get("importe");
         $fecha = $request->request->get("fecha");
         $observaciones = $request->request->get("observaciones");
         $imagenes = $request->request->get("imagenes");
-        $categorias = $request->request->get("categorias");
+        $categoria = $request->request->get("categoria");
+        $categoriasHija = $request->request->get("categoriasHija");
         $fecha = new Datetime($fecha);   
         $usuarioID = $request->request->get("usuarioID");   
           
         try {
             $code = 200;
             $error = false;                     
-            $usuario = $em->getRepository(User::class)->find($usuarioID);      
+            $usuario = $em->getRepository(User::class)->find($usuarioID); 
+            if($categoria != NULL){
+                $categoriaPadre = $em->getRepository(Categorias::class)->find($categoria);  
+            }
+            if($categoriasHija != NULL){
+                $categoriasHija = $em->getRepository(CategoriasHijas::class)->find($categoriasHija);   
+            }
             $nuevaPublicacion= new Publicacion();          
             $nuevaPublicacion->crearPublicacion(
                 $titulo,
                 $importe,
                 $fecha,
                 $observaciones,
-                $usuario               
+                $usuario,
+                $categoriaPadre,
+                $categoriasHija
             );         
             $em->persist($nuevaPublicacion);
-            $em->flush();           
-                foreach($categorias as $clave => $valor) {                               
-                    $categoriaID =$em->getRepository(Categoria::class)->find($valor["id"]);   
-                   $categoriaPublicacion = new  CategoriasPublicacion();
-                   $categoriaPublicacion->setIDPublicacion($nuevaPublicacion);                     
-                   $categoriaPublicacion->setIDCategoria($categoriaID);
-                   $em->persist($categoriaPublicacion);
-                   $em->flush();    
-               }
-               foreach($imagenes as $clave => $valor) { 
-               
-                  $imagenesPublicacion= new ImagenesPublicacion();                                          
-                  $imagenesPublicacion->setIdpublicacion($nuevaPublicacion);
-                  
-                  $imagenesPublicacion->setTipoarchivo($valor["size"]);
-                  $imagenesPublicacion->setArchivo($valor["type"]);
-                  $imagenesPublicacion->setContenttype($valor["type"]);
-                  $imagenesPublicacion->setFilename($valor["name"]);
-                  $em->persist($imagenesPublicacion);
-                   $em->flush();    
-               }   
-            
+            $em->flush();    
 
-            $message = "Se creo con exito la publicacion";
+            if ($imagenes != NULL){
+                $index=0;
+              foreach($imagenes as $clave => $valor) { 
+                  /* if ($valor["file"]["type"] == "image/jpeg"){
+                     $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]);    
+                  }else{
+                    $img = str_replace('data:image/png;base64,', '', $valor["base64"]);  
+                  }  */ 
+                $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]); 
+                $data = base64_decode($img);
+                $filepath = "imagenes/".$nuevaPublicacion->getId()."-" .$index .".png";
+                 file_put_contents($filepath, $data);              
+                 $imagenesPublicacion= new ImagenesPublicacion();
+                 $imagenesPublicacion->setPublicacionId($nuevaPublicacion);
+                 $imagenesPublicacion->setUbicacion($nuevaPublicacion->getId()."-" .$index .".png");
+                 $index= $index + 1 ;
+                 $em->persist($imagenesPublicacion);
+                 $em->flush();   
+              }
+            }  
+            $message = "Se creo con exito la publicacion,gracias por confiar en Mercado Local";
         } catch (Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -197,6 +213,102 @@ class PublicacionController extends AbstractFOSRestController
             'code' => $code,
             'error' => $error,
             'data' => $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+     /**
+     * Retorna el listado de publicaciones
+     * @Rest\Get("/getImagen", name="getImagen")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de getImagen"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de getImagen"
+     * )
+    
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function getImagen(EntityManagerInterface $em, Request $request)
+    {      
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $img = file_get_contents( 
+                'images/image2.png'); 
+                  
+                // Encode the image string data into base64 
+                $data = base64_encode($img); 
+            
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $data : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+
+     /**
+     * Retorna el listado de publicaciones
+     * @Rest\Post("/addImagen", name="addImagen")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de getImagen"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de getImagen"
+     * )
+     *  @SWG\Parameter(
+     *     name="imagen",
+     *       in="body",
+     *     type="array",
+     *     description="imagen elegida  ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function addImagen(EntityManagerInterface $em, Request $request)
+    {
+     
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $img = $request->request->get("imagen"); 
+            //ANDAAAAAAAAA           
+            $img = str_replace('data:image/jpeg;base64,', '', $img);          
+         
+            $data = base64_decode($img);
+            $filepath = "images/image2.png";
+             file_put_contents($filepath, $data);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? "bien" : $message,
         ];
         return new JsonResponse(
             $response

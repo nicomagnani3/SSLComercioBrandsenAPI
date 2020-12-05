@@ -50,10 +50,16 @@ class Publicacion extends PublicacionAbstract
 
     
 
+
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ImagenesPublicacion", mappedBy="idpublicacion")
+     * @ORM\OneToOne(targetEntity="App\Entity\Categorias", cascade={"persist", "remove"})
      */
-    private $imagenesPublicacion;
+    private $categoria;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\CategoriasHijas", cascade={"persist", "remove"})
+     */
+    private $categoriaHija;
 
   
 
@@ -61,7 +67,6 @@ class Publicacion extends PublicacionAbstract
 
     public function __construct()
     {
-        $this->imagenesPublicacion = new ArrayCollection();
       
     }
 
@@ -147,43 +152,30 @@ class Publicacion extends PublicacionAbstract
         return $this;
     }
 
-    /**
-     * @return Collection|CategoriasPublicacion[]
-     */
-    public function getCategoriaspublicacion(): Collection
-    {
-        return $this->categoriaspublicacion;
-    }
+   
 
     
 
-    /**
-     * @return Collection|ImagenesPublicacion[]
-     */
-    public function getImagenesPublicacion(): Collection
+    public function getCategoria(): ?Categorias
     {
-        return $this->imagenesPublicacion;
+        return $this->categoria;
     }
 
-    public function addImagenesPublicacion(ImagenesPublicacion $imagenesPublicacion): self
+    public function setCategoria(?Categorias $categoria): self
     {
-        if (!$this->imagenesPublicacion->contains($imagenesPublicacion)) {
-            $this->imagenesPublicacion[] = $imagenesPublicacion;
-            $imagenesPublicacion->setIdpublicacion($this);
-        }
+        $this->categoria = $categoria;
 
         return $this;
     }
 
-    public function removeImagenesPublicacion(ImagenesPublicacion $imagenesPublicacion): self
+    public function getCategoriaHija(): ?CategoriasHijas
     {
-        if ($this->imagenesPublicacion->contains($imagenesPublicacion)) {
-            $this->imagenesPublicacion->removeElement($imagenesPublicacion);
-            // set the owning side to null (unless already changed)
-            if ($imagenesPublicacion->getIdpublicacion() === $this) {
-                $imagenesPublicacion->setIdpublicacion(null);
-            }
-        }
+        return $this->categoriaHija;
+    }
+
+    public function setCategoriaHija(?CategoriasHijas $categoriaHija): self
+    {
+        $this->categoriaHija = $categoriaHija;
 
         return $this;
     }

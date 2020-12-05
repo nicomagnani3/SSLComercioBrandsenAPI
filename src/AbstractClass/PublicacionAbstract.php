@@ -19,16 +19,21 @@ abstract class PublicacionAbstract
     $importe,
     $fecha,
     $observaciones,
-    $usuario         ){                  
+    $usuario,
+    $categoria,
+    $categoriaHija      ){                  
                 $this->setIDusuario($usuario);         
                 $this->setFecha($fecha);               
                 $this->setTitulo($titulo);     
-                $this->setPrecio($importe);   
+                $this->setPrecio($importe);                
+                $this->setCategoria($categoria);
+                $this->setCategoriaHija($categoriaHija);                   
                 if($observaciones == NULL){  
                     $this->setdescripcion('SN');
                 } else{
                      $this->setdescripcion($observaciones);
                     }   
+
     }
 
     

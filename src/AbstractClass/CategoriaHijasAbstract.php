@@ -8,6 +8,7 @@ abstract class CategoriaHijasAbstract
     {
         return [
             'id'=>$this->getId(),
+            'idPadre'=>$this->getCategoriapadreId()->getId(),
             'nombre' => $this->getDescripcion(),
             
            
