@@ -130,6 +130,14 @@ class PublicacionController extends AbstractFOSRestController
      *     }
      * )  
      *   @SWG\Parameter(
+     *     name="imgPrimera",
+     *       in="body",
+     *     type="Array",
+     *     description="imgPrimera  ",
+     *      schema={
+     *     }
+     * )  
+     *   @SWG\Parameter(
      *     name="categoria",
      *       in="body",
      *     type="array",
@@ -137,6 +145,7 @@ class PublicacionController extends AbstractFOSRestController
      *      schema={
      *     }
      * ) 
+     * 
      *  @SWG\Parameter(
      *     name="categoriasHija",
      *       in="body",
@@ -154,6 +163,7 @@ class PublicacionController extends AbstractFOSRestController
         $fecha = $request->request->get("fecha");
         $observaciones = $request->request->get("observaciones");
         $imagenes = $request->request->get("imagenes");
+        $imgPrimera=$request->request->get("imgPrimera");
         $categoria = $request->request->get("categoria");
         $categoriasHija = $request->request->get("categoriasHija");
         $fecha = new Datetime($fecha);   
@@ -181,9 +191,20 @@ class PublicacionController extends AbstractFOSRestController
             );         
             $em->persist($nuevaPublicacion);
             $em->flush();    
-
+            if($imgPrimera != NULL){                
+                    $img = str_replace('data:image/jpeg;base64,', '',$imgPrimera); 
+                    $data = base64_decode($img);
+                    $filepath = "imagenes/".$nuevaPublicacion->getId()."-0"  .".png";
+                    file_put_contents($filepath, $data);              
+                    $imagenesPublicacion= new ImagenesPublicacion();
+                    $imagenesPublicacion->setPublicacionId($nuevaPublicacion);
+                    $imagenesPublicacion->setUbicacion($nuevaPublicacion->getId()."-0"  .".png");              
+                    $em->persist($imagenesPublicacion);
+                    $em->flush();   
+                
+            }
             if ($imagenes != NULL){
-                $index=0;
+                $index=1;
               foreach($imagenes as $clave => $valor) { 
                   /* if ($valor["file"]["type"] == "image/jpeg"){
                      $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]);    

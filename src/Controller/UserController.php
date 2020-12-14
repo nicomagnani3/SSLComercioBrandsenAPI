@@ -351,4 +351,56 @@ class UserController extends AbstractFOSRestController
             $response
         );
     }
+    
+     /**
+     * @Rest\Post("/recuperarClave", name="recuperarClave")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Pudo recuperar la clave"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo recuperar la clave"
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="email",
+     *     in="body",
+     *     type="string",
+     *     description="The email",
+     *     schema={}
+     * )     
+     * @throws \InvalidArgumentException 
+     * @SWG\Tag(name="User")
+     */
+    public function recuperarClave(EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder, Request $request)
+    {
+
+        $user = new User();
+        $email     = $request->request->get("email");          
+        $code = 200;  
+        $error=false;  
+        try {           
+            $existeUser =$em->getRepository(User::class)->findOneBy(['email' => $email]); 
+            if ($existeUser == NULL){
+                throw new \InvalidArgumentException('El email ingresado no se encuentra en el sistema');
+                $error=true;
+            }          
+                
+            } catch (\Exception $ex) {
+                $code = 500;
+                $error = true;
+                $message = "Atencion: {$ex->getMessage()}";
+            }        
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $user->getEmail() : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
 }
