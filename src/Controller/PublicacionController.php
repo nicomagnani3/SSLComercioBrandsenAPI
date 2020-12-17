@@ -54,10 +54,10 @@ class PublicacionController extends AbstractFOSRestController
             $publicaciones = $em->getRepository(Publicacion::class)->findAll();
           
             $array = array_map(function ($item) {               
-                    return $item->getArray();               
-               
+                    return $item->getArray();   
             }, $publicaciones);
            
+    
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
