@@ -21,8 +21,7 @@ security:
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
-            security: false
-
+            security: false         
         login:
             pattern: ^/api/login
             anonymous: true
@@ -31,7 +30,19 @@ security:
             anonymous: true
         get_publicaciones:
             pattern: ^/api/get_publicaciones
-            anonymous: true    
+            anonymous: true   
+        getPublicacionesPorNombre:
+            pattern: ^/api/getPublicacionesPorNombre
+            anonymous: true  
+        get_categorias:
+            pattern: ^/api/get_categorias
+            anonymous: true  
+        getpublicacionescategoria:
+            pattern: ^/api/getpublicacionescategoria
+            anonymous: true
+        getImagenesPublicacion:
+            pattern: ^/api/getImagenesPublicacion
+            anonymous: true                                 
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -54,6 +65,10 @@ security:
         - { path: ^/api/login_check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/get_publicaciones, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/getPublicacionesPorNombre, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_categorias, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
+        - { path: ^/api/getpublicacionescategoria, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/getImagenesPublicacion, roles: IS_AUTHENTICATED_ANONYMOUSLY }                 
         - { path: ^/api/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/v1,       roles: IS_AUTHENTICATED_FULLY }
 

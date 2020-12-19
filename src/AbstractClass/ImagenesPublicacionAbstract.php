@@ -8,11 +8,8 @@ abstract class ImagenesPublicacionAbstract
     {
         return [
             'id'=>$this->getId(),
-            'idpublicacion' => $this->getIdpublicacion(),
-            'tipoarchivo'=>$this->getTipoarchivo(),
-            'archivo' => base64_encode($this->getArchivo()),
-            'contenttype' => $this->getContenttype(),
-            'filename' => $this->getFilename(),
+            'idpublicacion' => $this->getPublicacionId()->getId(),
+            'ubicacion'=>$this->getUbicacion()           
         ];  
     }
 }

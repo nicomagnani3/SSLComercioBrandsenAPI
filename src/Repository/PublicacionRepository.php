@@ -19,32 +19,15 @@ class PublicacionRepository extends ServiceEntityRepository
         parent::__construct($registry, Publicacion::class);
     }
 
-    // /**
-    //  * @return Publicacion[] Returns an array of Publicacion objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function getPublicacionesPorTitulo($titulo, $em)
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $conn = $this->getEntityManager()->getConnection();
 
-    /*
-    public function findOneBySomeField($value): ?Publicacion
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $query =    "SELECT * from Publicacion where titulo LIKE '%$titulo%'
+                        order by fecha DESC";       
+        $stmt = $conn->prepare($query);       
+        $stmt->execute();
+        return $stmt->fetchAll();
+     
     }
-    */
 }

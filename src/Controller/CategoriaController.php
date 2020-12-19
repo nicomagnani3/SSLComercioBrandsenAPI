@@ -114,4 +114,6 @@ class CategoriaController extends AbstractFOSRestController
             $response
         );
     }
+
+
 }
