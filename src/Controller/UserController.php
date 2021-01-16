@@ -116,36 +116,6 @@ class UserController extends AbstractFOSRestController
 
 
     /**
-     * @Rest\Post("/test", name="test")
-     *
-     * @SWG\Response(
-     *     response=200,
-     *     description="User was successfully registered"
-     * )
-     *
-     * @SWG\Response(
-     *     response=500,
-     *     description="User was not successfully registered"
-     * )
-     *
-     * @SWG\Tag(name="User")
-     */
-    public function test(Request $request)
-    {
-
-        $hasPermission = $this->permission->hasPermission('VER_DIRECCION', $request->attributes->get('authorization'));
-        if (!$hasPermission) {
-            return $this->permission->permissionDenied();
-        };
-
-
-
-        return $this->json([
-            'authorization' => $request->attributes->get('authorization')
-        ], Response::HTTP_OK);
-    }
-
-    /**
      * @Rest\Post("/register", name="register")
      *
      * @SWG\Response(

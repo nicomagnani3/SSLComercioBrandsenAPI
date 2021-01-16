@@ -4,7 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Publicacion;
 use App\Entity\User;
-use App\Entity\Utilities;
+use App\Entity\PublicacionServicios;
+use App\Entity\PublicacionEmprendimientos;
 use App\Entity\CategoriasHijas;
 use App\Entity\Categorias;
 use App\Entity\ImagenesPublicacion;
@@ -20,6 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
+use App\Controller\MercadoPago\Payment;
 
 class PublicacionController extends AbstractFOSRestController
 {
@@ -337,7 +339,7 @@ class PublicacionController extends AbstractFOSRestController
     }
 
     /**
-     * Busca la publicacion por un titulo que se le pasa por parametro
+     * Busca la publicacion por un titulo que se le pasa por parametro, busca productos,servicios y emprendimientos
      * @Rest\Post("/getPublicacionesPorNombre", name="getPublicacionesPorNombre")
      *
      * @SWG\Response(
@@ -367,12 +369,46 @@ class PublicacionController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-
-            $publicaciones = $em->getRepository(Publicacion::class)->getPublicacionesPorTitulo($titulo, $em);
             $array_new = [];
             $arrayCompleto = [];
+            $publicaciones = $em->getRepository(Publicacion::class)->getPublicacionesPorTitulo($titulo, $em);
             foreach ($publicaciones as $value) {
                 $ubicacion = 'imagenes/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [
+                    'id' => $value["id"],
+                    'fecha' => $value["fecha"],
+                    'precio' => $value["precio"],
+                    'titulo' => $value["titulo"],
+                    'descripcion' => $value["descripcion"],
+                    'imagen' => $data
+                ];
+                array_push($arrayCompleto, $array_new);
+            }
+
+            $publicaciones = $em->getRepository(PublicacionServicios::class)->getPublicacionesPorTitulo($titulo, $em);
+            foreach ($publicaciones as $value) {
+                $ubicacion = 'imagenesServicios/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [
+                    'id' => $value["id"],
+                    'fecha' => $value["fecha"],
+                    'precio' => $value["precio"],
+                    'titulo' => $value["titulo"],
+                    'descripcion' => $value["descripcion"],
+                    'imagen' => $data
+                ];
+                array_push($arrayCompleto, $array_new);
+            }
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->getPublicacionesPorTitulo($titulo, $em);
+            foreach ($publicaciones as $value) {
+                $ubicacion = 'imagenesEmprendimientos/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
                 );
@@ -490,24 +526,22 @@ class PublicacionController extends AbstractFOSRestController
             $array = array_map(function ($item) {
                 return $item->getArray();
             }, $imagenes);
-             $cantidadElementos=count($array);
+            $cantidadElementos = count($array);
             $array_new = [];
-            $arrayCompleto = [];          
-            for ($i=0; $i < $cantidadElementos ; $i++) {
-                $ubicacion = 'imagenes/' . $idPublicacion . '-' .$i .'.png';
+            $arrayCompleto = [];
+            for ($i = 0; $i < $cantidadElementos; $i++) {
+                $ubicacion = 'imagenes/' . $idPublicacion . '-' . $i . '.png';
                 $img = file_get_contents(
                     $ubicacion
                 );
                 $data = base64_encode($img);
                 $array_new = [
-                    'id' => $idPublicacion,                    
+                    'id' => $idPublicacion,
                     'imagen' => $data,
-                    'numero'=>$i
+                    'numero' => $i
                 ];
                 array_push($arrayCompleto, $array_new);
-
-            } 
-          
+            }
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -522,5 +556,58 @@ class PublicacionController extends AbstractFOSRestController
         return new JsonResponse(
             $response
         );
+    }
+
+    /**
+     * Retorna el listado de imagenes de una publicacion en particular
+     * @Rest\Post("/process_payment", name="process_payment")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de imagnes"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de imagenes"
+     * )
+     *  @SWG\Parameter(
+     *     name="idPublicacion",
+     *       in="body",
+     *     type="array",
+     *     description="idPublicacion elegida  ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function pago()
+    {
+        MercadoPago\SDK::setAccessToken("YOUR_ACCESS_TOKEN");
+
+        $payment = new MercadoPago\Payment();
+        $payment->transaction_amount = (float)$_POST['transactionAmount'];
+        $payment->token = $_POST['token'];
+        $payment->description = $_POST['description'];
+        $payment->installments = (int)$_POST['installments'];
+        $payment->payment_method_id = $_POST['paymentMethodId'];
+        $payment->issuer_id = (int)$_POST['issuer'];
+
+        $payer = new MercadoPago\Payer();
+        $payer->email = $_POST['email'];
+        $payer->identification = array(
+            "type" => $_POST['docType'],
+            "number" => $_POST['docNumber']
+        );
+        $payment->payer = $payer;
+
+        $payment->save();
+
+        $response = array(
+            'status' => $payment->status,
+            'status_detail' => $payment->status_detail,
+            'id' => $payment->id
+        );
+        echo json_encode($response);
     }
 }
