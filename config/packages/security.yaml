@@ -42,7 +42,16 @@ security:
             anonymous: true
         getImagenesPublicacion:
             pattern: ^/api/getImagenesPublicacion
-            anonymous: true                                 
+            anonymous: true 
+        get_emprendimientos:
+            pattern: ^/api/get_emprendimientos
+            anonymous: true        
+        search_publicaciones_emprendimientos:
+            pattern: ^/api/search_publicaciones_emprendimientos
+            anonymous: true     
+        get_servicios:
+            pattern: ^/api/get_servicios
+            anonymous: true                         
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -71,6 +80,10 @@ security:
         - { path: ^/api/getImagenesPublicacion, roles: IS_AUTHENTICATED_ANONYMOUSLY }                 
         - { path: ^/api/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/v1,       roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/get_emprendimientos, roles: IS_AUTHENTICATED_ANONYMOUSLY }  
+        - { path: ^/api/search_publicaciones_emprendimientos, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
+        - { path: ^/api/get_servicios, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
+
 
         # login:
         #     pattern:  ^/api/login

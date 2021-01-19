@@ -157,7 +157,7 @@ class PublicacionController extends AbstractFOSRestController
      *      schema={
      *     }
      * )   
-     * @SWG\Tag(name="Publicacion")
+     * @SWG\Tag(name="Publicaciones")
      */
     public function nueva_publicacion(EntityManagerInterface $em, Request $request)
     {
@@ -372,7 +372,9 @@ class PublicacionController extends AbstractFOSRestController
             $array_new = [];
             $arrayCompleto = [];
             $publicaciones = $em->getRepository(Publicacion::class)->getPublicacionesPorTitulo($titulo, $em);
+            
             foreach ($publicaciones as $value) {
+                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);              
                 $ubicacion = 'imagenes/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
@@ -384,13 +386,15 @@ class PublicacionController extends AbstractFOSRestController
                     'precio' => $value["precio"],
                     'titulo' => $value["titulo"],
                     'descripcion' => $value["descripcion"],
-                    'imagen' => $data
+                    'imagen' => $data,
+                    'telefono'=>$usuario->getTelefono()
                 ];
                 array_push($arrayCompleto, $array_new);
             }
 
             $publicaciones = $em->getRepository(PublicacionServicios::class)->getPublicacionesPorTitulo($titulo, $em);
             foreach ($publicaciones as $value) {
+                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);      
                 $ubicacion = 'imagenesServicios/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
@@ -402,12 +406,15 @@ class PublicacionController extends AbstractFOSRestController
                     'precio' => $value["precio"],
                     'titulo' => $value["titulo"],
                     'descripcion' => $value["descripcion"],
-                    'imagen' => $data
+                    'imagen' => $data,
+                    'telefono'=>$usuario->getTelefono()
+
                 ];
                 array_push($arrayCompleto, $array_new);
             }
             $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->getPublicacionesPorTitulo($titulo, $em);
             foreach ($publicaciones as $value) {
+                $usuario = $em->getRepository(User::class)->find($value["idusuari_id_id"]);
                 $ubicacion = 'imagenesEmprendimientos/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
@@ -419,7 +426,8 @@ class PublicacionController extends AbstractFOSRestController
                     'precio' => $value["precio"],
                     'titulo' => $value["titulo"],
                     'descripcion' => $value["descripcion"],
-                    'imagen' => $data
+                    'imagen' => $data,
+                    'telefono'=>$usuario->getTelefono()
                 ];
                 array_push($arrayCompleto, $array_new);
             }

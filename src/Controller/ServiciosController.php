@@ -242,7 +242,7 @@ class ServiciosController extends AbstractFOSRestController
      *      schema={
      *     }
      * )      
-     * @SWG\Tag(name="Emprendimiento")
+     * @SWG\Tag(name="Servicios")
      */
     public function nueva_publicacionServicio(EntityManagerInterface $em, Request $request)
     {

@@ -31,6 +31,12 @@ class User implements UserInterface
      * 
      */
     protected $email;
+
+    /**
+     * @ORM\Column(type="string", length=50, unique=true)
+     * 
+     */
+    protected $telefono;
  
     /**
      * @ORM\Column(name="username", type="string", length=255, unique=true)
@@ -139,6 +145,29 @@ class User implements UserInterface
     public function getEmail()
     {
         return $this->email;
+    }
+     /**
+     * Set telefono
+     *
+     * @param string $telefono
+     *
+     * @return User
+     */
+    public function setTelefono($telefono)
+    {
+        $this->telefono = $telefono;
+ 
+        return $this;
+    }
+ 
+    /**
+     * Get telefono
+     *
+     * @return string
+     */
+    public function getTelefono()
+    {
+        return $this->telefono;
     }
  
     /**

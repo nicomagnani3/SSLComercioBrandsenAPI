@@ -12,12 +12,13 @@ abstract class PublicacionEmprendimientoAbstract
             $data = base64_encode($img); 
         return [
             'id'=>$this->getId(),
-            'fecha' => $this->getFecha(),
+            'fecha' => $this->getFecha()->format('Y-m-d H:i:s'),
             'precio' => $this->getPrecio(),
             'titulo'=>$this->getTitulo(),
             'descripcion'=>$this->getdescripcion(),
             'imagen'=>$data,
-            'destacado'=>$this->getDestacada()
+            'destacado'=>$this->getDestacada(),
+            'telefono'=>$this->getIdusuariId()->getTelefono()
            
         ];  
     }

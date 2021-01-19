@@ -157,6 +157,58 @@ class EmprendimientosController extends AbstractFOSRestController
         );
     }
     /**
+     * Retorna  las publicaciones de emprendimientos que pertenecen al id del emprendimiento principal pasada por parametro
+     * @Rest\Post("/search_publicaciones_emprendimientos", name="search_publicaciones_emprendimientos")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *  @SWG\Parameter(
+     *     name="idEmprendimiento",
+     *       in="body",
+     *     type="string",
+     *     description="id de publicacion a buscar  ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Tag(name="Emprendimientos")
+     */
+    public function search_publicaciones_emprendimientos(EntityManagerInterface $em, Request $request)
+    {
+        $id = $request->request->get("idEmprendimiento");
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['emprendimiento' => $id]);
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $publicaciones);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+
+
+    /**
      * Genera una nueva  publicacion de un emprendimiento con los datos correspondientes 
      * @Rest\Post("/nuevo_emprendimiento", name="nuevo_emprendimiento")
      *
@@ -228,7 +280,7 @@ class EmprendimientosController extends AbstractFOSRestController
      *      schema={
      *     }
      * )      
-     * @SWG\Tag(name="Emprendimiento")
+     * @SWG\Tag(name="Emprendimientos")
      */
     public function nueva_publicacion(EntityManagerInterface $em, Request $request)
     {
