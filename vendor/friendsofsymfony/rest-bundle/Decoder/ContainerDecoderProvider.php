@@ -11,13 +11,14 @@
 
 namespace FOS\RestBundle\Decoder;
 
-use Psr\Container\ContainerInterface as PsrContainerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Provides encoders through the Symfony DIC.
  *
  * @author Igor Wiedler <igor@wiedler.ch>
+ *
+ * @final since 2.8
  */
 class ContainerDecoderProvider implements DecoderProviderInterface
 {
@@ -25,17 +26,10 @@ class ContainerDecoderProvider implements DecoderProviderInterface
     private $decoders;
 
     /**
-     * Constructor.
-     *
-     * @param PsrContainerInterface $container The container from which the actual decoders are retrieved
-     * @param array                 $decoders  List of key (format) value (service ids) of decoders
+     * @param array<string,string> $decoders List of key (format) value (service ids) of decoders
      */
-    public function __construct($container, array $decoders)
+    public function __construct(ContainerInterface $container, array $decoders)
     {
-        if (!$container instanceof PsrContainerInterface && !$container instanceof ContainerInterface) {
-            throw new \InvalidArgumentException(sprintf('The container must be an instance of %s or %s (%s given).', PsrContainerInterface::class, ContainerInterface::class, is_object($container) ? get_class($container) : gettype($container)));
-        }
-
         $this->container = $container;
         $this->decoders = $decoders;
     }
@@ -54,9 +48,7 @@ class ContainerDecoderProvider implements DecoderProviderInterface
     public function getDecoder($format)
     {
         if (!$this->supports($format)) {
-            throw new \InvalidArgumentException(
-                sprintf("Format '%s' is not supported by ContainerDecoderProvider.", $format)
-            );
+            throw new \InvalidArgumentException(sprintf("Format '%s' is not supported by ContainerDecoderProvider.", $format));
         }
 
         return $this->container->get($this->decoders[$format]);

@@ -15,12 +15,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @author Ener-Getick <egetick@gmail.com>
+ *
+ * @final since 2.8
  */
 class ChainVersionResolver implements VersionResolverInterface
 {
-    /**
-     * @var VersionResolverInterface[]
-     */
     private $resolvers = [];
 
     /**
@@ -40,19 +39,19 @@ class ChainVersionResolver implements VersionResolverInterface
     {
         foreach ($this->resolvers as $resolver) {
             $version = $resolver->resolve($request);
-            if (false !== $version) {
+
+            if (null !== $version && !is_string($version)) {
+                @trigger_error(sprintf('Not returning a string or null from %s::resolve() when implementing the %s is deprecated since FOSRestBundle 2.8.', get_class($resolver), VersionResolverInterface::class), E_USER_DEPRECATED);
+            }
+
+            if (null !== $version && false !== $version) {
                 return $version;
             }
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * Adds a resolver.
-     *
-     * @param VersionResolverInterface $resolver
-     */
     public function addResolver(VersionResolverInterface $resolver)
     {
         $this->resolvers[] = $resolver;

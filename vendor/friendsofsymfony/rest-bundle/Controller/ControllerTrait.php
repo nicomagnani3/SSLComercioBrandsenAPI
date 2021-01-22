@@ -23,26 +23,13 @@ use Symfony\Component\HttpFoundation\Response;
  */
 trait ControllerTrait
 {
-    /**
-     * @var ViewHandlerInterface
-     */
     private $viewhandler;
 
-    /**
-     * Get the ViewHandler.
-     *
-     * @param ViewHandlerInterface $viewhandler
-     */
     public function setViewHandler(ViewHandlerInterface $viewhandler)
     {
         $this->viewhandler = $viewhandler;
     }
 
-    /**
-     * Get the ViewHandler.
-     *
-     * @return ViewHandlerInterface
-     */
     protected function getViewHandler()
     {
         if (!$this->viewhandler instanceof ViewHandlerInterface) {
@@ -53,13 +40,7 @@ trait ControllerTrait
     }
 
     /**
-     * Creates a view.
-     *
-     * Convenience method to allow for a fluent interface.
-     *
-     * @param mixed $data
-     * @param int   $statusCode
-     * @param array $headers
+     * @param int $statusCode
      *
      * @return View
      */
@@ -69,13 +50,8 @@ trait ControllerTrait
     }
 
     /**
-     * Creates a Redirect view.
-     *
-     * Convenience method to allow for a fluent interface.
-     *
      * @param string $url
      * @param int    $statusCode
-     * @param array  $headers
      *
      * @return View
      */
@@ -85,14 +61,8 @@ trait ControllerTrait
     }
 
     /**
-     * Creates a Route Redirect View.
-     *
-     * Convenience method to allow for a fluent interface.
-     *
      * @param string $route
-     * @param mixed  $parameters
      * @param int    $statusCode
-     * @param array  $headers
      *
      * @return View
      */
@@ -106,8 +76,6 @@ trait ControllerTrait
      *
      * Not necessary to use, if you are using the "ViewResponseListener", which
      * does this conversion automatically in kernel event "onKernelView".
-     *
-     * @param View $view
      *
      * @return Response
      */

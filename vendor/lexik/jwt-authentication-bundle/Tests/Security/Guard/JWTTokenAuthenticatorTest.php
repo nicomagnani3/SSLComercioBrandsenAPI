@@ -21,6 +21,8 @@ use Lexik\Bundle\JWTAuthenticationBundle\Tests\Stubs\User as AdvancedUserStub;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface as ContractsEventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
@@ -39,7 +41,8 @@ class JWTTokenAuthenticatorTest extends TestCase
         $authenticator = new JWTTokenAuthenticator(
             $jwtManager,
             $this->getEventDispatcherMock(),
-            $this->getTokenExtractorMock('token')
+            $this->getTokenExtractorMock('token'),
+            $this->getTokenStorageMock()
         );
 
         $this->assertInstanceOf(PreAuthenticationJWTUserToken::class, $authenticator->getCredentials($this->getRequestMock()));
@@ -51,7 +54,8 @@ class JWTTokenAuthenticatorTest extends TestCase
             (new JWTTokenAuthenticator(
                 $this->getJWTManagerMock(),
                 $this->getEventDispatcherMock(),
-                $this->getTokenExtractorMock('token')
+                $this->getTokenExtractorMock('token'),
+                $this->getTokenStorageMock()
             ))->getCredentials($this->getRequestMock());
 
             $this->fail(sprintf('Expected exception of type "%s" to be thrown.', InvalidTokenException::class));
@@ -73,7 +77,8 @@ class JWTTokenAuthenticatorTest extends TestCase
             (new JWTTokenAuthenticator(
                 $jwtManager,
                 $this->getEventDispatcherMock(),
-                $this->getTokenExtractorMock('token')
+                $this->getTokenExtractorMock('token'),
+                $this->getTokenStorageMock()
             ))->getCredentials($this->getRequestMock());
 
             $this->fail(sprintf('Expected exception of type "%s" to be thrown.', ExpiredTokenException::class));
@@ -87,7 +92,8 @@ class JWTTokenAuthenticatorTest extends TestCase
         $authenticator = new JWTTokenAuthenticator(
             $this->getJWTManagerMock(),
             $this->getEventDispatcherMock(),
-            $this->getTokenExtractorMock(false)
+            $this->getTokenExtractorMock(false),
+            $this->getTokenStorageMock()
         );
 
         $this->assertNull($authenticator->getCredentials($this->getRequestMock()));
@@ -115,7 +121,8 @@ class JWTTokenAuthenticatorTest extends TestCase
         $authenticator = new JWTTokenAuthenticator(
             $this->getJWTManagerMock(null, $userIdClaim),
             $this->getEventDispatcherMock(),
-            $this->getTokenExtractorMock()
+            $this->getTokenExtractorMock(),
+            $this->getTokenStorageMock()
         );
 
         $this->assertSame($userStub, $authenticator->getUser($decodedToken, $userProvider));
@@ -130,7 +137,8 @@ class JWTTokenAuthenticatorTest extends TestCase
             (new JWTTokenAuthenticator(
                 $this->getJWTManagerMock(null, 'username'),
                 $this->getEventDispatcherMock(),
-                $this->getTokenExtractorMock()
+                $this->getTokenExtractorMock(),
+                $this->getTokenStorageMock()
             ))->getUser($decodedToken, $this->getUserProviderMock());
 
             $this->fail(sprintf('Expected exception of type "%s" to be thrown.', InvalidPayloadException::class));
@@ -139,16 +147,15 @@ class JWTTokenAuthenticatorTest extends TestCase
         }
     }
 
-    /**
-     * @expectedException        \InvalidArgumentException
-     * @expectedExceptionMessage must be an instance of "Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\PreAuthenticationJWTUserToken".
-     */
     public function testGetUserWithInvalidFirstArg()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         (new JWTTokenAuthenticator(
             $this->getJWTManagerMock(),
             $this->getEventDispatcherMock(),
-            $this->getTokenExtractorMock()
+            $this->getTokenExtractorMock(),
+            $this->getTokenStorageMock()
         ))->getUser(new \stdClass(), $this->getUserProviderMock());
     }
 
@@ -171,7 +178,8 @@ class JWTTokenAuthenticatorTest extends TestCase
             (new JWTTokenAuthenticator(
                 $this->getJWTManagerMock(null, 'username'),
                 $this->getEventDispatcherMock(),
-                $this->getTokenExtractorMock()
+                $this->getTokenExtractorMock(),
+                $this->getTokenStorageMock()
             ))->getUser($decodedToken, $userProvider);
 
             $this->fail(sprintf('Expected exception of type "%s" to be thrown.', UserNotFoundException::class));
@@ -192,13 +200,19 @@ class JWTTokenAuthenticatorTest extends TestCase
 
         $jwtUserToken = new JWTUserToken($userRoles, $userStub, $rawToken, 'lexik');
 
+        $tokenStorage = $this->getTokenStorageMock();
+
+        $tokenStorage->expects(self::exactly(2))->method('setToken')->withConsecutive([$decodedToken], [null]);
+        $tokenStorage->expects(self::once())->method('getToken')->willReturn($decodedToken);
+
         $dispatcher = $this->getEventDispatcherMock();
         $this->expectEvent(Events::JWT_AUTHENTICATED, new JWTAuthenticatedEvent($payload, $jwtUserToken), $dispatcher);
 
         $authenticator = new JWTTokenAuthenticator(
             $this->getJWTManagerMock(null, 'sub'),
             $dispatcher,
-            $this->getTokenExtractorMock()
+            $this->getTokenExtractorMock(),
+            $tokenStorage
         );
 
         $userProvider = $this->getUserProviderMock();
@@ -213,18 +227,23 @@ class JWTTokenAuthenticatorTest extends TestCase
         $this->assertEquals($jwtUserToken, $authenticator->createAuthenticatedToken($userStub, 'lexik'));
     }
 
-    /**
-     * @expectedException        \RuntimeException
-     * @expectedExceptionMessage Unable to return an authenticated token
-     */
     public function testCreateAuthenticatedTokenThrowsExceptionIfNotPreAuthenticatedToken()
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unable to return an authenticated token');
+
         $userStub = new AdvancedUserStub('lexik', 'test');
+
+        $tokenStorage = $this->getTokenStorageMock();
+
+        $tokenStorage->expects(self::never())->method('setToken');
+        $tokenStorage->expects(self::once())->method('getToken')->willReturn(null);
 
         (new JWTTokenAuthenticator(
            $this->getJWTManagerMock(),
            $this->getEventDispatcherMock(),
-           $this->getTokenExtractorMock()
+           $this->getTokenExtractorMock(),
+           $tokenStorage
        ))->createAuthenticatedToken($userStub, 'lexik');
     }
 
@@ -239,7 +258,8 @@ class JWTTokenAuthenticatorTest extends TestCase
         $authenticator = new JWTTokenAuthenticator(
             $this->getJWTManagerMock(),
             $dispatcher,
-            $this->getTokenExtractorMock()
+            $this->getTokenExtractorMock(),
+            $this->getTokenStorageMock()
         );
 
         $response = $authenticator->onAuthenticationFailure($this->getRequestMock(), $authException);
@@ -259,7 +279,8 @@ class JWTTokenAuthenticatorTest extends TestCase
         $authenticator = new JWTTokenAuthenticator(
             $this->getJWTManagerMock(),
             $dispatcher,
-            $this->getTokenExtractorMock()
+            $this->getTokenExtractorMock(),
+            $this->getTokenStorageMock()
         );
 
         $response = $authenticator->start($this->getRequestMock());
@@ -276,7 +297,8 @@ class JWTTokenAuthenticatorTest extends TestCase
             (new JWTTokenAuthenticator(
                 $this->getJWTManagerMock(),
                 $this->getEventDispatcherMock(),
-                $this->getTokenExtractorMock()
+                $this->getTokenExtractorMock(),
+                $this->getTokenStorageMock()
             ))->checkCredentials(null, $user)
         );
     }
@@ -287,7 +309,8 @@ class JWTTokenAuthenticatorTest extends TestCase
             (new JWTTokenAuthenticator(
                 $this->getJWTManagerMock(),
                 $this->getEventDispatcherMock(),
-                $this->getTokenExtractorMock()
+                $this->getTokenExtractorMock(),
+                $this->getTokenStorageMock()
             ))->supportsRememberMe()
         );
     }
@@ -349,6 +372,16 @@ class JWTTokenAuthenticatorTest extends TestCase
         return $this->getMockBuilder(UserProviderInterface::class)
             ->disableOriginalConstructor()
             ->getMock();
+    }
+
+    /**
+     * @return \PHPUnit\Framework\MockObject\MockObject|TokenStorageInterface
+     */
+    private function getTokenStorageMock()
+    {
+        return $this->getMockBuilder(TokenStorageInterface::class)
+            ->setMethods(['getToken', 'setToken'])
+            ->getMockForAbstractClass();
     }
 
     private function expectEvent($eventName, $event, $dispatcher)

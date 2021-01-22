@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Controller\UserValueResolver;
 
-@trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.1, use "%s" instead.', SecurityUserValueResolver::class, UserValueResolver::class), E_USER_DEPRECATED);
+@trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.1, use "%s" instead.', SecurityUserValueResolver::class, UserValueResolver::class), \E_USER_DEPRECATED);
 
 /**
  * Supports the argument type of {@see UserInterface}.
@@ -37,7 +37,7 @@ final class SecurityUserValueResolver implements ArgumentValueResolverInterface
         $this->tokenStorage = $tokenStorage;
     }
 
-    public function supports(Request $request, ArgumentMetadata $argument)
+    public function supports(Request $request, ArgumentMetadata $argument): bool
     {
         // only security user implementations are supported
         if (UserInterface::class !== $argument->getType()) {
@@ -55,7 +55,7 @@ final class SecurityUserValueResolver implements ArgumentValueResolverInterface
         return $user instanceof UserInterface;
     }
 
-    public function resolve(Request $request, ArgumentMetadata $argument)
+    public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
         yield $this->tokenStorage->getToken()->getUser();
     }

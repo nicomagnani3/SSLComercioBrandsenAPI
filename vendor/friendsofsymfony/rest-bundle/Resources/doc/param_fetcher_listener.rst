@@ -6,7 +6,6 @@ configured for the matched controller so that the user does not need to do this 
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         param_fetcher_listener: true
 
@@ -20,6 +19,7 @@ configured for the matched controller so that the user does not need to do this 
     use FOS\RestBundle\Controller\Annotations\RequestParam;
     use FOS\RestBundle\Controller\Annotations\QueryParam;
     use FOS\RestBundle\Controller\Annotations\FileParam;
+    use Symfony\Component\Validator\Constraints;
     use Acme\FooBundle\Validation\Constraints\MyComplexConstraint;
 
     class FooController extends Controller
@@ -42,12 +42,19 @@ configured for the matched controller so that the user does not need to do this 
          * @QueryParam(name="sort", requirements="(asc|desc)", allowBlank=false, default="asc", description="Sort direction")
          * Will check if a blank value, e.g an empty string is passed and if so, it will set to the default of asc.
          *
+         * @RequestParam(name="nullableSample", nullable=true, description="An example for a nullable entry")
          * @RequestParam(name="firstname", requirements="[a-z]+", description="Firstname.")
          * Will look for a firstname request parameters, ie. firstname=foo in POST data.
          * If not passed it will error out when read out of the ParamFetcher since RequestParam defaults to strict=true
          * If passed but doesn't match the requirement "[a-z]+" it will also error out (400 Bad Request)
          * Note that if the value matches the default then no validation is run.
          * So make sure the default value really matches your expectations.
+         *
+         * @RequestParam(name="simpleEmail", requirements=@Constraints\Email)
+         * @RequestParam(name="complexEmail", requirements={@Constraints\Email, @Constraints\NotEqualTo("joe@example.org")})
+         * You can use one or multiple Symfony Validator constraints for more complex requirements checking. The first
+         * example above checks for a correctly formatted e-mail address. The second example also ensures that it does not
+         * matches some default example value.
          *
          * @RequestParam(name="search", requirements="[a-z]+", description="search")
          * @RequestParam(name="byauthor", requirements="[a-z]+", description="by author", incompatibles={"search"})
@@ -56,7 +63,7 @@ configured for the matched controller so that the user does not need to do this 
          *   2 by filtering the author
          * and you don't have yet implemented the possibility to filter by both at the same time.
          * In order to prevent clients from doing a request with both (which will produce not the expected
-         * resut and is likely to be considered as a bug) you can precise the parameters can't be present
+         * result and is likely to be considered as a bug) you can precise the parameters can't be present
          * at the same time by doing
          *
          * @QueryParam(map=true, name="ids", requirements="\d+", default="1", description="List of ids")
@@ -106,7 +113,7 @@ configured for the matched controller so that the user does not need to do this 
 
             $dynamicQueryParam = new QueryParam();
             $dynamicQueryParam->name = "dynamic_query";
-            $dynamicQueryParam->requirements="[a-z]+";
+            $dynamicQueryParam->requirements = "[a-z]+";
             $paramFetcher->addParam($dynamicQueryParam);
 
             $page = $paramFetcher->get('page');
@@ -132,7 +139,6 @@ request attributes
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         param_fetcher_listener: force
 
@@ -187,3 +193,4 @@ Container parameters can be used in requirements and default field.
         {
             ...
         }
+

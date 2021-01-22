@@ -13,7 +13,6 @@ namespace FOS\RestBundle\View;
 
 use FOS\RestBundle\Context\Context;
 use FOS\RestBundle\Serializer\Serializer;
-use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +20,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Templating\EngineInterface;
 use Symfony\Component\Templating\TemplateReferenceInterface;
+use Twig\Environment;
 
 /**
  * View may be used in controllers to build up a response in a format agnostic way
@@ -30,6 +31,8 @@ use Symfony\Component\Templating\TemplateReferenceInterface;
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  * @author Lukas K. Smith <smith@pooteeweet.org>
+ *
+ * @final since 2.8
  */
 class ViewHandler implements ConfigurableViewHandlerInterface
 {
@@ -49,22 +52,16 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     protected $formats;
 
     /**
-     *  HTTP response status code for a failed validation.
-     *
      * @var int
      */
     protected $failedValidationCode;
 
     /**
-     * HTTP response status code when the view data is null.
-     *
      * @var int
      */
     protected $emptyContentCode;
 
     /**
-     * Whether or not to serialize null view data.
-     *
      * @var bool
      */
     protected $serializeNull;
@@ -73,12 +70,12 @@ class ViewHandler implements ConfigurableViewHandlerInterface
      * If to force a redirect for the given key format,
      * with value being the status code to use.
      *
-     * @var array
+     * @var array<string,int>
      */
     protected $forceRedirects;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $defaultEngine;
 
@@ -105,33 +102,29 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     private $options;
 
     /**
-     * Constructor.
-     *
-     * @param UrlGeneratorInterface $urlGenerator         The URL generator
-     * @param Serializer            $serializer
-     * @param EngineInterface       $templating           The configured templating engine
-     * @param RequestStack          $requestStack         The request stack
-     * @param array                 $formats              the supported formats as keys and if the given formats uses templating is denoted by a true value
-     * @param int                   $failedValidationCode The HTTP response status code for a failed validation
-     * @param int                   $emptyContentCode     HTTP response status code when the view data is null
-     * @param bool                  $serializeNull        Whether or not to serialize null view data
-     * @param array                 $forceRedirects       If to force a redirect for the given key format, with value being the status code to use
-     * @param string                $defaultEngine        default engine (twig, php ..)
-     * @param array                 $options              config options
+     * @param EngineInterface|Environment $templating The configured templating engine
      */
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
         Serializer $serializer,
-        EngineInterface $templating = null,
+        $templating,
         RequestStack $requestStack,
         array $formats = null,
-        $failedValidationCode = Response::HTTP_BAD_REQUEST,
-        $emptyContentCode = Response::HTTP_NO_CONTENT,
-        $serializeNull = false,
+        int $failedValidationCode = Response::HTTP_BAD_REQUEST,
+        int $emptyContentCode = Response::HTTP_NO_CONTENT,
+        bool $serializeNull = false,
         array $forceRedirects = null,
-        $defaultEngine = 'twig',
+        ?string $defaultEngine = 'twig',
         array $options = []
     ) {
+        if (11 >= func_num_args() || func_get_arg(11)) {
+            @trigger_error(sprintf('The constructor of the %s class is deprecated, use the static create() factory method instead.', __CLASS__), E_USER_DEPRECATED);
+        }
+
+        if (null !== $templating && !$templating instanceof EngineInterface && !$templating instanceof Environment) {
+            throw new \TypeError(sprintf('If provided, the templating engine must be an instance of %s or %s, but %s was given.', EngineInterface::class, Environment::class, get_class($templating)));
+        }
+
         $this->urlGenerator = $urlGenerator;
         $this->serializer = $serializer;
         $this->templating = $templating;
@@ -150,10 +143,21 @@ class ViewHandler implements ConfigurableViewHandlerInterface
         $this->reset();
     }
 
+    public static function create(
+        UrlGeneratorInterface $urlGenerator,
+        Serializer $serializer,
+        RequestStack $requestStack,
+        array $formats = null,
+        int $failedValidationCode = Response::HTTP_BAD_REQUEST,
+        int $emptyContentCode = Response::HTTP_NO_CONTENT,
+        bool $serializeNull = false,
+        array $options = []
+    ): self {
+        return new self($urlGenerator, $serializer, null, $requestStack, $formats, $failedValidationCode, $emptyContentCode, $serializeNull, [], 'twig', $options, false);
+    }
+
     /**
-     * Sets the default serialization groups.
-     *
-     * @param array|string $groups
+     * @param string[]|string $groups
      */
     public function setExclusionStrategyGroups($groups)
     {
@@ -161,8 +165,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Sets the default serialization version.
-     *
      * @param string $version
      */
     public function setExclusionStrategyVersion($version)
@@ -171,8 +173,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * If nulls should be serialized.
-     *
      * @param bool $isEnabled
      */
     public function setSerializeNullStrategy($isEnabled)
@@ -216,8 +216,7 @@ class ViewHandler implements ConfigurableViewHandlerInterface
      * the key 'form' in the View's data it will return the failed_validation
      * configuration if the form instance has errors.
      *
-     * @param View  $view
-     * @param mixed $content
+     * @param string|false|null
      *
      * @return int HTTP status code
      */
@@ -238,7 +237,7 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * If the given format uses the templating system for rendering.
+     * @deprecated since 2.8
      *
      * @param string $format
      *
@@ -246,15 +245,14 @@ class ViewHandler implements ConfigurableViewHandlerInterface
      */
     public function isFormatTemplating($format)
     {
+        if (1 === func_num_args() || func_get_arg(1)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         return !empty($this->formats[$format]);
     }
 
     /**
-     * Gets or creates a JMS\Serializer\SerializationContext and initializes it with
-     * the view exclusion strategies, groups & versions if a new context is created.
-     *
-     * @param View $view
-     *
      * @return Context
      */
     protected function getSerializationContext(View $view)
@@ -274,6 +272,10 @@ class ViewHandler implements ConfigurableViewHandlerInterface
             $context->setSerializeNull($this->serializeNullStrategy);
         }
 
+        if (null !== $view->getStatusCode() && !$context->hasAttribute('status_code')) {
+            $context->setAttribute('status_code', $view->getStatusCode());
+        }
+
         return $context;
     }
 
@@ -281,9 +283,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
      * Handles a request with the proper handler.
      *
      * Decides on which handler to use based on the request format.
-     *
-     * @param View    $view
-     * @param Request $request
      *
      * @throws UnsupportedMediaTypeHttpException
      *
@@ -311,9 +310,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Creates the Response from the view.
-     *
-     * @param View   $view
      * @param string $location
      * @param string $format
      *
@@ -343,22 +339,25 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Renders the view data with the given template.
+     * @deprecated since 2.8
      *
-     * @param View   $view
      * @param string $format
      *
      * @return string
      */
     public function renderTemplate(View $view, $format)
     {
-        if (null === $this->templating) {
-            throw new \LogicException(sprintf('An instance of %s must be injected in %s to render templates.', EngineInterface::class, __CLASS__));
+        if (2 === func_num_args() || func_get_arg(2)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
         }
 
-        $data = $this->prepareTemplateParameters($view);
+        if (null === $this->templating) {
+            throw new \LogicException(sprintf('An instance of %s or %s must be injected in %s to render templates.', EngineInterface::class, Environment::class, __CLASS__));
+        }
 
-        $template = $view->getTemplate();
+        $data = $this->prepareTemplateParameters($view, false);
+
+        $template = $view->getTemplate(false);
         if ($template instanceof TemplateReferenceInterface) {
             if (null === $template->get('format')) {
                 $template->set('format', $format);
@@ -374,27 +373,29 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Prepares view data for use by templating engine.
-     *
-     * @param View $view
+     * @deprecated since 2.8
      *
      * @return array
      */
     public function prepareTemplateParameters(View $view)
     {
+        if (1 === func_num_args() || func_get_arg(1)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         $data = $view->getData();
 
         if ($data instanceof FormInterface) {
-            $data = [$view->getTemplateVar() => $data->getData(), 'form' => $data];
+            $data = [$view->getTemplateVar(false) => $data->getData(), 'form' => $data];
         } elseif (empty($data) || !is_array($data) || is_numeric((key($data)))) {
-            $data = [$view->getTemplateVar() => $data];
+            $data = [$view->getTemplateVar(false) => $data];
         }
 
         if (isset($data['form']) && $data['form'] instanceof FormInterface) {
             $data['form'] = $data['form']->createView();
         }
 
-        $templateData = $view->getTemplateData();
+        $templateData = $view->getTemplateData(false);
         if (is_callable($templateData)) {
             $templateData = call_user_func($templateData, $this, $view);
         }
@@ -403,11 +404,7 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Handles creation of a Response using either redirection or the templating/serializer service.
-     *
-     * @param View    $view
-     * @param Request $request
-     * @param string  $format
+     * @param string $format
      *
      * @return Response
      */
@@ -438,9 +435,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Initializes a response object that represents the view and holds the view's status code.
-     *
-     * @param View   $view
      * @param string $format
      *
      * @return Response
@@ -448,8 +442,8 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     private function initResponse(View $view, $format)
     {
         $content = null;
-        if ($this->isFormatTemplating($format)) {
-            $content = $this->renderTemplate($view, $format);
+        if ($this->isFormatTemplating($format, false)) {
+            $content = $this->renderTemplate($view, $format, false);
         } elseif ($this->serializeNull || null !== $view->getData()) {
             $data = $this->getDataFromView($view);
 
@@ -458,7 +452,7 @@ class ViewHandler implements ConfigurableViewHandlerInterface
             }
 
             $context = $this->getSerializationContext($view);
-            $context->setAttribute('template_data', $view->getTemplateData());
+            $context->setAttribute('template_data', $view->getTemplateData(false));
 
             $content = $this->serializer->serialize($data, $format, $context);
         }
@@ -474,10 +468,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
     }
 
     /**
-     * Returns the form from the given view if present, false otherwise.
-     *
-     * @param View $view
-     *
      * @return bool|FormInterface
      */
     protected function getFormFromView(View $view)
@@ -495,13 +485,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
         return false;
     }
 
-    /**
-     * Returns the data from a view.
-     *
-     * @param View $view
-     *
-     * @return mixed|null
-     */
     private function getDataFromView(View $view)
     {
         $form = $this->getFormFromView($view);
@@ -513,9 +496,6 @@ class ViewHandler implements ConfigurableViewHandlerInterface
         return $form;
     }
 
-    /**
-     * Resets internal object state at the end of the request.
-     */
     public function reset()
     {
         $this->exclusionStrategyGroups = $this->options['exclusionStrategyGroups'];

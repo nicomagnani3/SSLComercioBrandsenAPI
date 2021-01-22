@@ -18,6 +18,8 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  * Normalizes invalid Form instances.
  *
  * @author Guilhem N. <guilhem.niot@gmail.com>
+ *
+ * @internal since 2.8
  */
 class FormErrorNormalizer implements NormalizerInterface
 {
@@ -44,7 +46,7 @@ class FormErrorNormalizer implements NormalizerInterface
     /**
      * This code has been taken from JMSSerializer.
      */
-    private function convertFormToArray(FormInterface $data)
+    private function convertFormToArray(FormInterface $data): array
     {
         $form = $errors = [];
 

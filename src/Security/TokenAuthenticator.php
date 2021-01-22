@@ -227,7 +227,7 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
     {   
         if($request->attributes->get('Expired')){
             $data = [
-                'message' => "Por favor inicie sesion antes!,gracias"
+                'message' => "¡La sesión ha expirado!, vuelva a iniciar sesión"
             ];
         }else{
             $data = [

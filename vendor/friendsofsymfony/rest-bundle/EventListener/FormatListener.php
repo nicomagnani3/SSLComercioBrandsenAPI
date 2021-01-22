@@ -14,7 +14,7 @@ namespace FOS\RestBundle\EventListener;
 use FOS\RestBundle\FOSRestBundle;
 use FOS\RestBundle\Util\StopFormatListenerException;
 use FOS\RestBundle\Negotiation\FormatNegotiator;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
@@ -29,24 +29,15 @@ class FormatListener
 {
     private $formatNegotiator;
 
-    /**
-     * Initialize FormatListener.
-     *
-     * @param FormatNegotiatorInterface $formatNegotiator
-     */
     public function __construct(FormatNegotiator $formatNegotiator)
     {
         $this->formatNegotiator = $formatNegotiator;
     }
 
     /**
-     * Determines and sets the Request format.
-     *
-     * @param GetResponseEvent $event The event
-     *
-     * @throws NotAcceptableHttpException
+     * @param RequestEvent $event The event
      */
-    public function onKernelRequest(GetResponseEvent $event)
+    public function onKernelRequest($event)
     {
         $request = $event->getRequest();
 

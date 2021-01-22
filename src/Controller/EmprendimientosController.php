@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+
 use App\Entity\User;
 use App\Entity\PublicacionEmprendimientos;
 use App\Entity\Emprendimientos;
@@ -17,7 +18,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
-
+/**
+ * Class EmprendimientosController
+ *
+ * @Route("/api")
+ */
 class EmprendimientosController extends AbstractFOSRestController
 {
     private $permission;
@@ -29,8 +34,14 @@ class EmprendimientosController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de emprendimientos
-     * @Rest\Get("/get_emprendimientos", name="get_emprendimientos")
+     * Retorna el listado de emprendimientos     
+     * @Rest\Route(
+     *    "/get_emprendimientos", 
+     *    name="get_emprendimientos",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )
      *
      * @SWG\Response(
      *     response=200,
@@ -73,8 +84,13 @@ class EmprendimientosController extends AbstractFOSRestController
     }
     /**
      * Retorna el listado de categorias hijas de una categoria en particular
-     * @Rest\Get("/get_emprendimientosHijos", name="/get_emprendimientosHijos")
-     *
+     * @Rest\Route(
+     *    "/get_emprendimientosHijos", 
+     *    name="get_emprendimientosHijos",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de categorias"
@@ -113,10 +129,15 @@ class EmprendimientosController extends AbstractFOSRestController
             $response
         );
     }
-     /**
+    /**
      * Retorna el listado de publicaciones de emnprendimientos
-     * @Rest\Get("/get_publicaciones_emprendimientos", name="get_publicaciones_emprendimientos")
-     *
+     * @Rest\Route(
+     *    "/get_publicaciones_emprendimientos", 
+     *    name="get_publicaciones_emprendimientos",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de publicaciones"
@@ -158,8 +179,13 @@ class EmprendimientosController extends AbstractFOSRestController
     }
     /**
      * Retorna  las publicaciones de emprendimientos que pertenecen al id del emprendimiento principal pasada por parametro
-     * @Rest\Post("/search_publicaciones_emprendimientos", name="search_publicaciones_emprendimientos")
-     *
+     * @Rest\Route(
+     *    "/search_publicaciones_emprendimientos", 
+     *    name="search_publicaciones_emprendimientos",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de publicaciones"
@@ -210,8 +236,13 @@ class EmprendimientosController extends AbstractFOSRestController
 
     /**
      * Genera una nueva  publicacion de un emprendimiento con los datos correspondientes 
-     * @Rest\Post("/nuevo_emprendimiento", name="nuevo_emprendimiento")
-     *
+     * @Rest\Route(
+     *    "/nuevo_emprendimiento", 
+     *    name="nuevo_emprendimiento",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se genero una publicacion"
@@ -293,7 +324,7 @@ class EmprendimientosController extends AbstractFOSRestController
         $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
         $destacada = $request->request->get("destacada");
-        
+
 
         try {
             $code = 200;
@@ -314,7 +345,7 @@ class EmprendimientosController extends AbstractFOSRestController
             );
             $em->persist($nuevaPublicacion);
             $em->flush();
-             if ($imgPrimera != NULL) {
+            if ($imgPrimera != NULL) {
                 $img = str_replace('data:image/jpeg;base64,', '', $imgPrimera);
                 $data = base64_decode($img);
                 $filepath = "imagenesEmprendimientos/" . $nuevaPublicacion->getId() . "-0"  . ".png";
@@ -328,7 +359,7 @@ class EmprendimientosController extends AbstractFOSRestController
             if ($imagenes != NULL) {
                 $index = 1;
                 foreach ($imagenes as $clave => $valor) {
-                  
+
                     $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]);
                     $data = base64_decode($img);
                     $filepath = "imagenesEmprendimientos/" . $nuevaPublicacion->getId() . "-" . $index . ".png";
@@ -340,7 +371,7 @@ class EmprendimientosController extends AbstractFOSRestController
                     $em->persist($imagenesPublicacion);
                     $em->flush();
                 }
-            } 
+            }
             $message = "Se creo con exito la publicacion,gracias por confiar en Mercado Local";
         } catch (Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;

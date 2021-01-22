@@ -11,6 +11,8 @@
 
 namespace FOS\RestBundle\Routing\Loader;
 
+@trigger_error(sprintf('The %s\RestRouteProcessor class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Routing\RouteCollection;
@@ -20,30 +22,22 @@ use Symfony\Component\Routing\RouteCollection;
  *
  * @author Donald Tyler <chekote69@gmail.com>
  * @author Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * @deprecated since 2.8
  */
 class RestRouteProcessor
 {
     /**
-     * Import & return routes collection from a resource.
-     *
-     * @param LoaderInterface $loader      The Loader
-     * @param mixed           $resource    A Resource
-     * @param array           $parents     Array of parent resources names
-     * @param string          $routePrefix Current routes prefix
-     * @param string          $namePrefix  Routes names prefix
-     * @param string          $type        The resource type
-     * @param string          $currentDir  Current directory of the loader
-     *
-     * @return RouteCollection A RouteCollection instance
+     * @return RouteCollection
      */
     public function importResource(
         LoaderInterface $loader,
         $resource,
         array $parents = [],
-        $routePrefix = null,
-        $namePrefix = null,
-        $type = null,
-        $currentDir = null
+        string $routePrefix = null,
+        string $namePrefix = null,
+        string $type = null,
+        string $currentDir = null
     ) {
         $loader = $loader->resolve($resource, $type);
 

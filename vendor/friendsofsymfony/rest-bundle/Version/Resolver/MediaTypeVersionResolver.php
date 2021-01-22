@@ -16,12 +16,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @author Ener-Getick <egetick@gmail.com>
+ *
+ * @final since 2.8
  */
 class MediaTypeVersionResolver implements VersionResolverInterface
 {
-    /**
-     * @var string
-     */
     private $regex;
 
     /**
@@ -38,9 +37,9 @@ class MediaTypeVersionResolver implements VersionResolverInterface
     public function resolve(Request $request)
     {
         if (!$request->attributes->has('media_type') || false === preg_match($this->regex, $request->attributes->get('media_type'), $matches)) {
-            return false;
+            return null;
         }
 
-        return isset($matches['version']) ? $matches['version'] : false;
+        return isset($matches['version']) ? $matches['version'] : null;
     }
 }

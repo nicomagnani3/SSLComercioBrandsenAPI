@@ -18,8 +18,8 @@ abstract class PublicacionEmprendimientoAbstract
             'descripcion'=>$this->getdescripcion(),
             'imagen'=>$data,
             'destacado'=>$this->getDestacada(),
-            'telefono'=>$this->getIdusuariId()->getTelefono()
-           
+            'telefono'=>$this->getIdusuariId()->getTelefono(),
+            'padre'=>$this->getEmprendimiento()->getNombre()
         ];  
     }
     public function crearPublicacion( $titulo,

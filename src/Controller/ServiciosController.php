@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+
 use App\Entity\User;
 use App\Entity\ServiciosHijos;
 use App\Entity\Servicios;
@@ -19,19 +20,30 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
 
+/**
+ * Class ServiciosController
+ *
+ * @Route("/api")
+ */
 class ServiciosController extends AbstractFOSRestController
 {
     private $permission;
 
 
-    public function __construct (Permission $permission) {
+    public function __construct(Permission $permission)
+    {
         $this->permission = $permission;
     }
 
     /**
      * Retorna el listado de servicios
-     * @Rest\Get("/get_servicios", name="get_servicios")
-     *
+     * @Rest\Route(
+     *    "/get_servicios", 
+     *    name="get_servicios",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de servicios"
@@ -46,18 +58,16 @@ class ServiciosController extends AbstractFOSRestController
      */
     public function servicios(EntityManagerInterface $em, Request $request)
     {
-      
+
         $errors = [];
         try {
             $code = 200;
             $error = false;
             $emprendimientos = $em->getRepository(Servicios::class)->findAll();
-        
-            $array = array_map(function ($item) {               
-                    return $item->getArray();               
-               
+
+            $array = array_map(function ($item) {
+                return $item->getArray();
             }, $emprendimientos);
-           
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -75,8 +85,13 @@ class ServiciosController extends AbstractFOSRestController
     }
     /**
      * Retorna el listado de servicios hijas de un servicio en particular
-     * @Rest\Get("/get_serviciossHijos", name="/get_serviciossHijos")
-     *
+     * @Rest\Route(
+     *    "/get_serviciossHijos", 
+     *    name="get_serviciossHijos",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de categorias"
@@ -91,17 +106,15 @@ class ServiciosController extends AbstractFOSRestController
      */
     public function get_serviciossHijos(EntityManagerInterface $em, Request $request)
     {
-      
+
         $errors = [];
         try {
             $code = 200;
-            $error = false;     
-            $serviciosHijos = $em->getRepository(ServiciosHijos::class)->findAll();    
-            $array = array_map(function ($item) {               
-                    return $item->getArray();               
-               
+            $error = false;
+            $serviciosHijos = $em->getRepository(ServiciosHijos::class)->findAll();
+            $array = array_map(function ($item) {
+                return $item->getArray();
             }, $serviciosHijos);
-           
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -117,11 +130,16 @@ class ServiciosController extends AbstractFOSRestController
             $response
         );
     }
-    
+
     /**
      * Retorna el listado de publicaciones de servicios
-     * @Rest\Get("/get_publicaciones_servicios", name="get_publicaciones_servicios")
-     *
+     * @Rest\Route(
+     *    "/get_publicaciones_servicios", 
+     *    name="get_publicaciones_servicios",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de publicaciones"
@@ -161,11 +179,72 @@ class ServiciosController extends AbstractFOSRestController
             $response
         );
     }
-    
-     /**
-     * Genera una nueva  publicacion de un servicio con los datos correspondientes 
-     * @Rest\Post("/nuevo_servicio", name="nuevo_servicio")
+
+
+    /**
+     * Retorna  las publicaciones de servicios que pertenecen al id del emprendimiento principal pasada por parametro
+     * @Rest\Route(
+     *    "/search_publicaciones_servicios", 
+     *    name="search_publicaciones_servicios",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
      *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *  @SWG\Parameter(
+     *     name="id",
+     *       in="body",
+     *     type="string",
+     *     description="id de publicacion a buscar  ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Tag(name="Servicios")
+     */
+    public function search_publicaciones_servicios(EntityManagerInterface $em, Request $request)
+    {
+        $id = $request->request->get("id");
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['servicioId' => $id]);
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $publicaciones);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    /**
+     * Genera una nueva  publicacion de un servicio con los datos correspondientes 
+     * @Rest\Route(
+     *    "/nuevo_servicio", 
+     *    name="nuevo_servicio",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se genero una publicacion"
@@ -226,7 +305,7 @@ class ServiciosController extends AbstractFOSRestController
      *      schema={
      *     }
      * )  
-      *   @SWG\Parameter(
+     *   @SWG\Parameter(
      *     name="servicioHijo",
      *       in="body",
      *     type="array",
@@ -252,10 +331,10 @@ class ServiciosController extends AbstractFOSRestController
         $imagenes = $request->request->get("imagenes");
         $imgPrimera = $request->request->get("imgPrimera");
         $servicio = $request->request->get("servicio");
-        $servicioHijo= $request->request->get("servicioHijo");
+        $servicioHijo = $request->request->get("servicioHijo");
         $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
-        $destacada = $request->request->get("destacada"); 
+        $destacada = $request->request->get("destacada");
         try {
             $code = 200;
             $error = false;
@@ -263,7 +342,7 @@ class ServiciosController extends AbstractFOSRestController
             if ($servicio != NULL) {
                 $servicioOBJ = $em->getRepository(Servicios::class)->find($servicio);
             }
-            if ($servicioHijo!= NULL) {
+            if ($servicioHijo != NULL) {
                 $servicioHijoOBJ = $em->getRepository(ServiciosHijos::class)->find($servicioHijo);
             }
             $nuevaPublicacion = new PublicacionServicios();
@@ -279,7 +358,7 @@ class ServiciosController extends AbstractFOSRestController
             );
             $em->persist($nuevaPublicacion);
             $em->flush();
-             if ($imgPrimera != NULL) {
+            if ($imgPrimera != NULL) {
                 $img = str_replace('data:image/jpeg;base64,', '', $imgPrimera);
                 $data = base64_decode($img);
                 $filepath = "imagenesServicios/" . $nuevaPublicacion->getId() . "-0"  . ".png";
@@ -293,7 +372,7 @@ class ServiciosController extends AbstractFOSRestController
             if ($imagenes != NULL) {
                 $index = 1;
                 foreach ($imagenes as $clave => $valor) {
-                  
+
                     $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]);
                     $data = base64_decode($img);
                     $filepath = "imagenesServicios/" . $nuevaPublicacion->getId() . "-" . $index . ".png";
@@ -305,7 +384,7 @@ class ServiciosController extends AbstractFOSRestController
                     $em->persist($imagenesPublicacion);
                     $em->flush();
                 }
-            } 
+            }
             $message = "Se creo con exito la publicacion,gracias por confiar en Mercado Local";
         } catch (Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
@@ -322,5 +401,4 @@ class ServiciosController extends AbstractFOSRestController
             $response
         );
     }
-
 }

@@ -13,7 +13,7 @@ namespace FOS\RestBundle\EventListener;
 
 use FOS\RestBundle\FOSRestBundle;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
@@ -28,8 +28,6 @@ class MimeTypeListener
     private $mimeTypes;
 
     /**
-     * Constructor.
-     *
      * @param array $mimeTypes An array with the format as key and
      *                         the corresponding mime type as value
      */
@@ -39,11 +37,9 @@ class MimeTypeListener
     }
 
     /**
-     * Core request handler.
-     *
-     * @param GetResponseEvent $event The event
+     * @param RequestEvent $event The event
      */
-    public function onKernelRequest(GetResponseEvent $event)
+    public function onKernelRequest($event)
     {
         $request = $event->getRequest();
 

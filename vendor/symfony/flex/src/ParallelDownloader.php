@@ -70,7 +70,7 @@ class ParallelDownloader extends RemoteFilesystem
 
         if (!$this->quiet) {
             if (!$this->downloader && method_exists(parent::class, 'getRemoteContents')) {
-                $this->io->writeError('<warning>Enable the "cURL" PHP extension for faster downloads</warning>');
+                $this->io->writeError('<warning>Enable the "cURL" PHP extension for faster downloads</>');
             }
 
             $note = '';
@@ -80,10 +80,10 @@ class ParallelDownloader extends RemoteFilesystem
             }
 
             $this->io->writeError('');
-            $this->io->writeError(sprintf('<info>Prefetching %d packages</info> %s', $this->downloadCount, $note));
+            $this->io->writeError(sprintf('<info>Prefetching %d packages</> %s', $this->downloadCount, $note));
             $this->io->writeError('  - Downloading', false);
             if ($this->progress) {
-                $this->io->writeError(' (<comment>0%</comment>)', false);
+                $this->io->writeError(' (<comment>0%</>)', false);
             }
         }
         try {
@@ -91,9 +91,9 @@ class ParallelDownloader extends RemoteFilesystem
             if ($this->quiet) {
                 // no-op
             } elseif ($this->progress) {
-                $this->io->overwriteError(' (<comment>100%</comment>)');
+                $this->io->overwriteError(' (<comment>100%</>)');
             } else {
-                $this->io->writeError(' (<comment>100%</comment>)');
+                $this->io->writeError(' (<comment>100%</>)');
             }
         } finally {
             if (!$this->quiet) {
@@ -197,7 +197,7 @@ class ParallelDownloader extends RemoteFilesystem
 
             if (5 <= $progress - $state->lastProgress || 1 <= $progressTime - $state->lastUpdate) {
                 $state->lastProgress = $progress;
-                $this->io->overwriteError(sprintf(' (<comment>%d%%</comment>)', $progress), false);
+                $this->io->overwriteError(sprintf(' (<comment>%d%%</>)', $progress), false);
                 $state->lastUpdate = microtime(true);
             }
         }
@@ -216,7 +216,7 @@ class ParallelDownloader extends RemoteFilesystem
     /**
      * {@inheritdoc}
      */
-    protected function getRemoteContents($originUrl, $fileUrl, $context, array &$responseHeaders = null)
+    protected function getRemoteContents($originUrl, $fileUrl, $context, array &$responseHeaders = null, $maxFileSize = null)
     {
         if (isset(self::$cache[$fileUrl])) {
             self::$cacheNext = false;
@@ -234,7 +234,7 @@ class ParallelDownloader extends RemoteFilesystem
             self::$cacheNext = false;
 
             if (3 < \func_num_args()) {
-                $result = $this->getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders);
+                $result = $this->getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders, $maxFileSize);
                 self::$cache[$fileUrl] = [$responseHeaders, $result];
             } else {
                 $result = $this->getRemoteContents($originUrl, $fileUrl, $context);
@@ -244,8 +244,8 @@ class ParallelDownloader extends RemoteFilesystem
             return $result;
         }
 
-        if (!$this->downloader) {
-            return parent::getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders);
+        if (!$this->downloader || !preg_match('/^https?:/', $fileUrl)) {
+            return parent::getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders, $maxFileSize);
         }
 
         try {
@@ -259,7 +259,7 @@ class ParallelDownloader extends RemoteFilesystem
         } catch (TransportException $e) {
             $this->io->writeError('Retrying download: '.$e->getMessage(), true, IOInterface::DEBUG);
 
-            return parent::getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders);
+            return parent::getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders, $maxFileSize);
         } catch (\Throwable $e) {
             $responseHeaders = [];
             throw $e;

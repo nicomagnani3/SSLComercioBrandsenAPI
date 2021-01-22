@@ -19,6 +19,8 @@ use Twig\TwigFilter;
  * Twig extension relate to PHP code and used by the profiler and the default exception templates.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @final since Symfony 4.4
  */
 class CodeExtension extends AbstractExtension
 {
@@ -40,6 +42,8 @@ class CodeExtension extends AbstractExtension
 
     /**
      * {@inheritdoc}
+     *
+     * @return TwigFilter[]
      */
     public function getFilters()
     {
@@ -68,7 +72,7 @@ class CodeExtension extends AbstractExtension
     public function abbrMethod($method)
     {
         if (false !== strpos($method, '::')) {
-            list($class, $method) = explode('::', $method, 2);
+            [$class, $method] = explode('::', $method, 2);
             $result = sprintf('%s::%s()', $this->abbrClass($class), $method);
         } elseif ('Closure' === $method) {
             $result = sprintf('<abbr title="%s">%1$s</abbr>', $method);
@@ -103,7 +107,7 @@ class CodeExtension extends AbstractExtension
             } elseif ('resource' === $item[0]) {
                 $formattedValue = '<em>resource</em>';
             } else {
-                $formattedValue = str_replace("\n", '', htmlspecialchars(var_export($item[1], true), ENT_COMPAT | ENT_SUBSTITUTE, $this->charset));
+                $formattedValue = str_replace("\n", '', htmlspecialchars(var_export($item[1], true), \ENT_COMPAT | \ENT_SUBSTITUTE, $this->charset));
             }
 
             $result[] = \is_int($key) ? $formattedValue : sprintf("'%s' => %s", $key, $formattedValue);
@@ -137,7 +141,7 @@ class CodeExtension extends AbstractExtension
     {
         if (is_file($file) && is_readable($file)) {
             // highlight_file could throw warnings
-            // see https://bugs.php.net/bug.php?id=25725
+            // see https://bugs.php.net/25725
             $code = @highlight_file($file, true);
             // remove main code/span tags
             $code = preg_replace('#^<code.*?>\s*<span.*?>(.*)</span>\s*</code>#s', '\\1', $code);
@@ -188,7 +192,7 @@ class CodeExtension extends AbstractExtension
         }
 
         if (false !== $link = $this->getFileLink($file, $line)) {
-            return sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', htmlspecialchars($link, ENT_COMPAT | ENT_SUBSTITUTE, $this->charset), $text);
+            return sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', htmlspecialchars($link, \ENT_COMPAT | \ENT_SUBSTITUTE, $this->charset), $text);
         }
 
         return $text;
@@ -232,7 +236,7 @@ class CodeExtension extends AbstractExtension
     /**
      * @internal
      */
-    public function formatLogMessage($message, array $context)
+    public function formatLogMessage(string $message, array $context): string
     {
         if ($context && false !== strpos($message, '{')) {
             $replacements = [];
@@ -247,7 +251,7 @@ class CodeExtension extends AbstractExtension
             }
         }
 
-        return htmlspecialchars($message, ENT_COMPAT | ENT_SUBSTITUTE, $this->charset);
+        return htmlspecialchars($message, \ENT_COMPAT | \ENT_SUBSTITUTE, $this->charset);
     }
 
     /**

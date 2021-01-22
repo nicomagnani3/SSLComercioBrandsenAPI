@@ -10,7 +10,6 @@ and have the converters enabled:
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     sensio_framework_extra:
         request: { converters: true }
 
@@ -18,17 +17,9 @@ To enable the Request body converter, add the following configuration:
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         body_converter:
             enabled: true
-
-.. note::
-
-    You will probably want to disable the automatic route generation
-    (``@NoRoute``) for routes using the body converter, and instead define the
-    routes manually to avoid having the deserialized, type hinted objects
-    (``$post`` in this example) appear in the route as a parameter.
 
 Now, in the following example, the request body will be deserialized into a new
 instance of ``Post`` and injected into the ``$post`` variable:
@@ -68,7 +59,6 @@ enabling validation:
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         body_converter:
             enabled: true

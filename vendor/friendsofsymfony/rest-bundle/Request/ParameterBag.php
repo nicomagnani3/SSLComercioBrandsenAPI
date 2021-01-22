@@ -23,7 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 final class ParameterBag
 {
     private $paramReader;
-    private $params = array();
+    private $params = [];
 
     public function __construct(ParamReaderInterface $paramReader)
     {
@@ -36,7 +36,7 @@ final class ParameterBag
         if (!isset($this->params[$requestId]) || empty($this->params[$requestId]['controller'])) {
             throw new \InvalidArgumentException('Controller and method needs to be set via setController.');
         }
-        if ($this->params[$requestId]['params'] === null) {
+        if (null === $this->params[$requestId]['params']) {
             return $this->initParams($requestId);
         }
 
@@ -54,29 +54,20 @@ final class ParameterBag
     public function setController(Request $request, $controller)
     {
         $requestId = spl_object_hash($request);
-        $this->params[$requestId] = array(
+        $this->params[$requestId] = [
             'controller' => $controller,
             'params' => null,
-        );
+        ];
     }
 
     /**
-     * Initialize the parameters.
-     *
-     * @param string $requestId
-     *
      * @return ParamInterface[]
-     *
-     * @throws \InvalidArgumentException
-     * @throws \ReflectionException
      */
-    private function initParams($requestId)
+    private function initParams(string $requestId): array
     {
         $controller = $this->params[$requestId]['controller'];
         if (!is_array($controller) || empty($controller[0]) || !is_object($controller[0])) {
-            throw new \InvalidArgumentException(
-                'Controller needs to be set as a class instance (closures/functions are not supported)'
-            );
+            throw new \InvalidArgumentException('Controller needs to be set as a class instance (closures/functions are not supported)');
         }
 
         $class = class_exists(ClassUtils::class)

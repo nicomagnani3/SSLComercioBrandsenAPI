@@ -31,7 +31,7 @@ interface RememberMeServicesInterface
      * This attribute name can be used by the implementation if it needs to set
      * a cookie on the Request when there is no actual Response, yet.
      */
-    const COOKIE_ATTR_NAME = '_security_remember_me_cookie';
+    public const COOKIE_ATTR_NAME = '_security_remember_me_cookie';
 
     /**
      * This method will be called whenever the TokenStorage does not contain
@@ -46,7 +46,7 @@ interface RememberMeServicesInterface
      * make sure to throw an AuthenticationException as this will consequentially
      * result in a call to loginFail() and therefore an invalidation of the cookie.
      *
-     * @return TokenInterface
+     * @return TokenInterface|null
      */
     public function autoLogin(Request $request);
 

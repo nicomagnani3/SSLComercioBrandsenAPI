@@ -2,13 +2,16 @@
 
 namespace Doctrine\DBAL\Portability;
 
+use Doctrine\DBAL\Driver\ResultStatement;
 use Doctrine\DBAL\Driver\Statement as DriverStatement;
 use Doctrine\DBAL\Driver\StatementIterator;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 use IteratorAggregate;
 use PDO;
+
 use function array_change_key_case;
+use function assert;
 use function is_string;
 use function rtrim;
 
@@ -20,7 +23,7 @@ class Statement implements IteratorAggregate, DriverStatement
     /** @var int */
     private $portability;
 
-    /** @var DriverStatement */
+    /** @var DriverStatement|ResultStatement */
     private $stmt;
 
     /** @var int */
@@ -32,7 +35,7 @@ class Statement implements IteratorAggregate, DriverStatement
     /**
      * Wraps <tt>Statement</tt> and applies portability measures.
      *
-     * @param DriverStatement $stmt
+     * @param DriverStatement|ResultStatement $stmt
      */
     public function __construct($stmt, Connection $conn)
     {
@@ -44,9 +47,11 @@ class Statement implements IteratorAggregate, DriverStatement
     /**
      * {@inheritdoc}
      */
-    public function bindParam($column, &$variable, $type = ParameterType::STRING, $length = null)
+    public function bindParam($param, &$variable, $type = ParameterType::STRING, $length = null)
     {
-        return $this->stmt->bindParam($column, $variable, $type, $length);
+        assert($this->stmt instanceof DriverStatement);
+
+        return $this->stmt->bindParam($param, $variable, $type, $length);
     }
 
     /**
@@ -54,6 +59,8 @@ class Statement implements IteratorAggregate, DriverStatement
      */
     public function bindValue($param, $value, $type = ParameterType::STRING)
     {
+        assert($this->stmt instanceof DriverStatement);
+
         return $this->stmt->bindValue($param, $value, $type);
     }
 
@@ -78,6 +85,8 @@ class Statement implements IteratorAggregate, DriverStatement
      */
     public function errorCode()
     {
+        assert($this->stmt instanceof DriverStatement);
+
         return $this->stmt->errorCode();
     }
 
@@ -86,6 +95,8 @@ class Statement implements IteratorAggregate, DriverStatement
      */
     public function errorInfo()
     {
+        assert($this->stmt instanceof DriverStatement);
+
         return $this->stmt->errorInfo();
     }
 
@@ -94,17 +105,19 @@ class Statement implements IteratorAggregate, DriverStatement
      */
     public function execute($params = null)
     {
+        assert($this->stmt instanceof DriverStatement);
+
         return $this->stmt->execute($params);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setFetchMode($fetchMode, $arg1 = null, $arg2 = null)
+    public function setFetchMode($fetchMode, $arg2 = null, $arg3 = null)
     {
         $this->defaultFetchMode = $fetchMode;
 
-        return $this->stmt->setFetchMode($fetchMode, $arg1, $arg2);
+        return $this->stmt->setFetchMode($fetchMode, $arg2, $arg3);
     }
 
     /**
@@ -124,7 +137,7 @@ class Statement implements IteratorAggregate, DriverStatement
 
         $row = $this->stmt->fetch($fetchMode);
 
-        $iterateRow = $this->portability & (Connection::PORTABILITY_EMPTY_TO_NULL|Connection::PORTABILITY_RTRIM);
+        $iterateRow = $this->portability & (Connection::PORTABILITY_EMPTY_TO_NULL | Connection::PORTABILITY_RTRIM);
         $fixCase    = $this->case !== null
             && ($fetchMode === FetchMode::ASSOCIATIVE || $fetchMode === FetchMode::MIXED)
             && ($this->portability & Connection::PORTABILITY_FIX_CASE);
@@ -147,7 +160,7 @@ class Statement implements IteratorAggregate, DriverStatement
             $rows = $this->stmt->fetchAll($fetchMode);
         }
 
-        $iterateRow = $this->portability & (Connection::PORTABILITY_EMPTY_TO_NULL|Connection::PORTABILITY_RTRIM);
+        $iterateRow = $this->portability & (Connection::PORTABILITY_EMPTY_TO_NULL | Connection::PORTABILITY_RTRIM);
         $fixCase    = $this->case !== null
             && ($fetchMode === FetchMode::ASSOCIATIVE || $fetchMode === FetchMode::MIXED)
             && ($this->portability & Connection::PORTABILITY_FIX_CASE);
@@ -212,7 +225,7 @@ class Statement implements IteratorAggregate, DriverStatement
     {
         $value = $this->stmt->fetchColumn($columnIndex);
 
-        if ($this->portability & (Connection::PORTABILITY_EMPTY_TO_NULL|Connection::PORTABILITY_RTRIM)) {
+        if ($this->portability & (Connection::PORTABILITY_EMPTY_TO_NULL | Connection::PORTABILITY_RTRIM)) {
             if (($this->portability & Connection::PORTABILITY_EMPTY_TO_NULL) && $value === '') {
                 $value = null;
             } elseif (($this->portability & Connection::PORTABILITY_RTRIM) && is_string($value)) {
@@ -228,6 +241,8 @@ class Statement implements IteratorAggregate, DriverStatement
      */
     public function rowCount()
     {
+        assert($this->stmt instanceof DriverStatement);
+
         return $this->stmt->rowCount();
     }
 }

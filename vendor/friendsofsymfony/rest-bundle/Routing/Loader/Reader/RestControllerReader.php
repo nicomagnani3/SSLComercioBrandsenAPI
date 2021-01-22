@@ -11,6 +11,8 @@
 
 namespace FOS\RestBundle\Routing\Loader\Reader;
 
+@trigger_error(sprintf('The %s\RestControllerReader class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use Doctrine\Common\Annotations\Reader;
 use FOS\RestBundle\Controller\Annotations;
 use FOS\RestBundle\Routing\ClassResourceInterface;
@@ -21,18 +23,14 @@ use Symfony\Component\Config\Resource\FileResource;
  * REST controller reader.
  *
  * @author Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * @deprecated since 2.8
  */
 class RestControllerReader
 {
     private $actionReader;
     private $annotationReader;
 
-    /**
-     * Initializes controller reader.
-     *
-     * @param RestActionReader $actionReader     action reader
-     * @param Reader           $annotationReader annotation reader
-     */
     public function __construct(RestActionReader $actionReader, Reader $annotationReader)
     {
         $this->actionReader = $actionReader;
@@ -40,8 +38,6 @@ class RestControllerReader
     }
 
     /**
-     * Returns action reader.
-     *
      * @return RestActionReader
      */
     public function getActionReader()
@@ -50,12 +46,6 @@ class RestControllerReader
     }
 
     /**
-     * Reads controller routes.
-     *
-     * @param \ReflectionClass $reflectionClass
-     *
-     * @throws \InvalidArgumentException
-     *
      * @return RestRouteCollection
      */
     public function read(\ReflectionClass $reflectionClass)
@@ -85,7 +75,10 @@ class RestControllerReader
             $this->actionReader->setPluralize($annotation->pluralize);
         } elseif ($reflectionClass->implementsInterface(ClassResourceInterface::class)) {
             $resource = preg_split(
-                '/([A-Z][^A-Z]*)Controller/', $reflectionClass->getShortName(), -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+                '/([A-Z][^A-Z]*)Controller/',
+                $reflectionClass->getShortName(),
+                -1,
+                PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
             );
             if (empty($resource)) {
                 throw new \InvalidArgumentException("Controller '{$reflectionClass->name}' does not identify a resource");

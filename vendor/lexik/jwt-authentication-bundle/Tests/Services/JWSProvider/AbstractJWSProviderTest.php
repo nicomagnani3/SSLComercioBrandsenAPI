@@ -2,6 +2,7 @@
 
 namespace Lexik\Bundle\JWTAuthenticationBundle\Tests\Services\JWSProvider;
 
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWSProvider\LcobucciJWSProvider;
 use Lexik\Bundle\JWTAuthenticationBundle\Signature\CreatedJWS;
 use Lexik\Bundle\JWTAuthenticationBundle\Signature\LoadedJWS;
 use PHPUnit\Framework\TestCase;
@@ -114,21 +115,21 @@ vwIDAQAB
     {
         $keyLoader = $this->getKeyLoaderMock();
         $keyLoader
-            ->expects($this->at(0))
-            ->method('loadKey')
-            ->with('private')
-            ->willReturn(static::$privateKey);
-        $keyLoader
-            ->expects($this->at(1))
+            ->expects($this->once())
             ->method('getPassphrase')
             ->willReturn('foobar');
 
         $keyLoader
-            ->expects($this->at(2))
+            ->expects($this->exactly(2))
             ->method('loadKey')
-            ->with('public')
-            ->willReturn(static::$publicKey);
-
+            ->withConsecutive(
+                ['private'],
+                ['public']
+            )
+            ->willReturnOnConsecutiveCalls(
+                static::$privateKey,
+                static::$publicKey
+            );
         $provider = new static::$providerClass($keyLoader, 'openssl', 'RS256', null, 0);
         $jws      = $provider->create(['username' => 'chalasr']);
 
@@ -144,22 +145,40 @@ vwIDAQAB
         $this->assertArrayNotHasKey('exp', $jws->getPayload());
     }
 
-    /**
-     * @expectedException        \InvalidArgumentException
-     * @expectedExceptionMessage The algorithm "wrongAlgorithm" is not supported
-     */
     public function testInvalidsignatureAlgorithm()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The algorithm "wrongAlgorithm" is not supported');
+
         new static::$providerClass($this->getKeyLoaderMock(), 'openssl', 'wrongAlgorithm', 3600, 0);
     }
 
-    /**
-     * @expectedException        \InvalidArgumentException
-     * @expectedExceptionMessage The TTL should be a numeric value
-     */
     public function testInvalidTtl()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The TTL should be a numeric value');
+
         new static::$providerClass($this->getKeyLoaderMock(), 'openssl', 'wrongAlgorithm', 'invalid_ttl', 0);
+    }
+
+    public function testCreateWithExtraStandardClaims()
+    {
+        $keyLoaderMock = $this->getKeyLoaderMock();
+        $keyLoaderMock
+            ->expects($this->once())
+            ->method('loadKey')
+            ->with('private')
+            ->willReturn(static::$privateKey);
+        $keyLoaderMock
+            ->expects($this->once())
+            ->method('getPassphrase')
+            ->willReturn('foobar');
+
+        $payload     = ['username' => 'chalasr'];
+        $jwsProvider = new static::$providerClass($keyLoaderMock, 'openssl', 'RS384', 3600, 0);
+
+        $this->assertInstanceOf(CreatedJWS::class, $created = $jwsProvider->create($payload));
+        $this->assertNotEmpty($created->getToken());
     }
 
     private function getKeyLoaderMock()

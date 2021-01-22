@@ -6,6 +6,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Table;
+
 use function array_merge;
 
 class CreateSchemaSqlCollector extends AbstractVisitor
@@ -47,7 +48,7 @@ class CreateSchemaSqlCollector extends AbstractVisitor
      */
     public function acceptTable(Table $table)
     {
-        $this->createTableQueries = array_merge($this->createTableQueries, (array) $this->platform->getCreateTableSQL($table));
+        $this->createTableQueries = array_merge($this->createTableQueries, $this->platform->getCreateTableSQL($table));
     }
 
     /**

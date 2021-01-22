@@ -38,20 +38,12 @@ final class Configuration implements ConfigurationInterface
      */
     private $debug;
 
-    /**
-     * @param bool $debug
-     */
-    public function __construct($debug)
+    public function __construct(bool $debug)
     {
-        $this->debug = (bool) $debug;
+        $this->debug = $debug;
     }
 
-    /**
-     * Generates the configuration tree.
-     *
-     * @return TreeBuilder
-     */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('fos_rest');
 
@@ -66,6 +58,7 @@ final class Configuration implements ConfigurationInterface
                 ->scalarNode('disable_csrf_role')->defaultNull()->end()
                 ->arrayNode('access_denied_listener')
                     ->canBeEnabled()
+                    ->setDeprecated('The "%path%.%node%" option is deprecated since FOSRestBundle 2.8.')
                     ->beforeNormalization()
                         ->ifArray()->then(function ($v) {
                             if (!empty($v) && empty($v['formats'])) {
@@ -108,7 +101,30 @@ final class Configuration implements ConfigurationInterface
                 ->end()
                 ->arrayNode('routing_loader')
                     ->addDefaultsIfNotSet()
+                    ->beforeNormalization()
+                        ->ifTrue(function ($v) { return isset($v['enabled']) && false !== $v['enabled']; })
+                        ->then(function ($v) {
+                            @trigger_error('Enabling the route generation feature is deprecated since FOSRestBundle 2.8.', E_USER_DEPRECATED);
+
+                            return $v;
+                        })
+                    ->end()
+                    ->beforeNormalization()
+                        ->ifTrue(function ($v) { return is_bool($v); })
+                        ->then(function ($v) {
+                            return [
+                                'enabled' => $v,
+                            ];
+                        })
+                    ->end()
                     ->children()
+                        ->booleanNode('enabled')
+                            ->defaultValue(function () {
+                                @trigger_error('Enabling the route generation feature is deprecated since FOSRestBundle 2.8.', E_USER_DEPRECATED);
+
+                                return true;
+                            })
+                        ->end()
                         ->scalarNode('default_format')->defaultNull()->end()
                         ->scalarNode('prefix_methods')->defaultTrue()->end()
                         ->scalarNode('include_format')->defaultTrue()->end()
@@ -136,11 +152,17 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('service')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->scalarNode('router')->defaultValue('router')->end()
-                        ->scalarNode('templating')->defaultValue('templating')->end()
+                        ->scalarNode('router')->defaultValue('router')->setDeprecated('The "%path%.%node%" configuration key has been deprecated in FOSRestBundle 2.8.')->end()
+                        ->scalarNode('templating')
+                            ->defaultValue('templating')
+                            ->setDeprecated('The "%path%.%node%" option is deprecated since FOSRestBundle 2.8.')
+                        ->end()
                         ->scalarNode('serializer')->defaultNull()->end()
                         ->scalarNode('view_handler')->defaultValue('fos_rest.view_handler.default')->end()
-                        ->scalarNode('inflector')->defaultValue('fos_rest.inflector.doctrine')->end()
+                        ->scalarNode('inflector')
+                            ->defaultValue('fos_rest.inflector.doctrine')
+                            ->setDeprecated('The "%path%.%node%" option is deprecated since FOSRestBundle 2.8.')
+                        ->end()
                         ->scalarNode('validator')->defaultValue('validator')->end()
                     ->end()
                 ->end()
@@ -173,7 +195,7 @@ final class Configuration implements ConfigurationInterface
                         ->end()
                         ->arrayNode('ips')
                             ->beforeNormalization()->ifString()->then(function ($v) {
-                                return array($v);
+                                return [$v];
                             })->end()
                             ->prototype('scalar')->end()
                         ->end()
@@ -202,8 +224,12 @@ final class Configuration implements ConfigurationInterface
                     ->fixXmlConfig('force_redirect', 'force_redirects')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->scalarNode('default_engine')->defaultValue('twig')->end()
+                        ->scalarNode('default_engine')
+                            ->setDeprecated('The "%path%.%node%" option has been deprecated in FOSRestBundle 2.8.')
+                            ->defaultValue('twig')
+                        ->end()
                         ->arrayNode('force_redirects')
+                            ->setDeprecated('The "%path%.%node%" option has been deprecated in FOSRestBundle 2.8.')
                             ->useAttributeAsKey('name')
                             ->defaultValue(['html' => true])
                             ->prototype('boolean')->end()
@@ -228,7 +254,7 @@ final class Configuration implements ConfigurationInterface
                                     ->prototype('array')
                                         ->beforeNormalization()
                                             ->ifString()
-                                            ->then(function ($v) { return array($v); })
+                                            ->then(function ($v) { return [$v]; })
                                         ->end()
                                         ->prototype('scalar')->end()
                                     ->end()
@@ -241,6 +267,7 @@ final class Configuration implements ConfigurationInterface
                             ->prototype('boolean')->end()
                         ->end()
                         ->arrayNode('templating_formats')
+                            ->setDeprecated('The "%path%.%node%" configuration key has been deprecated in FOSRestBundle 2.8.')
                             ->useAttributeAsKey('name')
                             ->defaultValue(['html' => true])
                             ->prototype('boolean')->end()
@@ -285,8 +312,17 @@ final class Configuration implements ConfigurationInterface
                     ->fixXmlConfig('decoder', 'decoders')
                     ->addDefaultsIfNotSet()
                     ->canBeUnset()
-                    ->canBeDisabled()
+                    ->treatFalseLike(['enabled' => false])
+                    ->treatTrueLike(['enabled' => true])
+                    ->treatNullLike(['enabled' => true])
                     ->children()
+                        ->booleanNode('enabled')
+                            ->defaultValue(function () {
+                                @trigger_error('The body_listener config has been enabled by default and will be disabled by default in FOSRestBundle 3.0. Please enable or disable it explicitly.', E_USER_DEPRECATED);
+
+                                return true;
+                            })
+                        ->end()
                         ->scalarNode('service')->defaultNull()->end()
                         ->scalarNode('default_format')->defaultNull()->end()
                         ->booleanNode('throw_exception_on_unsupported_content_type')
@@ -427,9 +463,47 @@ final class Configuration implements ConfigurationInterface
                     ->fixXmlConfig('message', 'messages')
                     ->addDefaultsIfNotSet()
                     ->canBeEnabled()
+                    ->validate()
+                      ->always()
+                      ->then(function ($v) {
+                          if (!$v['enabled']) {
+                              return $v;
+                          }
+
+                          if ($v['exception_listener']) {
+                              @trigger_error('Enabling the "fos_rest.exception.exception_listener" option is deprecated since FOSRestBundle 2.8.', E_USER_DEPRECATED);
+                          }
+                          if ($v['serialize_exceptions']) {
+                              @trigger_error('Enabling the "fos_rest.exception.serialize_exceptions" option is deprecated since FOSRestBundle 2.8.', E_USER_DEPRECATED);
+                          }
+
+                          return $v;
+                      })
+                    ->end()
                     ->children()
-                        ->scalarNode('exception_controller')->defaultNull()->end()
-                        ->scalarNode('service')->defaultNull()->end()
+                        ->booleanNode('map_exception_codes')
+                            ->defaultFalse()
+                            ->info('Enables an event listener that maps exception codes to response status codes based on the map configured with the "fos_rest.exception.codes" option.')
+                        ->end()
+                        ->booleanNode('exception_listener')
+                            ->defaultTrue()
+                        ->end()
+                        ->scalarNode('exception_controller')
+                            ->defaultNull()
+                            ->setDeprecated('The "%path%.%node%" option is deprecated since FOSRestBundle 2.8.')
+                        ->end()
+                        ->booleanNode('serialize_exceptions')
+                            ->defaultTrue()
+                        ->end()
+                        ->enumNode('flatten_exception_format')
+                            ->defaultValue('legacy')
+                            ->values(['legacy', 'rfc7807'])
+                        ->end()
+                        ->scalarNode('service')
+                            ->defaultNull()
+                            ->setDeprecated('The "%path%.%node%" option is deprecated since FOSRestBundle 2.8.')
+                        ->end()
+                        ->booleanNode('serializer_error_renderer')->defaultValue(false)->end()
                         ->arrayNode('codes')
                             ->useAttributeAsKey('name')
                             ->beforeNormalization()
@@ -440,13 +514,11 @@ final class Configuration implements ConfigurationInterface
                                             continue;
                                         }
 
-                                        if (!defined('Symfony\Component\HttpFoundation\Response::'.$item)) {
-                                            throw new InvalidConfigurationException(
-                                                'Invalid HTTP code in fos_rest.exception.codes, see Symfony\Component\HttpFoundation\Response for all valid codes.'
-                                            );
+                                        if (!defined(sprintf('%s::%s', Response::class, $item))) {
+                                            throw new InvalidConfigurationException(sprintf('Invalid HTTP code in fos_rest.exception.codes, see %s for all valid codes.', Response::class));
                                         }
 
-                                        $item = constant('Symfony\Component\HttpFoundation\Response::'.$item);
+                                        $item = constant(sprintf('%s::%s', Response::class, $item));
                                     }
 
                                     return $items;
@@ -487,17 +559,10 @@ final class Configuration implements ConfigurationInterface
             ->end();
     }
 
-    /**
-     * Checks if an exception is loadable.
-     *
-     * @param string $exception Class to test
-     *
-     * @throws InvalidConfigurationException if the class was not found
-     */
-    private function testExceptionExists($exception)
+    private function testExceptionExists(string $throwable)
     {
-        if (!is_subclass_of($exception, \Exception::class) && !is_a($exception, \Exception::class, true)) {
-            throw new InvalidConfigurationException("FOSRestBundle exception mapper: Could not load class '$exception' or the class does not extend from '\\Exception'. Most probably this is a configuration problem.");
+        if (!is_a($throwable, \Throwable::class, true)) {
+            throw new InvalidConfigurationException(sprintf('FOSRestBundle exception mapper: Could not load class "%s" or the class does not extend from "%s". Most probably this is a configuration problem.', $throwable, \Throwable::class));
         }
     }
 }

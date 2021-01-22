@@ -16,12 +16,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @author Ener-Getick <egetick@gmail.com>
+ *
+ * @final since 2.8
  */
 class HeaderVersionResolver implements VersionResolverInterface
 {
-    /**
-     * @var string
-     */
     private $headerName;
 
     /**
@@ -38,11 +37,9 @@ class HeaderVersionResolver implements VersionResolverInterface
     public function resolve(Request $request)
     {
         if (!$request->headers->has($this->headerName)) {
-            return false;
+            return null;
         }
 
-        $header = $request->headers->get($this->headerName);
-
-        return is_scalar($header) ? $header : strval($header);
+        return (string) $request->headers->get($this->headerName);
     }
 }

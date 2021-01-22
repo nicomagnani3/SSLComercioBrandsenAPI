@@ -19,6 +19,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * Implements a custom handler for JSONP leveraging the ViewHandler.
  *
  * @author Lukas K. Smith <smith@pooteeweet.org>
+ *
+ * @final since 2.8
  */
 class JsonpHandler
 {
@@ -44,10 +46,7 @@ class JsonpHandler
     /**
      * Handles wrapping a JSON response into a JSONP response.
      *
-     * @param ViewHandler $handler
-     * @param View        $view
-     * @param Request     $request
-     * @param string      $format
+     * @param string $format
      *
      * @return Response
      */

@@ -11,7 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Templating\Helper;
 
-@trigger_error('The '.StopwatchHelper::class.' class is deprecated since version 4.3 and will be removed in 5.0; use Twig instead.', E_USER_DEPRECATED);
+@trigger_error('The '.StopwatchHelper::class.' class is deprecated since version 4.3 and will be removed in 5.0; use Twig instead.', \E_USER_DEPRECATED);
 
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Templating\Helper\Helper;
@@ -39,12 +39,14 @@ class StopwatchHelper extends Helper
 
     public function __call($method, $arguments = [])
     {
-        if (null !== $this->stopwatch) {
-            if (method_exists($this->stopwatch, $method)) {
-                return $this->stopwatch->{$method}(...$arguments);
-            }
-
-            throw new \BadMethodCallException(sprintf('Method "%s" of Stopwatch does not exist', $method));
+        if (null === $this->stopwatch) {
+            return null;
         }
+
+        if (method_exists($this->stopwatch, $method)) {
+            return $this->stopwatch->{$method}(...$arguments);
+        }
+
+        throw new \BadMethodCallException(sprintf('Method "%s" of Stopwatch does not exist.', $method));
     }
 }

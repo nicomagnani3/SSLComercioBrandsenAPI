@@ -13,10 +13,14 @@ namespace FOS\RestBundle\Controller;
 
 use FOS\RestBundle\Util\ExceptionValueMap;
 use FOS\RestBundle\View\ViewHandlerInterface;
-use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Templating\EngineInterface;
 use Symfony\Component\Templating\TemplateReferenceInterface;
+use Twig\Environment;
 
+/**
+ * @deprecated since FOSRestBundle 2.8
+ */
 abstract class TemplatingExceptionController extends ExceptionController
 {
     protected $templating;
@@ -25,8 +29,12 @@ abstract class TemplatingExceptionController extends ExceptionController
         ViewHandlerInterface $viewHandler,
         ExceptionValueMap $exceptionCodes,
         $showException,
-        EngineInterface $templating
+        $templating
     ) {
+        if (!$templating instanceof EngineInterface && !$templating instanceof Environment) {
+            throw new \TypeError(sprintf('The fourth argument of %s must be an instance of %s or %s, but %s was given.', __METHOD__, EngineInterface::class, Environment::class, is_object($templating) ? get_class($templating) : gettype($templating)));
+        }
+
         parent::__construct($viewHandler, $exceptionCodes, $showException);
 
         $this->templating = $templating;
@@ -35,11 +43,10 @@ abstract class TemplatingExceptionController extends ExceptionController
     /**
      * Finds the template for the given format and status code.
      *
-     * @param Request $request
-     * @param int     $statusCode
-     * @param bool    $showException
+     * @param int  $statusCode
+     * @param bool $showException
      *
-     * @return TemplateReferenceInterface
+     * @return string|TemplateReferenceInterface
      */
     abstract protected function findTemplate(Request $request, $statusCode, $showException);
 }

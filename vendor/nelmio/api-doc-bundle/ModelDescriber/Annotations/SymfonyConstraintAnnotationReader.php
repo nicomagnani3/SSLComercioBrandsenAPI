@@ -38,12 +38,22 @@ class SymfonyConstraintAnnotationReader
     /**
      * Update the given property and schema with defined Symfony constraints.
      */
-    public function updateProperty(\ReflectionProperty $reflectionProperty, Schema $property)
+    public function updateProperty($reflection, Schema $property)
     {
-        $annotations = $this->annotationsReader->getPropertyAnnotations($reflectionProperty);
+        if ($reflection instanceof \ReflectionProperty) {
+            $annotations = $this->annotationsReader->getPropertyAnnotations($reflection);
+        } else {
+            $annotations = $this->annotationsReader->getMethodAnnotations($reflection);
+        }
 
         foreach ($annotations as $annotation) {
             if ($annotation instanceof Assert\NotBlank || $annotation instanceof Assert\NotNull) {
+                // To support symfony/validator < 4.3
+                if ($annotation instanceof Assert\NotBlank && \property_exists($annotation, 'allowNull') && $annotation->allowNull) {
+                    // The field is optional
+                    continue;
+                }
+
                 // The field is required
                 if (null === $this->schema) {
                     continue;
@@ -67,9 +77,8 @@ class SymfonyConstraintAnnotationReader
                 $property->setMinItems($annotation->min);
                 $property->setMaxItems($annotation->max);
             } elseif ($annotation instanceof Assert\Choice) {
-                $property->setEnum($annotation->callback ? call_user_func(is_array($annotation->callback) ? $annotation->callback : [$reflectionProperty->class, $annotation->callback]) : $annotation->choices);
-            } elseif ($annotation instanceof Assert\Expression) {
-                $this->appendPattern($property, $annotation->message);
+                $values = $annotation->callback ? call_user_func(is_array($annotation->callback) ? $annotation->callback : [$reflection->class, $annotation->callback]) : $annotation->choices;
+                $property->setEnum(array_values($values));
             } elseif ($annotation instanceof Assert\Range) {
                 $property->setMinimum($annotation->min);
                 $property->setMaximum($annotation->max);

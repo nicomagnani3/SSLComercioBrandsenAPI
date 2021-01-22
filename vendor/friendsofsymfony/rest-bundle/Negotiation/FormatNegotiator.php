@@ -19,35 +19,29 @@ use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * @author Ener-Getick <energetick.guigui@gmail.com>
+ * @internal
  */
-class FormatNegotiator extends BaseNegotiator
+class BaseFormatNegotiator extends BaseNegotiator
 {
     private $map = [];
     private $requestStack;
+    private $mimeTypes;
 
-    public function __construct(RequestStack $requestStack, array $mimeTypes = array())
+    public function __construct(RequestStack $requestStack, array $mimeTypes = [])
     {
         $this->requestStack = $requestStack;
         $this->mimeTypes = $mimeTypes;
     }
 
-    /**
-     * @param RequestMatcherInterface $requestMatcher
-     * @param array                   $options
-     */
     public function add(RequestMatcherInterface $requestMatcher, array $options = [])
     {
         $this->map[] = [$requestMatcher, $options];
     }
 
     /**
-     * {@inheritdoc}
-     * The best format is also determined in function of the bundle configuration.
-     *
-     * @throws StopFormatListenerException
+     * @internal
      */
-    public function getBest($header, array $priorities = [])
+    protected function doGetBest($header, array $priorities = [])
     {
         $request = $this->getRequest();
         $header = $header ?: $request->headers->get('Accept');
@@ -84,7 +78,8 @@ class FormatNegotiator extends BaseNegotiator
             }
 
             if ($header) {
-                $mimeTypes = $this->normalizePriorities($request,
+                $mimeTypes = $this->normalizePriorities(
+                    $request,
                     empty($priorities) ? $options['priorities'] : $priorities
                 );
 
@@ -107,12 +102,7 @@ class FormatNegotiator extends BaseNegotiator
         }
     }
 
-    /**
-     * @param array $values
-     *
-     * @return array
-     */
-    private function sanitize(array $values)
+    private function sanitize(array $values): array
     {
         return array_map(function ($value) {
             return preg_replace('/\s+/', '', strtolower($value));
@@ -120,18 +110,15 @@ class FormatNegotiator extends BaseNegotiator
     }
 
     /**
-     * Transform the format (json, html, ...) to their mimeType form (application/json, text/html, ...).
-     *
-     * @param Request  $request
      * @param string[] $priorities
      *
      * @return string[] formatted priorities
      */
-    private function normalizePriorities(Request $request, array $priorities)
+    private function normalizePriorities(Request $request, array $priorities): array
     {
         $priorities = $this->sanitize($priorities);
 
-        $mimeTypes = array();
+        $mimeTypes = [];
         foreach ($priorities as $priority) {
             if (strpos($priority, '/')) {
                 $mimeTypes[] = $priority;
@@ -157,12 +144,7 @@ class FormatNegotiator extends BaseNegotiator
         return $mimeTypes;
     }
 
-    /**
-     * @throws \RuntimeException
-     *
-     * @return Request
-     */
-    private function getRequest()
+    private function getRequest(): Request
     {
         $request = $this->requestStack->getCurrentRequest();
         if (null === $request) {
@@ -170,5 +152,33 @@ class FormatNegotiator extends BaseNegotiator
         }
 
         return $request;
+    }
+}
+
+if (method_exists(BaseNegotiator::class, 'getOrderedElements')) {
+    /**
+     * @author Guilhem Niot <guilhem@gniot.fr>
+     *
+     * @final since 2.8
+     */
+    class FormatNegotiator extends BaseFormatNegotiator
+    {
+        public function getBest($header, array $priorities = [], $strict = false)
+        {
+            return $this->doGetBest($header, $priorities);
+        }
+    }
+} else {
+    /**
+     * @author Guilhem Niot <guilhem@gniot.fr>
+     *
+     * @final since 2.8
+     */
+    class FormatNegotiator extends BaseFormatNegotiator
+    {
+        public function getBest($header, array $priorities = [])
+        {
+            return $this->doGetBest($header, $priorities);
+        }
     }
 }

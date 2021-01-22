@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+4.4.0
+-----
+
+ * [BC BREAK] using null as `$classValidatorRegexp` value in `DoctrineLoader::__construct` will not enable auto-mapping for all classes anymore, use `'{.*}'` instead.
+ * added `DoctrineClearEntityManagerWorkerSubscriber`
+ * deprecated `RegistryInterface`, use `Doctrine\Persistence\ManagerRegistry`
+ * added support for invokable event listeners
+ * added `getMetadataDriverClass` method to deprecate class parameters in service configuration files
+
 4.3.0
 -----
 

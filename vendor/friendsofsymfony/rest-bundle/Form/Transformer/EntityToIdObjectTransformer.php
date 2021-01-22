@@ -19,24 +19,15 @@ use Symfony\Component\Form\Exception\TransformationFailedException;
  * Class EntityToIdObjectTransformer.
  *
  * @author Marc Juchli <mail@marcjuch.li>
+ *
+ * @internal since 2.8
  */
 class EntityToIdObjectTransformer implements DataTransformerInterface
 {
-    /**
-     * @var ObjectManager
-     */
     private $om;
-
-    /**
-     * @var string
-     */
     private $entityName;
 
-    /**
-     * @param ObjectManager $om
-     * @param string        $entityName
-     */
-    public function __construct(ObjectManager $om, $entityName)
+    public function __construct(ObjectManager $om, string $entityName)
     {
         $this->entityName = $entityName;
         $this->om = $om;
@@ -81,10 +72,7 @@ class EntityToIdObjectTransformer implements DataTransformerInterface
             ->findOneBy([$identifier => $id]);
 
         if (null === $object) {
-            throw new TransformationFailedException(sprintf(
-                'An object with identifier key "%s" and value "%s" does not exist!',
-                $identifier, $id
-            ));
+            throw new TransformationFailedException(sprintf('An object with identifier key "%s" and value "%s" does not exist!', $identifier, $id));
         }
 
         return $object;

@@ -11,8 +11,10 @@
 
 namespace FOS\RestBundle\EventListener;
 
+@trigger_error(sprintf('The %s\AccessDeniedListener class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use FOS\RestBundle\FOSRestBundle;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -35,19 +37,19 @@ class AccessDeniedListener implements EventSubscriberInterface
     private $challenge;
 
     /**
-     * Constructor.
-     *
-     * @param array  $formats   An array with keys corresponding to request formats or content types
-     *                          that must be processed by this listener
-     * @param string $challenge
+     * @param array $formats An array with keys corresponding to request formats or content types
+     *                       that must be processed by this listener
      */
-    public function __construct($formats, $challenge)
+    public function __construct(array $formats, ?string $challenge)
     {
         $this->formats = $formats;
         $this->challenge = $challenge;
     }
 
-    public function onKernelException(GetResponseForExceptionEvent $event)
+    /**
+     * @param ExceptionEvent $event
+     */
+    public function onKernelException($event)
     {
         static $handling;
 
@@ -67,24 +69,32 @@ class AccessDeniedListener implements EventSubscriberInterface
 
         $handling = true;
 
-        $exception = $event->getException();
+        if (method_exists($event, 'getThrowable')) {
+            $exception = $event->getThrowable();
+        } else {
+            $exception = $event->getException();
+        }
 
         if ($exception instanceof AccessDeniedException) {
-            $exception = new AccessDeniedHttpException('You do not have the necessary permissions', $exception);
-            $event->setException($exception);
+            $exception = new AccessDeniedHttpException('You do not have the necessary permissions');
         } elseif ($exception instanceof AuthenticationException) {
             if ($this->challenge) {
-                $exception = new UnauthorizedHttpException($this->challenge, 'You are not authenticated', $exception);
+                $exception = new UnauthorizedHttpException($this->challenge, 'You are not authenticated');
             } else {
-                $exception = new HttpException(401, 'You are not authenticated', $exception);
+                $exception = new HttpException(401, 'You are not authenticated');
             }
+        }
+
+        if (method_exists($event, 'setThrowable')) {
+            $event->setThrowable($exception);
+        } else {
             $event->setException($exception);
         }
 
         $handling = false;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::EXCEPTION => ['onKernelException', 5],

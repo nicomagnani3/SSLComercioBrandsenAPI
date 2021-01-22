@@ -21,20 +21,14 @@ use Symfony\Component\Validator\Exception\UnexpectedValueException;
  */
 class TimeValidator extends ConstraintValidator
 {
-    const PATTERN = '/^(\d{2}):(\d{2}):(\d{2})$/';
+    public const PATTERN = '/^(\d{2}):(\d{2}):(\d{2})$/';
 
     /**
      * Checks whether a time is valid.
      *
-     * @param int $hour   The hour
-     * @param int $minute The minute
-     * @param int $second The second
-     *
-     * @return bool Whether the time is valid
-     *
      * @internal
      */
-    public static function checkTime($hour, $minute, $second)
+    public static function checkTime(int $hour, int $minute, float $second): bool
     {
         return $hour >= 0 && $hour < 24 && $minute >= 0 && $minute < 60 && $second >= 0 && $second < 60;
     }
@@ -45,7 +39,7 @@ class TimeValidator extends ConstraintValidator
     public function validate($value, Constraint $constraint)
     {
         if (!$constraint instanceof Time) {
-            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Time');
+            throw new UnexpectedTypeException($constraint, Time::class);
         }
 
         if (null === $value || '' === $value) {
@@ -53,7 +47,7 @@ class TimeValidator extends ConstraintValidator
         }
 
         if ($value instanceof \DateTimeInterface) {
-            @trigger_error(sprintf('Validating a \\DateTimeInterface with "%s" is deprecated since version 4.2. Use "%s" instead or remove the constraint if the underlying model is already type hinted to \\DateTimeInterface.', Time::class, Type::class), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Validating a \\DateTimeInterface with "%s" is deprecated since version 4.2. Use "%s" instead or remove the constraint if the underlying model is already type hinted to \\DateTimeInterface.', Time::class, Type::class), \E_USER_DEPRECATED);
 
             return;
         }

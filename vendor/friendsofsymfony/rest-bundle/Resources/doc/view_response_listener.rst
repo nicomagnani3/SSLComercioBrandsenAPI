@@ -89,21 +89,6 @@ you should return a ``$view`` object with the data set by ``setTemplateData``.
         return $view;
     }
 
-If ``@View()`` is used, the template variable name used to render templating
-formats can be configured (default  ``'data'``):
-
-.. code-block:: php
-
-    <?php
-
-    /**
-     * @View(templateVar="users")
-     */
-    public function getUsersAction()
-    {
-        // ...
-    }
-
 The status code of the view can also be configured:
 
 .. code-block:: php
@@ -178,8 +163,6 @@ You can also define your serializer options dynamically:
         return $view;
     }
 
-See `this example code`_ for more details.
-
 The ViewResponse listener will automatically populate your view with request
 attributes if you do not provide any data when returning a view object. This
 behaviour comes from `SensioFrameworkExtraBundle`_ and will automatically add
@@ -200,4 +183,3 @@ with the ``@View`` annotation:
     }
 
 .. _`SensioFrameworkExtraBundle`: http://symfony.com/doc/current/bundles/SensioFrameworkExtraBundle/index.html
-.. _`this example code`: https://github.com/liip/LiipHelloBundle/blob/master/Controller/ExtraController.php

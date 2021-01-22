@@ -3,6 +3,8 @@
 namespace Doctrine\Bundle\DoctrineBundle\Controller;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\OraclePlatform;
+use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Exception;
 use PDO;
@@ -11,6 +13,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Symfony\Component\VarDumper\Cloner\Data;
+
+use function assert;
 
 class ProfilerController implements ContainerAwareInterface
 {
@@ -36,8 +40,8 @@ class ProfilerController implements ContainerAwareInterface
      */
     public function explainAction($token, $connectionName, $query)
     {
-        /** @var Profiler $profiler */
         $profiler = $this->container->get('profiler');
+        assert($profiler instanceof Profiler);
         $profiler->disable();
 
         $profile = $profiler->loadProfile($token);
@@ -52,11 +56,16 @@ class ProfilerController implements ContainerAwareInterface
             return new Response('This query cannot be explained.');
         }
 
-        /** @var Connection $connection */
         $connection = $this->container->get('doctrine')->getConnection($connectionName);
+        assert($connection instanceof Connection);
         try {
-            if ($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
+            $platform = $connection->getDatabasePlatform();
+            if ($platform instanceof SqlitePlatform) {
+                $results = $this->explainSQLitePlatform($connection, $query);
+            } elseif ($platform instanceof SQLServerPlatform) {
                 $results = $this->explainSQLServerPlatform($connection, $query);
+            } elseif ($platform instanceof OraclePlatform) {
+                $results = $this->explainOraclePlatform($connection, $query);
             } else {
                 $results = $this->explainOtherPlatform($connection, $query);
             }
@@ -70,7 +79,29 @@ class ProfilerController implements ContainerAwareInterface
         ]));
     }
 
-    private function explainSQLServerPlatform(Connection $connection, $query)
+    /**
+     * @param mixed[] $query
+     *
+     * @return mixed[]
+     */
+    private function explainSQLitePlatform(Connection $connection, array $query): array
+    {
+        $params = $query['params'];
+
+        if ($params instanceof Data) {
+            $params = $params->getValue(true);
+        }
+
+        return $connection->executeQuery('EXPLAIN QUERY PLAN ' . $query['sql'], $params, $query['types'])
+            ->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param mixed[] $query
+     *
+     * @return mixed[]
+     */
+    private function explainSQLServerPlatform(Connection $connection, array $query): array
     {
         if (stripos($query['sql'], 'SELECT') === 0) {
             $sql = 'SET STATISTICS PROFILE ON; ' . $query['sql'] . '; SET STATISTICS PROFILE OFF;';
@@ -90,7 +121,12 @@ class ProfilerController implements ContainerAwareInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    private function explainOtherPlatform(Connection $connection, $query)
+    /**
+     * @param mixed[] $query
+     *
+     * @return mixed[]
+     */
+    private function explainOtherPlatform(Connection $connection, array $query): array
     {
         $params = $query['params'];
 
@@ -99,6 +135,19 @@ class ProfilerController implements ContainerAwareInterface
         }
 
         return $connection->executeQuery('EXPLAIN ' . $query['sql'], $params, $query['types'])
+            ->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param mixed[] $query
+     *
+     * @return mixed[]
+     */
+    private function explainOraclePlatform(Connection $connection, array $query): array
+    {
+        $connection->executeQuery('EXPLAIN PLAN FOR ' . $query['sql']);
+
+        return $connection->executeQuery('SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY())')
             ->fetchAll(PDO::FETCH_ASSOC);
     }
 }

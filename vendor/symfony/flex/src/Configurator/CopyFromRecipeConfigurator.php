@@ -21,7 +21,7 @@ class CopyFromRecipeConfigurator extends AbstractConfigurator
 {
     public function configure(Recipe $recipe, $config, Lock $lock, array $options = [])
     {
-        $this->write('Setting configuration and copying files');
+        $this->write('Copying files from recipe');
         $options = array_merge($this->options->toArray(), $options);
 
         $lock->add($recipe->getName(), ['files' => $this->copyFiles($config, $recipe->getFiles(), $options)]);
@@ -29,7 +29,7 @@ class CopyFromRecipeConfigurator extends AbstractConfigurator
 
     public function unconfigure(Recipe $recipe, $config, Lock $lock)
     {
-        $this->write('Removing configuration and files');
+        $this->write('Removing files from recipe');
         $this->removeFiles($config, $this->getRemovableFilesFromRecipeAndLock($recipe, $lock), $this->options->get('root-dir'));
     }
 
@@ -46,8 +46,12 @@ class CopyFromRecipeConfigurator extends AbstractConfigurator
         );
 
         $removableFiles = $recipe->getFiles();
-        foreach ($lockedFiles as $file) {
-            if (isset($removableFiles[$file])) {
+
+        $lockedFiles = array_map('realpath', $lockedFiles);
+
+        // Compare file paths by their real path to abstract OS differences
+        foreach (array_keys($removableFiles) as $file) {
+            if (\in_array(realpath($file), $lockedFiles)) {
                 unset($removableFiles[$file]);
             }
         }
@@ -107,7 +111,7 @@ class CopyFromRecipeConfigurator extends AbstractConfigurator
             @chmod($to, fileperms($to) | 0111);
         }
 
-        $this->write(sprintf('Created <fg=green>"%s"</>', $this->path->relativize($to)));
+        $this->write(sprintf('  Created <fg=green>"%s"</>', $this->path->relativize($to)));
 
         return $copiedFile;
     }
@@ -141,7 +145,7 @@ class CopyFromRecipeConfigurator extends AbstractConfigurator
         }
 
         @unlink($to);
-        $this->write(sprintf('Removed <fg=green>"%s"</>', $this->path->relativize($to)));
+        $this->write(sprintf('  Removed <fg=green>"%s"</>', $this->path->relativize($to)));
 
         if (0 === \count(glob(\dirname($to).'/*', GLOB_NOSORT))) {
             @rmdir(\dirname($to));

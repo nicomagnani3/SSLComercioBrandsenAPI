@@ -27,13 +27,12 @@ class SwitchUserRole extends Role
     private $source;
 
     /**
-     * @param string         $role   The role as a string
-     * @param TokenInterface $source The original token
+     * @param string $role The role as a string
      */
     public function __construct(string $role, TokenInterface $source)
     {
         if ($triggerDeprecation = \func_num_args() < 3 || func_get_arg(2)) {
-            @trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.3 and will be removed in 5.0. Use strings as roles instead.', __CLASS__), E_USER_DEPRECATED);
+            @trigger_error(sprintf('The "%s" class is deprecated since Symfony 4.3 and will be removed in 5.0. Use strings as roles instead.', __CLASS__), \E_USER_DEPRECATED);
 
             $this->deprecationTriggered = true;
         }
@@ -51,7 +50,7 @@ class SwitchUserRole extends Role
     public function getSource()
     {
         if (!$this->deprecationTriggered && (\func_num_args() < 1 || func_get_arg(0))) {
-            @trigger_error(sprintf('The "%s" class is deprecated since version 4.3 and will be removed in 5.0. Use strings as roles instead.', __CLASS__), E_USER_DEPRECATED);
+            @trigger_error(sprintf('The "%s" class is deprecated since version 4.3 and will be removed in 5.0. Use strings as roles instead.', __CLASS__), \E_USER_DEPRECATED);
 
             $this->deprecationTriggered = true;
         }

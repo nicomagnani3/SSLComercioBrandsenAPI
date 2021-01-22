@@ -11,6 +11,8 @@
 
 namespace FOS\RestBundle\Routing\Loader;
 
+@trigger_error(sprintf('The %s\RestYamlCollectionLoader class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use FOS\RestBundle\Routing\RestRouteCollection;
 use Symfony\Component\Config\FileLocatorInterface;
 use Symfony\Component\Config\Resource\FileResource;
@@ -21,6 +23,8 @@ use Symfony\Component\Yaml\Yaml;
 
 /**
  * RestYamlCollectionLoader YAML file collections loader.
+ *
+ * @deprecated since 2.8
  */
 class RestYamlCollectionLoader extends YamlFileLoader
 {
@@ -31,20 +35,14 @@ class RestYamlCollectionLoader extends YamlFileLoader
     private $defaultFormat;
 
     /**
-     * Initializes yaml loader.
-     *
-     * @param FileLocatorInterface $locator
-     * @param RestRouteProcessor   $processor
-     * @param bool                 $includeFormat
-     * @param string[]             $formats
-     * @param string               $defaultFormat
+     * @param string[] $formats
      */
     public function __construct(
         FileLocatorInterface $locator,
         RestRouteProcessor $processor,
-        $includeFormat = true,
+        bool $includeFormat = true,
         array $formats = [],
-        $defaultFormat = null
+        string $defaultFormat = null
     ) {
         parent::__construct($locator);
 
@@ -121,7 +119,7 @@ class RestYamlCollectionLoader extends YamlFileLoader
                     $imported->setHost($host);
                 }
 
-                $imported->addPrefix($prefix);
+                $imported->addPrefix((string) $prefix);
 
                 // Add name prefix from parent config files
                 $imported = $this->addParentNamePrefix($imported, $namePrefix);
@@ -168,14 +166,11 @@ class RestYamlCollectionLoader extends YamlFileLoader
     public function supports($resource, $type = null)
     {
         return 'rest' === $type && is_string($resource) &&
-            in_array(pathinfo($resource, PATHINFO_EXTENSION), array('yaml', 'yml'), true);
+            in_array(pathinfo($resource, PATHINFO_EXTENSION), ['yaml', 'yml'], true);
     }
 
     /**
-     * Adds a name prefix to the route name of all collection routes.
-     *
-     * @param RouteCollection $collection Route collection
-     * @param array           $namePrefix NamePrefix to add in each route name of the route collection
+     * @param string $namePrefix
      *
      * @return RouteCollection
      */

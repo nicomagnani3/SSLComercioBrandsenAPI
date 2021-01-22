@@ -15,15 +15,15 @@ namespace FOS\RestBundle\Decoder;
  * Decodes JSON data and make it compliant with application/x-www-form-encoded style.
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
+ *
+ * @final since 2.8
  */
 class JsonToFormDecoder implements DecoderInterface
 {
     /**
      * Makes data decoded from JSON application/x-www-form-encoded compliant.
-     *
-     * @param array $data
      */
-    private function xWwwFormEncodedLike(&$data)
+    private function xWwwFormEncodedLike(array &$data)
     {
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
@@ -48,7 +48,7 @@ class JsonToFormDecoder implements DecoderInterface
     public function decode($data)
     {
         $decodedData = @json_decode($data, true);
-        if ($decodedData) {
+        if (is_array($decodedData)) {
             $this->xWwwFormEncodedLike($decodedData);
         }
 

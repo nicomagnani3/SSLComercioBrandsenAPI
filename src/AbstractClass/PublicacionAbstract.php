@@ -16,8 +16,10 @@ abstract class PublicacionAbstract
             'precio' => $this->getPrecio(),
             'titulo'=>$this->getTitulo(),
             'descripcion'=>$this->getdescripcion(),
+            'destacado'=>$this->getDestacada(),
             'imagen'=>$data,
-            'telefono'=>$this->getIDusuario()->getTelefono()
+            'telefono'=>$this->getIDusuario()->getTelefono(),
+            'padre'=>$this->getCategoria()->getNombre()
            
         ];  
     }
@@ -27,13 +29,15 @@ abstract class PublicacionAbstract
     $observaciones,
     $usuario,
     $categoria,
-    $categoriaHija      ){                  
+    $categoriaHija,
+    $destacada     ){                  
                 $this->setIDusuario($usuario);         
                 $this->setFecha($fecha);               
                 $this->setTitulo($titulo);     
                 $this->setPrecio($importe);                
                 $this->setCategoria($categoria);
-                $this->setCategoriaHija($categoriaHija);                   
+                $this->setCategoriaHija($categoriaHija);  
+                $this->setDestacada($destacada);                 
                 if($observaciones == NULL){  
                     $this->setdescripcion('SN');
                 } else{

@@ -18,6 +18,7 @@ use Twig\Node\Expression\ArrayExpression;
 use Twig\Node\Node;
 use Twig\Node\TextNode;
 use Twig\Token;
+use Twig\TokenParser\AbstractTokenParser;
 
 /**
  * Token Parser for the 'transchoice' tag.
@@ -25,22 +26,22 @@ use Twig\Token;
  * @author Fabien Potencier <fabien@symfony.com>
  *
  * @deprecated since Symfony 4.2, use the "trans" tag with a "%count%" parameter instead
+ *
+ * @final since Symfony 4.4
  */
-class TransChoiceTokenParser extends TransTokenParser
+class TransChoiceTokenParser extends AbstractTokenParser
 {
     /**
-     * Parses a token and returns a node.
+     * {@inheritdoc}
      *
      * @return Node
-     *
-     * @throws SyntaxError
      */
     public function parse(Token $token)
     {
         $lineno = $token->getLine();
         $stream = $this->parser->getStream();
 
-        @trigger_error(sprintf('The "transchoice" tag is deprecated since Symfony 4.2, use the "trans" one instead with a "%%count%%" parameter in %s line %d.', $stream->getSourceContext()->getName(), $lineno), E_USER_DEPRECATED);
+        @trigger_error(sprintf('The "transchoice" tag is deprecated since Symfony 4.2, use the "trans" one instead with a "%%count%%" parameter in %s line %d.', $stream->getSourceContext()->getName(), $lineno), \E_USER_DEPRECATED);
 
         $vars = new ArrayExpression([], $lineno);
 
@@ -86,9 +87,9 @@ class TransChoiceTokenParser extends TransTokenParser
     }
 
     /**
-     * Gets the tag name associated with this token parser.
+     * {@inheritdoc}
      *
-     * @return string The tag name
+     * @return string
      */
     public function getTag()
     {

@@ -20,12 +20,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 trait ResolverTrait
 {
-    /**
-     * @param ContainerInterface $container
-     * @param mixed              $value
-     *
-     * @return mixed
-     */
     private function resolveValue(ContainerInterface $container, $value)
     {
         if (is_array($value)) {
@@ -40,7 +34,7 @@ trait ResolverTrait
             return $value;
         }
 
-        $escapedValue = preg_replace_callback('/%%|%([^%\s]++)%/', function ($match) use ($container, $value) {
+        $escapedValue = preg_replace_callback('/%%|%([^%\s]++)%/', function ($match) use ($container) {
             // skip %%
             if (!isset($match[1])) {
                 return '%%';
@@ -51,12 +45,7 @@ trait ResolverTrait
                 return (string) $resolved;
             }
 
-            throw new \RuntimeException(sprintf(
-                    'The container parameter "%s" must be a string or numeric, but it is of type %s.',
-                    $match[1],
-                    gettype($resolved)
-                )
-            );
+            throw new \RuntimeException(sprintf('The container parameter "%s" must be a string or numeric, but it is of type %s.', $match[1], gettype($resolved)));
         }, $value);
 
         return str_replace('%%', '%', $escapedValue);

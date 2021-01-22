@@ -2,11 +2,11 @@
 
 namespace Doctrine\Bundle\DoctrineBundle\Command;
 
-use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\Mapping\Driver\DatabaseDriver;
 use Doctrine\ORM\Tools\Console\MetadataFilter;
 use Doctrine\ORM\Tools\DisconnectedClassMetadataFactory;
 use Doctrine\ORM\Tools\Export\ClassMetadataExporter;
+use Doctrine\Persistence\ManagerRegistry;
 use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,6 +15,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Import Doctrine ORM metadata mapping information from an existing database.
+ *
+ * @deprecated
  *
  * @final
  */
@@ -140,12 +142,14 @@ EOT
                 } else {
                     $path = $destPath . '/' . str_replace('\\', '.', $className) . '.orm.' . $type;
                 }
+
                 $output->writeln(sprintf('  > writing <comment>%s</comment>', $path));
                 $code = $exporter->exportClassMetadata($class);
                 $dir  = dirname($path);
                 if (! is_dir($dir)) {
                     mkdir($dir, 0775, true);
                 }
+
                 file_put_contents($path, $code);
                 chmod($path, 0664);
             }

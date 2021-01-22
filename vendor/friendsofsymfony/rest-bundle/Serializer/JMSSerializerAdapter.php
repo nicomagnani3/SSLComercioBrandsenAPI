@@ -23,6 +23,8 @@ use JMS\Serializer\SerializerInterface;
  * Adapter to plug the JMS serializer into the FOSRestBundle Serializer API.
  *
  * @author Christian Flothmann <christian.flothmann@xabbuh.de>
+ *
+ * @final since 2.8
  */
 class JMSSerializerAdapter implements Serializer
 {
@@ -70,13 +72,7 @@ class JMSSerializerAdapter implements Serializer
         return $this->serializer->deserialize($data, $type, $format, $context);
     }
 
-    /**
-     * @param Context $context
-     * @param int     $direction {@see self} constants
-     *
-     * @return JMSContext
-     */
-    private function convertContext(Context $context, $direction)
+    private function convertContext(Context $context, int $direction): JMSContext
     {
         if (self::SERIALIZATION === $direction) {
             $jmsContext = $this->serializationContextFactory
@@ -104,7 +100,7 @@ class JMSSerializerAdapter implements Serializer
         if (null !== $context->getGroups()) {
             $jmsContext->setGroups($context->getGroups());
         }
-        if (null !== $context->getMaxDepth(false) || null !== $context->isMaxDepthEnabled()) {
+        if (null !== $context->getMaxDepth(false) || true === $context->isMaxDepthEnabled()) {
             $jmsContext->enableMaxDepthChecks();
         }
         if (null !== $context->getSerializeNull()) {

@@ -37,7 +37,9 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\UnitOfWork;
 use Doctrine\ORM\Utility\IdentifierFlattener;
 use Doctrine\ORM\Utility\PersisterHelper;
+use function array_map;
 use function array_merge;
+use function assert;
 use function reset;
 
 /**
@@ -90,7 +92,6 @@ class BasicEntityPersister implements EntityPersister
      */
     static private $comparisonMap = [
         Comparison::EQ          => '= %s',
-        Comparison::IS          => '= %s',
         Comparison::NEQ         => '!= %s',
         Comparison::GT          => '> %s',
         Comparison::GTE         => '>= %s',
@@ -359,6 +360,11 @@ class BasicEntityPersister implements EntityPersister
         return Type::getType($fieldMapping['type'])->convertToPHPValue($value, $this->platform);
     }
 
+    /**
+     * @return int[]|null[]|string[]
+     *
+     * @psalm-return list<int|null|string>
+     */
     private function extractIdentifierTypes(array $id, ClassMetadata $versionedClass) : array
     {
         $types = [];
@@ -446,9 +452,9 @@ class BasicEntityPersister implements EntityPersister
 
         foreach ($this->class->identifier as $idField) {
             if ( ! isset($this->class->associationMappings[$idField])) {
-                $params[]   = $identifier[$idField];
-                $types[]    = $this->class->fieldMappings[$idField]['type'];
-                $where[]    = $this->quoteStrategy->getColumnName($idField, $this->class, $this->platform);
+                $params[] = $identifier[$idField];
+                $types[]  = $this->class->fieldMappings[$idField]['type'];
+                $where[]  = $this->quoteStrategy->getColumnName($idField, $this->class, $this->platform);
 
                 continue;
             }
@@ -569,29 +575,12 @@ class BasicEntityPersister implements EntityPersister
      */
     public function delete($entity)
     {
-        $self       = $this;
         $class      = $this->class;
         $identifier = $this->em->getUnitOfWork()->getEntityIdentifier($entity);
         $tableName  = $this->quoteStrategy->getTableName($class, $this->platform);
         $idColumns  = $this->quoteStrategy->getIdentifierColumnNames($class, $this->platform);
         $id         = array_combine($idColumns, $identifier);
-        $types      = array_map(function ($identifier) use ($class, $self) {
-            if (isset($class->fieldMappings[$identifier])) {
-                return $class->fieldMappings[$identifier]['type'];
-            }
-
-            $targetMapping = $self->em->getClassMetadata($class->associationMappings[$identifier]['targetEntity']);
-
-            if (isset($targetMapping->fieldMappings[$targetMapping->identifier[0]])) {
-                return $targetMapping->fieldMappings[$targetMapping->identifier[0]]['type'];
-            }
-
-            if (isset($targetMapping->associationMappings[$targetMapping->identifier[0]])) {
-                return $targetMapping->associationMappings[$targetMapping->identifier[0]]['type'];
-            }
-
-            throw ORMException::unrecognizedField($targetMapping->identifier[0]);
-        }, $class->identifier);
+        $types      = $this->getClassIdentifiersTypes($class);
 
         $this->deleteJoinTableRecords($identifier);
 
@@ -617,7 +606,9 @@ class BasicEntityPersister implements EntityPersister
      *
      * @param object $entity The entity for which to prepare the data.
      *
-     * @return array The prepared data.
+     * @return mixed[][] The prepared data.
+     *
+     * @psalm-return array<string, array<array-key, mixed|null>>
      */
     protected function prepareUpdateData($entity)
     {
@@ -704,9 +695,11 @@ class BasicEntityPersister implements EntityPersister
      *
      * @param object $entity The entity for which to prepare the data.
      *
-     * @return array The prepared data for the tables to update.
+     * @return mixed[][] The prepared data for the tables to update.
      *
      * @see prepareUpdateData
+     *
+     * @psalm-return array<string, mixed[]>
      */
     protected function prepareInsertData($entity)
     {
@@ -729,7 +722,7 @@ class BasicEntityPersister implements EntityPersister
         $this->switchPersisterContext(null, $limit);
 
         $sql = $this->getSelectSQL($criteria, $assoc, $lockMode, $limit, null, $orderBy);
-        list($params, $types) = $this->expandParameters($criteria);
+        [$params, $types] = $this->expandParameters($criteria);
         $stmt = $this->conn->executeQuery($sql, $params, $types);
 
         if ($entity !== null) {
@@ -821,7 +814,7 @@ class BasicEntityPersister implements EntityPersister
     public function refresh(array $id, $entity, $lockMode = null)
     {
         $sql = $this->getSelectSQL($id, null, $lockMode);
-        list($params, $types) = $this->expandParameters($id);
+        [$params, $types] = $this->expandParameters($id);
         $stmt = $this->conn->executeQuery($sql, $params, $types);
 
         $hydrator = $this->em->newHydrator(Query::HYDRATE_OBJECT);
@@ -835,7 +828,7 @@ class BasicEntityPersister implements EntityPersister
     {
         $sql = $this->getCountSQL($criteria);
 
-        list($params, $types) = ($criteria instanceof Criteria)
+        [$params, $types] = $criteria instanceof Criteria
             ? $this->expandCriteriaParameters($criteria)
             : $this->expandParameters($criteria);
 
@@ -852,7 +845,7 @@ class BasicEntityPersister implements EntityPersister
         $offset  = $criteria->getFirstResult();
         $query   = $this->getSelectSQL($criteria, null, null, $limit, $offset, $orderBy);
 
-        list($params, $types) = $this->expandCriteriaParameters($criteria);
+        [$params, $types] = $this->expandCriteriaParameters($criteria);
 
         $stmt       = $this->conn->executeQuery($query, $params, $types);
         $hydrator   = $this->em->newHydrator(($this->currentPersisterContext->selectJoinSql) ? Query::HYDRATE_OBJECT : Query::HYDRATE_SIMPLEOBJECT);
@@ -878,14 +871,14 @@ class BasicEntityPersister implements EntityPersister
 
         $valueVisitor->dispatch($expression);
 
-        list($params, $types) = $valueVisitor->getParamsAndTypes();
+        [$params, $types] = $valueVisitor->getParamsAndTypes();
 
         foreach ($params as $param) {
             $sqlParams = array_merge($sqlParams, $this->getValues($param));
         }
 
         foreach ($types as $type) {
-            list ($field, $value) = $type;
+            [$field, $value] = $type;
             $sqlTypes = array_merge($sqlTypes, $this->getTypes($field, $value, $this->class));
         }
 
@@ -900,7 +893,7 @@ class BasicEntityPersister implements EntityPersister
         $this->switchPersisterContext($offset, $limit);
 
         $sql = $this->getSelectSQL($criteria, null, null, $limit, $offset, $orderBy);
-        list($params, $types) = $this->expandParameters($criteria);
+        [$params, $types] = $this->expandParameters($criteria);
         $stmt = $this->conn->executeQuery($sql, $params, $types);
 
         $hydrator = $this->em->newHydrator(($this->currentPersisterContext->selectJoinSql) ? Query::HYDRATE_OBJECT : Query::HYDRATE_SIMPLEOBJECT);
@@ -970,11 +963,11 @@ class BasicEntityPersister implements EntityPersister
     /**
      * {@inheritdoc}
      */
-    public function loadManyToManyCollection(array $assoc, $sourceEntity, PersistentCollection $coll)
+    public function loadManyToManyCollection(array $assoc, $sourceEntity, PersistentCollection $collection)
     {
         $stmt = $this->getManyToManyStatement($assoc, $sourceEntity);
 
-        return $this->loadCollectionFromStatement($assoc, $stmt, $coll);
+        return $this->loadCollectionFromStatement($assoc, $stmt, $collection);
     }
 
     /**
@@ -1045,7 +1038,7 @@ class BasicEntityPersister implements EntityPersister
         }
 
         $sql = $this->getSelectSQL($criteria, $assoc, null, $limit, $offset);
-        list($params, $types) = $this->expandToManyParameters($parameters);
+        [$params, $types] = $this->expandToManyParameters($parameters);
 
         return $this->conn->executeQuery($sql, $params, $types);
     }
@@ -1149,7 +1142,7 @@ class BasicEntityPersister implements EntityPersister
      *
      * @throws \Doctrine\ORM\ORMException
      */
-    protected final function getOrderBySQL(array $orderBy, $baseTableAlias)
+    final protected function getOrderBySQL(array $orderBy, $baseTableAlias) : string
     {
         $orderByList = [];
 
@@ -1434,7 +1427,9 @@ class BasicEntityPersister implements EntityPersister
      * Subclasses should override this method to alter or change the list of
      * columns placed in the INSERT statements used by the persister.
      *
-     * @return array The list of columns.
+     * @return string[] The list of columns.
+     *
+     * @psalm-return list<string>
      */
     protected function getInsertColumnList()
     {
@@ -1551,7 +1546,7 @@ class BasicEntityPersister implements EntityPersister
              . $where
              . $lockSql;
 
-        list($params, $types) = $this->expandParameters($criteria);
+        [$params, $types] = $this->expandParameters($criteria);
 
         $this->conn->executeQuery($sql, $params, $types);
     }
@@ -1559,7 +1554,7 @@ class BasicEntityPersister implements EntityPersister
     /**
      * Gets the FROM and optionally JOIN conditions to lock the entity managed by this persister.
      *
-     * @param integer $lockMode One of the Doctrine\DBAL\LockMode::* constants.
+     * @param int|null $lockMode One of the Doctrine\DBAL\LockMode::* constants.
      *
      * @return string
      */
@@ -1671,13 +1666,13 @@ class BasicEntityPersister implements EntityPersister
      * @return string[]
      *
      * @throws \Doctrine\ORM\ORMException
+     *
+     * @psalm-return list<string>
      */
     private function getSelectConditionStatementColumnSQL($field, $assoc = null)
     {
         if (isset($this->class->fieldMappings[$field])) {
-            $className = (isset($this->class->fieldMappings[$field]['inherited']))
-                ? $this->class->fieldMappings[$field]['inherited']
-                : $this->class->name;
+            $className = $this->class->fieldMappings[$field]['inherited'] ?? $this->class->name;
 
             return [$this->getSQLTableAlias($className) . '.' . $this->quoteStrategy->getColumnName($field, $this->class, $this->platform)];
         }
@@ -1768,11 +1763,11 @@ class BasicEntityPersister implements EntityPersister
     /**
      * {@inheritdoc}
      */
-    public function loadOneToManyCollection(array $assoc, $sourceEntity, PersistentCollection $coll)
+    public function loadOneToManyCollection(array $assoc, $sourceEntity, PersistentCollection $collection)
     {
         $stmt = $this->getOneToManyStatement($assoc, $sourceEntity);
 
-        return $this->loadCollectionFromStatement($assoc, $stmt, $coll);
+        return $this->loadCollectionFromStatement($assoc, $stmt, $collection);
     }
 
     /**
@@ -1828,7 +1823,7 @@ class BasicEntityPersister implements EntityPersister
         }
 
         $sql                  = $this->getSelectSQL($criteria, $assoc, null, $limit, $offset);
-        list($params, $types) = $this->expandToManyParameters($parameters);
+        [$params, $types] = $this->expandToManyParameters($parameters);
 
         return $this->conn->executeQuery($sql, $params, $types);
     }
@@ -1862,8 +1857,9 @@ class BasicEntityPersister implements EntityPersister
      *                             - value to be bound
      *                             - class to which the field belongs to
      *
+     * @return mixed[][]
      *
-     * @return array
+     * @psalm-return array{0: array, 1: list<mixed>}
      */
     private function expandToManyParameters($criteria)
     {
@@ -1889,9 +1885,11 @@ class BasicEntityPersister implements EntityPersister
      * @param mixed         $value
      * @param ClassMetadata $class
      *
-     * @return array
+     * @return int[]|null[]|string[]
      *
      * @throws \Doctrine\ORM\Query\QueryException
+     *
+     * @psalm-return list<int|null|string>
      */
     private function getTypes($field, $value, ClassMetadata $class)
     {
@@ -2004,11 +2002,11 @@ class BasicEntityPersister implements EntityPersister
              . $this->getLockTablesSql(null)
              . ' WHERE ' . $this->getSelectConditionSQL($criteria);
 
-        list($params, $types) = $this->expandParameters($criteria);
+        [$params, $types] = $this->expandParameters($criteria);
 
         if (null !== $extraConditions) {
             $sql                                 .= ' AND ' . $this->getSelectConditionCriteriaSQL($extraConditions);
-            list($criteriaParams, $criteriaTypes) = $this->expandCriteriaParameters($extraConditions);
+            [$criteriaParams, $criteriaTypes] = $this->expandCriteriaParameters($extraConditions);
 
             $params = array_merge($params, $criteriaParams);
             $types  = array_merge($types, $criteriaTypes);
@@ -2041,7 +2039,9 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $columnName
+     *
+     * @return string
      */
     public function getSQLColumnAlias($columnName)
     {
@@ -2088,5 +2088,23 @@ class BasicEntityPersister implements EntityPersister
         }
 
         $this->currentPersisterContext = $this->limitsHandlingContext;
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getClassIdentifiersTypes(ClassMetadata $class) : array
+    {
+        $entityManager = $this->em;
+
+        return array_map(
+            static function ($fieldName) use ($class, $entityManager) : string {
+                $types = PersisterHelper::getTypeOfField($fieldName, $class, $entityManager);
+                assert(isset($types[0]));
+
+                return $types[0];
+            },
+            $class->identifier
+        );
     }
 }

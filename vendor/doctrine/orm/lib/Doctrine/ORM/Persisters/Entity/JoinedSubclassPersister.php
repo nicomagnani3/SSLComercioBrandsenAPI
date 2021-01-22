@@ -27,6 +27,8 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Utility\PersisterHelper;
 
+use function array_combine;
+
 /**
  * The joined subclass persister maps a single entity instance to several tables in the
  * database as it is defined by the <tt>Class Table Inheritance</tt> strategy.
@@ -278,22 +280,25 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
         // If the database platform supports FKs, just
         // delete the row from the root table. Cascades do the rest.
         if ($this->platform->supportsForeignKeyConstraints()) {
-            $rootClass  = $this->em->getClassMetadata($this->class->rootEntityName);
-            $rootTable  = $this->quoteStrategy->getTableName($rootClass, $this->platform);
+            $rootClass = $this->em->getClassMetadata($this->class->rootEntityName);
+            $rootTable = $this->quoteStrategy->getTableName($rootClass, $this->platform);
+            $rootTypes = $this->getClassIdentifiersTypes($rootClass);
 
-            return (bool) $this->conn->delete($rootTable, $id);
+            return (bool) $this->conn->delete($rootTable, $id, $rootTypes);
         }
 
         // Delete from all tables individually, starting from this class' table up to the root table.
         $rootTable = $this->quoteStrategy->getTableName($this->class, $this->platform);
+        $rootTypes = $this->getClassIdentifiersTypes($this->class);
 
-        $affectedRows = $this->conn->delete($rootTable, $id);
+        $affectedRows = $this->conn->delete($rootTable, $id, $rootTypes);
 
         foreach ($this->class->parentClasses as $parentClass) {
             $parentMetadata = $this->em->getClassMetadata($parentClass);
             $parentTable    = $this->quoteStrategy->getTableName($parentMetadata, $this->platform);
+            $parentTypes    = $this->getClassIdentifiersTypes($parentMetadata);
 
-            $this->conn->delete($parentTable, $id);
+            $this->conn->delete($parentTable, $id, $parentTypes);
         }
 
         return (bool) $affectedRows;

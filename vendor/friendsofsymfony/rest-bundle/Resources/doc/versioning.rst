@@ -25,7 +25,7 @@ If you want to version your api with the uri, you can simply use the symfony rou
 
 .. code-block:: yaml
 
-    # app/config/routing.yml
+    # config/routes.yaml
     my_route:
         # ...
         path: /{version}/foo/route
@@ -35,11 +35,10 @@ Note: this will override the ``version`` attribute of the request if you use the
 Configure ``FOSRestBundle`` to use the api versioning
 -----------------------------------------------------
 
-You should activate the versioning in your config.yml:
+You should activate the versioning:
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         versioning: true
 
@@ -47,7 +46,6 @@ If you do not want to allow all the methods described above, you should choose w
 
 .. code-block:: yaml
 
-    #app/config/config.yml
     fos_rest:
         versioning:
             enabled: true
@@ -62,7 +60,6 @@ You can also choose the guessing order:
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         versioning:
             enabled: true
@@ -79,67 +76,67 @@ If you want to version by Accept header, you will need to do the following:
 
 #. The format listener must be enabled
 
-See :doc:`Format Listener <format_listener>`
+   See :doc:`Format Listener <format_listener>`
 
 #. The client must pass the requested version in his header like this :
 
-.. code-block:: yaml
+   .. code-block:: yaml
 
-    Accept:application/json;version=1.0
+       Accept:application/json;version=1.0
 
 #. You must configure the possible mime types for all supported versions:
 
-.. code-block:: yaml
+   .. code-block:: yaml
 
-    fos_rest:
-        view:
-            mime_types:
-                json: ['application/json', 'application/json;version=1.0', 'application/json;version=1.1']
+       fos_rest:
+           view:
+               mime_types:
+                   json: ['application/json', 'application/json;version=1.0', 'application/json;version=1.1']
 
-Note: If you have to handle huge versions and mime types, you can simplify the configuration with a php script:
+   Note: If you have to handle huge versions and mime types, you can simplify the configuration with a php script:
 
-.. code-block:: php
+   .. code-block:: php
 
-    // app/config/fos_rest_mime_types.php
-    $versions = array(
-        '1.0',
-        '1.1',
-        '2.0',
-    );
+       // app/config/fos_rest_mime_types.php
+       $versions = array(
+           '1.0',
+           '1.1',
+           '2.0',
+       );
 
-    $mimeTypes = array(
-        'json' => array(
-            'application/json',
-        ),
-        'yml'  => array(
-            'application/yaml',
-            'text/yaml',
-        ),
-    );
+       $mimeTypes = array(
+           'json' => array(
+               'application/json',
+           ),
+           'yml'  => array(
+               'application/yaml',
+               'text/yaml',
+           ),
+       );
 
-    array_walk($mimeTypes, function (&$mimeTypes, $format, $versions) {
-        $versionMimeTypes = array();
-        foreach ($mimeTypes as $mimeType) {
-            foreach ($versions as $version) {
-                array_push($versionMimeTypes, sprintf('%s;version=%s', $mimeType, $version));
-                array_push($versionMimeTypes, sprintf('%s;v=%s', $mimeType, $version));
-            }
-        }
-        $mimeTypes = array_merge($mimeTypes, $versionMimeTypes);
-    }, $versions);
+       array_walk($mimeTypes, function (&$mimeTypes, $format, $versions) {
+           $versionMimeTypes = array();
+           foreach ($mimeTypes as $mimeType) {
+               foreach ($versions as $version) {
+                   array_push($versionMimeTypes, sprintf('%s;version=%s', $mimeType, $version));
+                   array_push($versionMimeTypes, sprintf('%s;v=%s', $mimeType, $version));
+               }
+           }
+           $mimeTypes = array_merge($mimeTypes, $versionMimeTypes);
+       }, $versions);
 
-    $container->loadFromExtension('fos_rest', array(
-        'view' => array(
-            'mime_types' => $mimeTypes,
-        ),
-    ));
+       $container->loadFromExtension('fos_rest', array(
+           'view' => array(
+               'mime_types' => $mimeTypes,
+           ),
+       ));
 
-And then, import it from your config.yml file:
+   And then, import it from your Symfony config:
 
-.. code-block:: yaml
+   .. code-block:: yaml
 
-    imports:
-        - { resource: assets_version.php }
+       imports:
+           - { resource: fos_rest_mime_types.php }
 
 Use the ``JMSSerializer`` with the API versioning
 -------------------------------------------------
@@ -162,21 +159,3 @@ You can use conditions on your request to check for the version that was determi
     my_route:
         # ...
         condition: "request.attributes.get('version') == 'v2'"
-
-When using the :doc:`automatic route generation <5-automatic-route-generation_single-restful-controller>`,
-you can also use the ``@Version`` annotation to set the above condition automatically on all methods
-in the given controller.
-
-.. code-block:: php
-
-    use FOS\RestBundle\Controller\Annotations\Version;
-
-    /**
-     * @Version("v2")
-     *
-     * or if you support multiple versions in this controller
-     * @Version({"v1", "v2"})
-     */
-    class MyController
-    {
-    }

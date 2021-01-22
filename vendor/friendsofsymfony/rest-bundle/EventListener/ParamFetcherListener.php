@@ -13,7 +13,7 @@ namespace FOS\RestBundle\EventListener;
 
 use FOS\RestBundle\FOSRestBundle;
 use FOS\RestBundle\Request\ParamFetcherInterface;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 /**
  * This listener handles various setup tasks related to the query fetcher.
@@ -30,26 +30,16 @@ class ParamFetcherListener
     private $paramFetcher;
     private $setParamsAsAttributes;
 
-    /**
-     * Constructor.
-     *
-     * @param ParamFetcherInterface $paramFetcher
-     * @param bool                  $setParamsAsAttributes
-     */
-    public function __construct(ParamFetcherInterface $paramFetcher, $setParamsAsAttributes = false)
+    public function __construct(ParamFetcherInterface $paramFetcher, bool $setParamsAsAttributes = false)
     {
         $this->paramFetcher = $paramFetcher;
         $this->setParamsAsAttributes = $setParamsAsAttributes;
     }
 
     /**
-     * Core controller handler.
-     *
-     * @param FilterControllerEvent $event
-     *
-     * @throws \InvalidArgumentException
+     * @param ControllerEvent $event
      */
-    public function onKernelController(FilterControllerEvent $event)
+    public function onKernelController($event)
     {
         $request = $event->getRequest();
 
@@ -59,7 +49,7 @@ class ParamFetcherListener
 
         $controller = $event->getController();
 
-        if (is_callable($controller) && method_exists($controller, '__invoke')) {
+        if (is_callable($controller) && (is_object($controller) || is_string($controller)) && method_exists($controller, '__invoke')) {
             $controller = [$controller, '__invoke'];
         }
 
@@ -81,14 +71,7 @@ class ParamFetcherListener
         }
     }
 
-    /**
-     * Determines which attribute the ParamFetcher should be injected as.
-     *
-     * @param callable $controller The controller action as an "array" callable
-     *
-     * @return string
-     */
-    private function getAttributeName(callable $controller)
+    private function getAttributeName(callable $controller): string
     {
         list($object, $name) = $controller;
         $method = new \ReflectionMethod($object, $name);
@@ -102,15 +85,7 @@ class ParamFetcherListener
         return 'paramFetcher';
     }
 
-    /**
-     * Returns true if the given controller parameter is type-hinted as
-     * an instance of ParamFetcher.
-     *
-     * @param \ReflectionParameter $controllerParam A parameter of the controller action
-     *
-     * @return bool
-     */
-    private function isParamFetcherType(\ReflectionParameter $controllerParam)
+    private function isParamFetcherType(\ReflectionParameter $controllerParam): bool
     {
         $type = $controllerParam->getClass();
         if (null === $type) {

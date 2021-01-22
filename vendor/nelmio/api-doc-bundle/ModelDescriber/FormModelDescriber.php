@@ -11,10 +11,12 @@
 
 namespace Nelmio\ApiDocBundle\ModelDescriber;
 
+use Doctrine\Common\Annotations\Reader;
 use EXSyst\Component\Swagger\Schema;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareInterface;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareTrait;
 use Nelmio\ApiDocBundle\Model\Model;
+use Nelmio\ApiDocBundle\ModelDescriber\Annotations\AnnotationsReader;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormConfigBuilderInterface;
@@ -32,10 +34,15 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
     use ModelRegistryAwareTrait;
 
     private $formFactory;
+    private $doctrineReader;
 
-    public function __construct(FormFactoryInterface $formFactory = null)
+    public function __construct(FormFactoryInterface $formFactory = null, Reader $reader = null)
     {
         $this->formFactory = $formFactory;
+        $this->doctrineReader = $reader;
+        if (null === $reader) {
+            @trigger_error(sprintf('Not passing a doctrine reader to the constructor of %s is deprecated since version 3.8 and won\'t be allowed in version 5.', self::class), E_USER_DEPRECATED);
+        }
     }
 
     public function describe(Model $model, Schema $schema)
@@ -51,7 +58,12 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
 
         $class = $model->getType()->getClassName();
 
-        $form = $this->formFactory->create($class, null, []);
+        if (null !== $this->doctrineReader) {
+            $annotationsReader = new AnnotationsReader($this->doctrineReader, $this->modelRegistry);
+            $annotationsReader->updateDefinition(new \ReflectionClass($class), $schema);
+        }
+
+        $form = $this->formFactory->create($class, null, $model->getOptions() ?? []);
         $this->parseForm($schema, $form);
     }
 
@@ -66,6 +78,12 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
 
         foreach ($form as $name => $child) {
             $config = $child->getConfig();
+
+            // This field must not be documented
+            if ($config->hasOption('documentation') && false === $config->getOption('documentation')) {
+                continue;
+            }
+
             $property = $properties->get($name);
 
             if ($config->getRequired()) {
@@ -75,7 +93,10 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
                 $schema->setRequired($required);
             }
 
-            $property->merge($config->getOption('documentation'));
+            if ($config->hasOption('documentation') && is_array($config->getOption('documentation'))) {
+                $property->merge($config->getOption('documentation'));
+            }
+
             if (null !== $property->getType()) {
                 continue; // Type manually defined
             }
@@ -89,8 +110,7 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
      *
      * Returns true if a native Swagger type was found, false otherwise
      *
-     * @param FormConfigBuilderInterface $config
-     * @param                            $property
+     * @param $property
      */
     private function findFormType(FormConfigBuilderInterface $config, $property)
     {
@@ -98,7 +118,11 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
 
         if (!$builtinFormType = $this->getBuiltinFormType($type)) {
             // if form type is not builtin in Form component.
-            $model = new Model(new Type(Type::BUILTIN_TYPE_OBJECT, false, get_class($type->getInnerType())));
+            $model = new Model(
+                new Type(Type::BUILTIN_TYPE_OBJECT, false, get_class($type->getInnerType())),
+                null,
+                $config->getOptions()
+            );
             $property->setRef($this->modelRegistry->register($model));
 
             return;
@@ -225,8 +249,6 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
     }
 
     /**
-     * @param array $array
-     *
      * @return bool true if $array contains only numbers, false otherwise
      */
     private function isNumbersArray(array $array): bool
@@ -241,8 +263,6 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
     }
 
     /**
-     * @param array $array
-     *
      * @return bool true if $array contains only booleans, false otherwise
      */
     private function isBooleansArray(array $array): bool
@@ -257,8 +277,6 @@ final class FormModelDescriber implements ModelDescriberInterface, ModelRegistry
     }
 
     /**
-     * @param ResolvedFormTypeInterface $type
-     *
      * @return ResolvedFormTypeInterface|null
      */
     private function getBuiltinFormType(ResolvedFormTypeInterface $type)

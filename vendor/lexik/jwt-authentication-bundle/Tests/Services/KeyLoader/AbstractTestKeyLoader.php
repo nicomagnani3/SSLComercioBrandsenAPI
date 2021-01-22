@@ -3,6 +3,7 @@
 namespace Lexik\Bundle\JWTAuthenticationBundle\Tests\Services\KeyLoader;
 
 use Lexik\Bundle\JWTAuthenticationBundle\Services\KeyLoader\KeyLoaderInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Tests\ForwardCompatTestCaseTrait;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,32 +13,31 @@ use PHPUnit\Framework\TestCase;
  */
 abstract class AbstractTestKeyLoader extends TestCase
 {
+    use ForwardCompatTestCaseTrait;
+
     /** @var KeyLoaderInterface */
     protected $keyLoader;
 
     /**
      * {@inheritdoc}
      */
-    public function setUp()
+    public function doSetUp()
     {
         $this->removeKeysIfExist();
     }
 
-    /**
-     * Test load key from invalid type.
-     *
-     * @expectedException        \InvalidArgumentException
-     * @expectedExceptionMessage The key type must be "public" or "private", "wrongType" given.
-     */
     public function testLoadKeyFromWrongType()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The key type must be "public" or "private", "wrongType" given.');
+
         $this->keyLoader->loadKey('wrongType');
     }
 
     /**
      * {@inheritdoc}
      */
-    public function tearDown()
+    public function doTearDown()
     {
         $this->removeKeysIfExist();
     }

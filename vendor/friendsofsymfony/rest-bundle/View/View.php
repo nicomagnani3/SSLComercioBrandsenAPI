@@ -20,6 +20,8 @@ use Symfony\Component\Templating\TemplateReferenceInterface;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  * @author Lukas K. Smith <smith@pooteeweet.org>
+ *
+ * @final since 2.8
  */
 class View
 {
@@ -84,11 +86,7 @@ class View
     private $response;
 
     /**
-     * Convenience method to allow for a fluent interface.
-     *
-     * @param mixed $data
-     * @param int   $statusCode
-     * @param array $headers
+     * @param int|null $statusCode
      *
      * @return static
      */
@@ -98,12 +96,8 @@ class View
     }
 
     /**
-     * Convenience method to allow for a fluent interface while creating a redirect to a
-     * given url.
-     *
      * @param string $url
      * @param int    $statusCode
-     * @param array  $headers
      *
      * @return static
      */
@@ -116,13 +110,8 @@ class View
     }
 
     /**
-     * Convenience method to allow for a fluent interface while creating a redirect to a
-     * given route.
-     *
      * @param string $route
-     * @param array  $parameters
      * @param int    $statusCode
-     * @param array  $headers
      *
      * @return static
      */
@@ -140,17 +129,13 @@ class View
     }
 
     /**
-     * Constructor.
-     *
-     * @param mixed $data
-     * @param int   $statusCode
-     * @param array $headers
+     * @param int $statusCode
      */
     public function __construct($data = null, $statusCode = null, array $headers = [])
     {
         $this->setData($data);
         $this->setStatusCode($statusCode);
-        $this->setTemplateVar('data');
+        $this->setTemplateVar('data', false);
 
         if (!empty($headers)) {
             $this->getResponse()->headers->replace($headers);
@@ -158,10 +143,6 @@ class View
     }
 
     /**
-     * Sets the data.
-     *
-     * @param mixed $data
-     *
      * @return View
      */
     public function setData($data)
@@ -172,7 +153,7 @@ class View
     }
 
     /**
-     * Set template variable.
+     * @deprecated since 2.8
      *
      * @param array|callable $data
      *
@@ -180,14 +161,16 @@ class View
      */
     public function setTemplateData($data = [])
     {
+        if (1 === func_num_args() || func_get_arg(1)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         $this->templateData = $data;
 
         return $this;
     }
 
     /**
-     * Sets a header.
-     *
      * @param string $name
      * @param string $value
      *
@@ -201,10 +184,6 @@ class View
     }
 
     /**
-     * Sets the headers.
-     *
-     * @param array $headers
-     *
      * @return View
      */
     public function setHeaders(array $headers)
@@ -215,8 +194,6 @@ class View
     }
 
     /**
-     * Sets the HTTP status code.
-     *
      * @param int|null $code
      *
      * @return View
@@ -231,10 +208,6 @@ class View
     }
 
     /**
-     * Sets the serialization context.
-     *
-     * @param Context $context
-     *
      * @return View
      */
     public function setContext(Context $context)
@@ -245,7 +218,7 @@ class View
     }
 
     /**
-     * Sets template to use for the encoding.
+     * @deprecated since 2.8
      *
      * @param string|TemplateReferenceInterface $template
      *
@@ -255,6 +228,10 @@ class View
      */
     public function setTemplate($template)
     {
+        if (1 === func_num_args() || func_get_arg(1)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         if (!(is_string($template) || $template instanceof TemplateReferenceInterface)) {
             throw new \InvalidArgumentException('The template should be a string or implement TemplateReferenceInterface');
         }
@@ -264,7 +241,7 @@ class View
     }
 
     /**
-     * Sets template variable name to be used in templating formats.
+     * @deprecated since 2.8
      *
      * @param string $templateVar
      *
@@ -272,13 +249,17 @@ class View
      */
     public function setTemplateVar($templateVar)
     {
+        if (1 === func_num_args() || func_get_arg(1)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         $this->templateVar = $templateVar;
 
         return $this;
     }
 
     /**
-     * Sets the engine.
+     * @deprecated since 2.8
      *
      * @param string $engine
      *
@@ -286,14 +267,14 @@ class View
      */
     public function setEngine($engine)
     {
+        @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+
         $this->engine = $engine;
 
         return $this;
     }
 
     /**
-     * Sets the format.
-     *
      * @param string $format
      *
      * @return View
@@ -306,8 +287,6 @@ class View
     }
 
     /**
-     * Sets the location (implicitly removes the route).
-     *
      * @param string $location
      *
      * @return View
@@ -336,8 +315,6 @@ class View
     }
 
     /**
-     * Sets route data.
-     *
      * @param array $parameters
      *
      * @return View
@@ -350,10 +327,6 @@ class View
     }
 
     /**
-     * Sets the response.
-     *
-     * @param Response $response
-     *
      * @return View
      */
     public function setResponse(Response $response)
@@ -363,29 +336,26 @@ class View
         return $this;
     }
 
-    /**
-     * Gets the data.
-     *
-     * @return mixed|null
-     */
     public function getData()
     {
         return $this->data;
     }
 
     /**
-     * Gets the template data.
+     * @deprecated since 2.8
      *
      * @return mixed|null
      */
     public function getTemplateData()
     {
+        if (0 === func_num_args() || func_get_arg(0)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         return $this->templateData;
     }
 
     /**
-     * Gets the HTTP status code.
-     *
      * @return int|null
      */
     public function getStatusCode()
@@ -394,8 +364,6 @@ class View
     }
 
     /**
-     * Gets the headers.
-     *
      * @return array
      */
     public function getHeaders()
@@ -404,38 +372,46 @@ class View
     }
 
     /**
-     * Gets the template.
+     * @deprecated since 2.8
      *
      * @return TemplateReferenceInterface|string|null
      */
     public function getTemplate()
     {
+        if (0 === func_num_args() || func_get_arg(0)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         return $this->template;
     }
 
     /**
-     * Gets the template variable name.
+     * @deprecated since 2.8
      *
      * @return string|null
      */
     public function getTemplateVar()
     {
+        if (0 === func_num_args() || func_get_arg(0)) {
+            @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         return $this->templateVar;
     }
 
     /**
-     * Gets the engine.
+     * @deprecated since 2.8
      *
      * @return string|null
      */
     public function getEngine()
     {
+        @trigger_error(sprintf('The %s() method is deprecated since FOSRestBundle 2.8.', __METHOD__), E_USER_DEPRECATED);
+
         return $this->engine;
     }
 
     /**
-     * Gets the format.
-     *
      * @return string|null
      */
     public function getFormat()
@@ -444,8 +420,6 @@ class View
     }
 
     /**
-     * Gets the location.
-     *
      * @return string|null
      */
     public function getLocation()
@@ -454,8 +428,6 @@ class View
     }
 
     /**
-     * Gets the route.
-     *
      * @return string|null
      */
     public function getRoute()
@@ -464,8 +436,6 @@ class View
     }
 
     /**
-     * Gets route parameters.
-     *
      * @return array|null
      */
     public function getRouteParameters()
@@ -474,8 +444,6 @@ class View
     }
 
     /**
-     * Gets the response.
-     *
      * @return Response
      */
     public function getResponse()
@@ -492,8 +460,6 @@ class View
     }
 
     /**
-     * Gets the serialization context.
-     *
      * @return Context
      */
     public function getContext()

@@ -11,44 +11,36 @@
 
 namespace Symfony\Bridge\Doctrine\Messenger;
 
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
-use Symfony\Component\Messenger\Middleware\MiddlewareInterface;
 use Symfony\Component\Messenger\Middleware\StackInterface;
+use Symfony\Component\Messenger\Stamp\ConsumedByWorkerStamp;
 
 /**
  * Checks whether the connection is still open or reconnects otherwise.
  *
  * @author Fuong <insidestyles@gmail.com>
- *
- * @experimental in 4.3
  */
-class DoctrinePingConnectionMiddleware implements MiddlewareInterface
+class DoctrinePingConnectionMiddleware extends AbstractDoctrineMiddleware
 {
-    private $managerRegistry;
-    private $entityManagerName;
-
-    public function __construct(ManagerRegistry $managerRegistry, string $entityManagerName = null)
+    protected function handleForManager(EntityManagerInterface $entityManager, Envelope $envelope, StackInterface $stack): Envelope
     {
-        $this->managerRegistry = $managerRegistry;
-        $this->entityManagerName = $entityManagerName;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function handle(Envelope $envelope, StackInterface $stack): Envelope
-    {
-        try {
-            $entityManager = $this->managerRegistry->getManager($this->entityManagerName);
-        } catch (\InvalidArgumentException $e) {
-            throw new UnrecoverableMessageHandlingException($e->getMessage(), 0, $e);
+        if (null !== $envelope->last(ConsumedByWorkerStamp::class)) {
+            $this->pingConnection($entityManager);
         }
 
+        return $stack->next()->handle($envelope, $stack);
+    }
+
+    private function pingConnection(EntityManagerInterface $entityManager)
+    {
         $connection = $entityManager->getConnection();
 
-        if (!$connection->ping()) {
+        try {
+            $connection->executeQuery($connection->getDatabasePlatform()->getDummySelectSQL());
+        } catch (DBALException | Exception $e) {
             $connection->close();
             $connection->connect();
         }
@@ -56,7 +48,5 @@ class DoctrinePingConnectionMiddleware implements MiddlewareInterface
         if (!$entityManager->isOpen()) {
             $this->managerRegistry->resetManager($this->entityManagerName);
         }
-
-        return $stack->next()->handle($envelope, $stack);
     }
 }

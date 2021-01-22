@@ -11,6 +11,8 @@
 
 namespace FOS\RestBundle\Routing\Loader;
 
+@trigger_error(sprintf('The %s\RestRouteLoader class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use FOS\RestBundle\Routing\Loader\Reader\RestControllerReader;
 use Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser;
 use Symfony\Component\Config\FileLocatorInterface;
@@ -24,6 +26,8 @@ use Symfony\Component\HttpKernel\Kernel;
  *
  * @author Konstantin Kudryashov <ever.zet@gmail.com>
  * @author Bulat Shakirzyanov <mallluhuct@gmail.com>
+ *
+ * @deprecated since 2.8
  */
 class RestRouteLoader extends Loader
 {
@@ -34,30 +38,38 @@ class RestRouteLoader extends Loader
     protected $locator;
 
     /**
-     * Initializes loader.
-     *
-     * @param ContainerInterface   $container
-     * @param FileLocatorInterface $locator
-     * @param ControllerNameParser $controllerParser
      * @param RestControllerReader $controllerReader
      * @param string               $defaultFormat
      */
     public function __construct(
         ContainerInterface $container,
         FileLocatorInterface $locator,
-        ControllerNameParser $controllerParser,
-        RestControllerReader $controllerReader, $defaultFormat = 'html'
+        $controllerReader,
+        $defaultFormat = 'html'
     ) {
         $this->container = $container;
         $this->locator = $locator;
-        $this->controllerParser = $controllerParser;
-        $this->controllerReader = $controllerReader;
-        $this->defaultFormat = $defaultFormat;
+
+        if ($controllerReader instanceof ControllerNameParser || null === $controllerReader) {
+            @trigger_error(sprintf('Not passing an instance of %s as the 3rd argument of %s() is deprecated since FOSRestBundle 2.8.', RestControllerReader::class, __METHOD__), E_USER_DEPRECATED);
+
+            $this->controllerParser = $controllerReader;
+
+            if (!$defaultFormat instanceof RestControllerReader) {
+                throw new \TypeError(sprintf('Argument 4 passed to %s() must be an instance of %s, %s given.', __METHOD__, RestControllerReader::class, is_object($defaultFormat) ? get_class($defaultFormat) : gettype($defaultFormat)));
+            }
+
+            $this->controllerReader = $defaultFormat;
+            $this->defaultFormat = func_num_args() > 4 ? func_get_arg(4) : 'html';
+        } elseif (!$controllerReader instanceof RestControllerReader) {
+            throw new \TypeError(sprintf('Argument 3 passed to %s() must be an instance of %s, %s given.', __METHOD__, RestControllerReader::class, is_object($controllerReader) ? get_class($controllerReader) : gettype($controllerReader)));
+        } else {
+            $this->controllerReader = $controllerReader;
+            $this->defaultFormat = $defaultFormat;
+        }
     }
 
     /**
-     * Returns controller reader.
-     *
      * @return RestControllerReader
      */
     public function getControllerReader()
@@ -86,20 +98,13 @@ class RestRouteLoader extends Loader
     {
         return is_string($resource)
             && 'rest' === $type
-            && !in_array(pathinfo($resource, PATHINFO_EXTENSION), ['xml', 'yml', 'yaml']
-        );
+            && !in_array(
+                pathinfo($resource, PATHINFO_EXTENSION),
+                ['xml', 'yml', 'yaml']
+            );
     }
 
-    /**
-     * Returns controller locator by it's id.
-     *
-     * @param string $controller
-     *
-     * @throws \InvalidArgumentException
-     *
-     * @return array
-     */
-    private function getControllerLocator($controller)
+    private function getControllerLocator(string $controller): array
     {
         $class = null;
         $prefix = null;
@@ -108,7 +113,7 @@ class RestRouteLoader extends Loader
             $file = $this->locator->locate($controller);
             $controllerClass = ClassUtils::findClassInFile($file);
 
-            if (false === $controllerClass) {
+            if (null === $controllerClass) {
                 throw new \InvalidArgumentException(sprintf('Can\'t find class for controller "%s"', $controller));
             }
 
@@ -136,23 +141,19 @@ class RestRouteLoader extends Loader
             // full class name
             $class = $controller;
             $prefix = $class.'::';
-        } elseif (false !== strpos($controller, ':')) {
+        } elseif ($this->controllerParser && false !== strpos($controller, ':')) {
             // bundle:controller notation
             try {
                 $notation = $this->controllerParser->parse($controller.':method');
                 list($class) = explode('::', $notation);
                 $prefix = $class.'::';
             } catch (\Exception $e) {
-                throw new \InvalidArgumentException(
-                    sprintf('Can\'t locate "%s" controller.', $controller)
-                );
+                throw new \InvalidArgumentException(sprintf('Can\'t locate "%s" controller.', $controller));
             }
         }
 
         if (empty($class)) {
-            throw new \InvalidArgumentException(sprintf(
-                'Class could not be determined for Controller identified by "%s".', $controller
-            ));
+            throw new \InvalidArgumentException(sprintf('Class could not be determined for Controller identified by "%s".', $controller));
         }
 
         return [$prefix, $class];

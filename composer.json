@@ -9,6 +9,7 @@
         "friendsofsymfony/rest-bundle": "^2.3",
         "jms/serializer-bundle": "^2.4",
         "lexik/jwt-authentication-bundle": "^2.5",
+        "mercadopago/dx-php": "2.2.1",
         "nelmio/api-doc-bundle": "^3.2",
         "nelmio/cors-bundle": "^1.5",
         "sensio/framework-extra-bundle": "^5.2",

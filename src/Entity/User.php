@@ -85,6 +85,11 @@ class User implements UserInterface
      */
     private $publicaciones;
 
+    /**
+     * @ORM\OneToOne(targetEntity=TiposUsuarios::class, cascade={"persist", "remove"})
+     */
+    private $tipousuarioId;
+
 
  
     public function __construct()
@@ -382,15 +387,16 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getTipousuarioId(): ?TiposUsuarios
+    {
+        return $this->tipousuarioId;
+    }
 
-    // public function serialize()
-    // {
-    //    return serialize($this->getId());
-    // }
+    public function setTipousuarioId(?TiposUsuarios $tipousuarioId): self
+    {
+        $this->tipousuarioId = $tipousuarioId;
 
-    //  public function unserialize($data)
-    // {
-    //     $this->id = unserialize($data);
-    // }
+        return $this;
+    }
  
 }

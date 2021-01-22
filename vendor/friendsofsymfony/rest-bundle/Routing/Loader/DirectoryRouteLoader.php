@@ -11,6 +11,8 @@
 
 namespace FOS\RestBundle\Routing\Loader;
 
+@trigger_error(sprintf('The %s\DirectoryRouteLoader class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use Symfony\Component\Config\FileLocatorInterface;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Finder\Finder;
@@ -20,6 +22,8 @@ use Symfony\Component\Routing\RouteCollection;
  * Parse annotated controller classes from all files of a directory.
  *
  * @author Christian Flothmann <christian.flothmann@xabbuh.de>
+ *
+ * @deprecated since 2.8
  */
 class DirectoryRouteLoader extends Loader
 {
@@ -50,8 +54,8 @@ class DirectoryRouteLoader extends Loader
         $finder = new Finder();
 
         foreach ($finder->in($resource)->name('*.php')->sortByName()->files() as $file) {
-            if ($class = ClassUtils::findClassInFile($file)) {
-                $imported = $this->processor->importResource($this, $class, array(), null, null, 'rest');
+            if (null !== $class = ClassUtils::findClassInFile($file)) {
+                $imported = $this->processor->importResource($this, $class, [], null, null, 'rest');
                 $collection->addCollection($imported);
             }
         }

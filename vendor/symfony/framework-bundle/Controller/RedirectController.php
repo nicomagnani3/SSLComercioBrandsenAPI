@@ -46,7 +46,6 @@ class RedirectController
      * In case the route name is empty, the status code will be 404 when permanent is false
      * and 410 otherwise.
      *
-     * @param Request    $request           The request instance
      * @param string     $route             The route name to redirect to
      * @param bool       $permanent         Whether the redirection is permanent
      * @param bool|array $ignoreAttributes  Whether to ignore attributes or an array of attributes to ignore
@@ -63,7 +62,17 @@ class RedirectController
         $attributes = [];
         if (false === $ignoreAttributes || \is_array($ignoreAttributes)) {
             $attributes = $request->attributes->get('_route_params');
-            $attributes = $keepQueryParams ? array_merge($request->query->all(), $attributes) : $attributes;
+
+            if ($keepQueryParams) {
+                if ($query = $request->server->get('QUERY_STRING')) {
+                    $query = self::parseQuery($query);
+                } else {
+                    $query = $request->query->all();
+                }
+
+                $attributes = array_merge($query, $attributes);
+            }
+
             unset($attributes['route'], $attributes['permanent'], $attributes['ignoreAttributes'], $attributes['keepRequestMethod'], $attributes['keepQueryParams']);
             if ($ignoreAttributes) {
                 $attributes = array_diff_key($attributes, array_flip($ignoreAttributes));
@@ -88,7 +97,6 @@ class RedirectController
      * In case the path is empty, the status code will be 404 when permanent is false
      * and 410 otherwise.
      *
-     * @param Request     $request           The request instance
      * @param string      $path              The absolute path or URL to redirect to
      * @param bool        $permanent         Whether the redirect is permanent or not
      * @param string|null $scheme            The URL scheme (null to keep the current one)
@@ -111,7 +119,7 @@ class RedirectController
         }
 
         // redirect if the path is a full URL
-        if (parse_url($path, PHP_URL_SCHEME)) {
+        if (parse_url($path, \PHP_URL_SCHEME)) {
             return new RedirectResponse($path, $statusCode);
         }
 
@@ -119,8 +127,7 @@ class RedirectController
             $scheme = $request->getScheme();
         }
 
-        $qs = $request->getQueryString();
-        if ($qs) {
+        if ($qs = $request->server->get('QUERY_STRING') ?: $request->getQueryString()) {
             if (false === strpos($path, '?')) {
                 $qs = '?'.$qs;
             } else {
@@ -158,5 +165,69 @@ class RedirectController
         $url = $scheme.'://'.$request->getHost().$port.$request->getBaseUrl().$path.$qs;
 
         return new RedirectResponse($url, $statusCode);
+    }
+
+    public function __invoke(Request $request): Response
+    {
+        $p = $request->attributes->get('_route_params', []);
+
+        if (\array_key_exists('route', $p)) {
+            if (\array_key_exists('path', $p)) {
+                throw new \RuntimeException(sprintf('Ambiguous redirection settings, use the "path" or "route" parameter, not both: "%s" and "%s" found respectively in "%s" routing configuration.', $p['path'], $p['route'], $request->attributes->get('_route')));
+            }
+
+            return $this->redirectAction($request, $p['route'], $p['permanent'] ?? false, $p['ignoreAttributes'] ?? false, $p['keepRequestMethod'] ?? false, $p['keepQueryParams'] ?? false);
+        }
+
+        if (\array_key_exists('path', $p)) {
+            return $this->urlRedirectAction($request, $p['path'], $p['permanent'] ?? false, $p['scheme'] ?? null, $p['httpPort'] ?? null, $p['httpsPort'] ?? null, $p['keepRequestMethod'] ?? false);
+        }
+
+        throw new \RuntimeException(sprintf('The parameter "path" or "route" is required to configure the redirect action in "%s" routing configuration.', $request->attributes->get('_route')));
+    }
+
+    private static function parseQuery(string $query)
+    {
+        $q = [];
+
+        foreach (explode('&', $query) as $v) {
+            if (false !== $i = strpos($v, "\0")) {
+                $v = substr($v, 0, $i);
+            }
+
+            if (false === $i = strpos($v, '=')) {
+                $k = urldecode($v);
+                $v = '';
+            } else {
+                $k = urldecode(substr($v, 0, $i));
+                $v = substr($v, $i);
+            }
+
+            if (false !== $i = strpos($k, "\0")) {
+                $k = substr($k, 0, $i);
+            }
+
+            $k = ltrim($k, ' ');
+
+            if (false === $i = strpos($k, '[')) {
+                $q[] = bin2hex($k).$v;
+            } else {
+                $q[] = bin2hex(substr($k, 0, $i)).rawurlencode(substr($k, $i)).$v;
+            }
+        }
+
+        parse_str(implode('&', $q), $q);
+
+        $query = [];
+
+        foreach ($q as $k => $v) {
+            if (false !== $i = strpos($k, '_')) {
+                $query[substr_replace($k, hex2bin(substr($k, 0, $i)).'[', 0, 1 + $i)] = $v;
+            } else {
+                $query[hex2bin($k)] = $v;
+            }
+        }
+
+        return $query;
     }
 }

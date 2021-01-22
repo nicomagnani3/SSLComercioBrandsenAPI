@@ -103,6 +103,7 @@ final class NelmioApiDocExtension extends Extension implements PrependExtensionI
             unset($areaConfig['documentation']);
             if (0 === count($areaConfig['path_patterns'])
                 && 0 === count($areaConfig['host_patterns'])
+                && 0 === count($areaConfig['name_patterns'])
                 && false === $areaConfig['with_annotation']
             ) {
                 $container->setDefinition(sprintf('nelmio_api_doc.routes.%s', $area), $routesDefinition)
@@ -173,10 +174,24 @@ final class NelmioApiDocExtension extends Extension implements PrependExtensionI
                         new Reference('nelmio_api_doc.model_describers.jms.inner'),
                     ]);
             }
+        } else {
+            $container->removeDefinition('nelmio_api_doc.model_describers.object_fallback');
         }
 
         // Import the base configuration
         $container->getDefinition('nelmio_api_doc.describers.config')->replaceArgument(0, $config['documentation']);
+
+        // Compatibility Symfony
+        $controllerNameConverter = null;
+        if ($container->hasDefinition('.legacy_controller_name_converter')) { // 4.4
+            $controllerNameConverter = $container->getDefinition('.legacy_controller_name_converter');
+        } elseif ($container->hasDefinition('controller_name_converter')) { // < 4.4
+            $controllerNameConverter = $container->getDefinition('controller_name_converter');
+        }
+
+        if (null !== $controllerNameConverter) {
+            $container->getDefinition('nelmio_api_doc.controller_reflector')->setArgument(1, $controllerNameConverter);
+        }
     }
 
     private function findNameAliases(array $names, string $area): array

@@ -6,7 +6,7 @@ Introduction
 
 The view layer makes it possible to write ``format`` (html, json, xml, etc)
 agnostic controllers, by placing a layer between the Controller and the
-generation of the final output via the templating or a serializer.
+generation of the final output via a serializer.
 
 The bundle works both with the `Symfony Serializer Component`_ and the more
 sophisticated `serializer`_ created by Johannes Schmitt and integrated via the
@@ -29,9 +29,9 @@ which adds several convenience methods:
 
     namespace AppBundle\Controller;
 
-    use FOS\RestBundle\Controller\FOSRestController;
+    use FOS\RestBundle\Controller\AbstractFOSRestController;
 
-    class UsersController extends FOSRestController
+    class UsersController extends AbstractFOSRestController
     {
         public function getUsersAction()
         {
@@ -54,15 +54,16 @@ which adds several convenience methods:
         }
     }
 
-.. versionadded:: 1.6
-  The ``setTemplateData`` method was added in 1.6.
+.. versionadded:: 2.0
+    The ``ControllerTrait`` trait was added in 2.0.
 
 There is also a trait called ``ControllerTrait`` for anyone that prefers to not
 inject the container into their controller. This requires using setter injection
 to set a ``ViewHandlerInterface`` instance via the ``setViewHandler`` method.
 
-.. versionadded:: 2.0
-    The ``ControllerTrait`` trait was added in 2.0.
+
+.. versionadded:: 1.6
+  The ``setTemplateData`` method was added in 1.6.
 
 If you need to pass more data in template, not for serialization, you can use ``setTemplateData`` method:
 
@@ -133,17 +134,11 @@ combination with SensioFrameworkExtraBundle you can even omit the calls to
 
 As the purpose is to create a format-agnostic controller, data assigned to the
 ``View`` instance should ideally be an object graph, though any data type is
-acceptable. Note that when rendering templating formats, the ``ViewHandler``
-will wrap data types other than associative arrays in an associative array with
-a single key (default  ``'data'``), which will become the variable name of the
-object in the respective template. You can change this variable by calling
-the ``setTemplateVar()`` method on the view object.
+acceptable.
 
 There are also two specialized methods for redirect in the ``View`` classes.
 ``View::createRedirect`` redirects to an URL called ``RedirectView`` and
-``View::createRouteRedirect`` redirects to a route. Note that whether these
-classes actually cause a redirect or not is determined by the ``force_redirects``
-configuration option, which is only enabled for ``html`` by default (see below).
+``View::createRouteRedirect`` redirects to a route.
 
 There are several more methods on the ``View`` class, here is a list of all
 the important ones for configuring the view:
@@ -166,8 +161,6 @@ the important ones for configuring the view:
 * ``setRouteParameters($parameters)`` - Set the parameters for the route.
 * ``setResponse(Response $response)`` - The response instance that is populated
   by the ``ViewHandler``.
-
-See `this example code`_ for more details.
 
 Forms and Views
 ---------------
@@ -289,12 +282,9 @@ the task without any client modifications.
 Configuration
 -------------
 
-The ``formats`` and ``templating_formats`` settings determine which formats are
-respectively supported by the serializer and by the template layer. In other
-words any format listed in ``templating_formats`` will require a template for
-rendering using the ``templating`` service, while any format listed in
-``formats`` will use the serializer for rendering.  For both settings a
-value of ``false`` means that the given format is disabled.
+The ``formats`` setting determines which formats are supported by the serializer.
+Any format listed in ``formats`` will use the serializer for rendering. A value
+of ``false`` means that the given format is disabled.
 
 When using ``RouteRedirectView::create()`` the default behavior of forcing a
 redirect to the route when HTML is enabled, but this needs to be enabled for other
@@ -303,107 +293,6 @@ formats as needed.
 Finally the HTTP response status code for failed validation defaults to
 ``400``. Note when changing the default you can use name constants of
 ``Symfony\Component\HttpFoundation\Response`` class or an integer status code.
-
-You can also set the default templating engine to something different than the
-default of ``twig``:
-
-.. code-block:: yaml
-
-    # app/config/config.yml
-    fos_rest:
-        view:
-            formats:
-                rss: true
-                xml: false
-            templating_formats:
-                html: true
-            force_redirects:
-                html: true
-            failed_validation: HTTP_BAD_REQUEST
-            default_engine: twig
-
-See `this example configuration`_ for more details.
-
-Custom handler
---------------
-
-While many things should be possible via the serializer, in some cases
-it might not be enough. For example you might need some custom logic to be
-executed in the ``ViewHandler``. For these cases one might want to register a
-custom handler for a specific format. The custom handler can either be
-registered by defining a custom service, via a compiler pass, or it can be
-registered from inside the controller action.
-
-The callable will receive 3 parameters:
-
-* the instance of the ``ViewHandler``
-* the instance of the ``View``
-* the instance of the ``Request``
-
-Note there are several public methods on the ``ViewHandler`` which can be helpful:
-
-* ``isFormatTemplating()``
-* ``createResponse()``
-* ``createRedirectResponse()``
-* ``renderTemplate()``
-
-There is an example inside LiipHelloBundle to show how to register a custom handler
-(for an RSS feed):
-https://github.com/liip/LiipHelloBundle/blob/master/View/RSSViewHandler.php
-https://github.com/liip/LiipHelloBundle/blob/master/Resources/config/config.yml
-
-There is another example in ``Resources\doc\examples``:
-https://github.com/FriendsOfSymfony/FOSRestBundle/blob/master/Resources/doc/examples/RssHandler.php
-
-Here is an example using a closure registered inside a Controller action:
-
-.. code-block:: php
-
-    <?php
-
-    namespace AppBundle\Controller;
-
-    use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-    use FOS\RestBundle\View\View;
-
-    class UsersController extends Controller
-    {
-        public function getUsersAction()
-        {
-            $view = View::create();
-
-            // ...
-
-            $handler = $this->get('fos_rest.view_handler');
-            if (!$handler->isFormatTemplating($view->getFormat())) {
-                $templatingHandler = function ($handler, $view, $request) {
-                    // if a template is set, render it using the 'params'
-                    // and place the content into the data
-                    if ($view->getTemplate()) {
-                        $data = $view->getData();
-
-                        if (empty($data['params'])) {
-                            $params = array();
-                        } else {
-                            $params = $data['params'];
-                            unset($data['params']);
-                        }
-
-                        $view->setData($params);
-                        $data['html'] = $handler->renderTemplate($view, 'html');
-
-                        $view->setData($data);
-                    }
-
-                    return $handler->createResponse($view, $request, $format);
-                };
-
-                $handler->registerHandler($view->getFormat(), $templatingHandler);
-            }
-
-            return $handler->handle($view);
-        }
-    }
 
 JSONP custom handler
 ~~~~~~~~~~~~~~~~~~~~
@@ -417,7 +306,6 @@ Simply add the following to your configuration
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         view:
             jsonp_handler: ~
@@ -428,7 +316,6 @@ is valid or not.
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         view:
             jsonp_handler:
@@ -438,7 +325,6 @@ Finally the filter can also be disabled by setting it to false.
 
 .. code-block:: yaml
 
-    # app/config/config.yml
     fos_rest:
         view:
             jsonp_handler:
@@ -468,8 +354,6 @@ That was it!
 .. _`Symfony Serializer Component`: http://symfony.com/doc/current/components/serializer.html
 .. _`serializer`: https://github.com/schmittjoh/serializer
 .. _`JMSSerializerBundle`: https://github.com/schmittjoh/JMSSerializerBundle
-.. _`this example code`: https://github.com/liip/LiipHelloBundle/blob/master/Controller/HelloController.php
-.. _`this example configuration`: https://github.com/liip-forks/symfony-standard/blob/techtalk/app/config/config.yml
 .. _`CVE-2014-4671`: http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-4671
 .. _`Abusing JSONP with Rosetta Flash`: http://miki.it/blog/2014/7/8/abusing-jsonp-with-rosetta-flash/
 .. _`NelmioSecurityBundle`: https://github.com/nelmio/NelmioSecurityBundle

@@ -2,13 +2,18 @@
 
 namespace App\Controller;
 
+use MercadoPago;
+
 use App\Entity\Publicacion;
 use App\Entity\User;
+use App\Entity\MP;
 use App\Entity\PublicacionServicios;
 use App\Entity\PublicacionEmprendimientos;
 use App\Entity\CategoriasHijas;
 use App\Entity\Categorias;
+use App\Entity\Emprendimientos;
 use App\Entity\ImagenesPublicacion;
+use App\Entity\Servicios;
 use App\Security\Permission;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
@@ -21,7 +26,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
-use App\Controller\MercadoPago\Payment;
+
+/**
+ * Class PublicacionController
+ *
+ * @Route("/api")
+ */
 
 class PublicacionController extends AbstractFOSRestController
 {
@@ -35,8 +45,13 @@ class PublicacionController extends AbstractFOSRestController
 
     /**
      * Retorna el listado de publicaciones
-     * @Rest\Get("/get_publicaciones", name="get_publicaciones")
-     *
+     * @Rest\Route(
+     *    "/get_publicaciones", 
+     *    name="get_publicaciones",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de publicaciones"
@@ -78,8 +93,13 @@ class PublicacionController extends AbstractFOSRestController
     }
     /**
      * Genera una nueva  publicacion con los datos correspondientes 
-     * @Rest\Post("/nueva_publicacion", name="nueva_publicacion")
-     *
+     * @Rest\Route(
+     *    "/nueva_publicacion", 
+     *    name="nueva_publicacion",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se genero una publicacion"
@@ -88,8 +108,7 @@ class PublicacionController extends AbstractFOSRestController
      * @SWG\Response(
      *     response=500,
      *     description="No se pudo generar publicacion"
-     * )
-     
+     * )     
      *   @SWG\Parameter(
      *     name="titulo",
      *       in="body",
@@ -156,20 +175,29 @@ class PublicacionController extends AbstractFOSRestController
      *     description="categoriasHija elegida  ",
      *      schema={
      *     }
-     * )   
+     * )  
+     *   @SWG\Parameter(
+     *     name="destacada",
+     *       in="body",
+     *     type="boolean",
+     *     description="destacada   ",
+     *      schema={
+     *     }
+     * )    
      * @SWG\Tag(name="Publicaciones")
      */
     public function nueva_publicacion(EntityManagerInterface $em, Request $request)
     {
         $titulo = $request->request->get("titulo");
         $importe = $request->request->get("importe");
-        $fecha = $request->request->get("fecha");
+        //$fecha = $request->request->get("fecha");
         $observaciones = $request->request->get("observaciones");
         $imagenes = $request->request->get("imagenes");
         $imgPrimera = $request->request->get("imgPrimera");
         $categoria = $request->request->get("categoria");
         $categoriasHija = $request->request->get("categoriasHija");
-        $fecha = new Datetime($fecha);
+        $destacada = $request->request->get("destacada");
+        $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
 
         try {
@@ -190,7 +218,8 @@ class PublicacionController extends AbstractFOSRestController
                 $observaciones,
                 $usuario,
                 $categoriaPadre,
-                $categoriasHija
+                $categoriasHija,
+                $destacada
             );
             $em->persist($nuevaPublicacion);
             $em->flush();
@@ -241,107 +270,17 @@ class PublicacionController extends AbstractFOSRestController
             $response
         );
     }
-    /** 
-     * Retorna el listado de publicaciones ES TEST
-     * @Rest\Get("/getImagen", name="getImagen")
-     *
-     * @SWG\Response(
-     *     response=200,
-     *     description="Se obtuvo el listado de getImagen"
-     * )
-     *
-     * @SWG\Response(
-     *     response=500,
-     *     description="No se pudo obtener el listado de getImagen"
-     * )
-    
-     * @SWG\Tag(name="Publicaciones")
-     */
-    public function getImagen(EntityManagerInterface $em, Request $request)
-    {
-        $errors = [];
-        try {
-            $code = 200;
-            $error = false;
-            $img = file_get_contents(
-                'images/image2.png'
-            );
 
-            // Encode the image string data into base64 
-            $data = base64_encode($img);
-        } catch (\Exception $ex) {
-            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
-            $error = true;
-            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
-        }
-
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? $data : $message,
-        ];
-        return new JsonResponse(
-            $response
-        );
-    }
-
-    /**
-     * Retorna el listado de publicaciones ES TEST
-     * @Rest\Post("/addImagen", name="addImagen")
-     *
-     * @SWG\Response(
-     *     response=200,
-     *     description="Se obtuvo el listado de getImagen"
-     * )
-     *
-     * @SWG\Response(
-     *     response=500,
-     *     description="No se pudo obtener el listado de getImagen"
-     * )
-     *  @SWG\Parameter(
-     *     name="imagen",
-     *       in="body",
-     *     type="array",
-     *     description="imagen elegida  ",
-     *      schema={
-     *     }
-     * )
-     * @SWG\Tag(name="Publicaciones")
-     */
-    public function addImagen(EntityManagerInterface $em, Request $request)
-    {
-
-        $errors = [];
-        try {
-            $code = 200;
-            $error = false;
-            $img = $request->request->get("imagen");
-            //ANDAAAAAAAAA           
-            $img = str_replace('data:image/jpeg;base64,', '', $img);
-
-            $data = base64_decode($img);
-            $filepath = "images/image2.png";
-            file_put_contents($filepath, $data);
-        } catch (\Exception $ex) {
-            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
-            $error = true;
-            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
-        }
-
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? "bien" : $message,
-        ];
-        return new JsonResponse(
-            $response
-        );
-    }
 
     /**
      * Busca la publicacion por un titulo que se le pasa por parametro, busca productos,servicios y emprendimientos
-     * @Rest\Post("/getPublicacionesPorNombre", name="getPublicacionesPorNombre")
-     *
+     * @Rest\Route(
+     *    "/getPublicacionesPorNombre", 
+     *    name="getPublicacionesPorNombre",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de publicaciones"
@@ -372,9 +311,10 @@ class PublicacionController extends AbstractFOSRestController
             $array_new = [];
             $arrayCompleto = [];
             $publicaciones = $em->getRepository(Publicacion::class)->getPublicacionesPorTitulo($titulo, $em);
-            
+
             foreach ($publicaciones as $value) {
-                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);              
+                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);
+                $categoria = $em->getRepository(Categorias::class)->find($value["categoria_id"]);
                 $ubicacion = 'imagenes/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
@@ -386,15 +326,19 @@ class PublicacionController extends AbstractFOSRestController
                     'precio' => $value["precio"],
                     'titulo' => $value["titulo"],
                     'descripcion' => $value["descripcion"],
+                    'destacado' => $value["destacada"],
                     'imagen' => $data,
-                    'telefono'=>$usuario->getTelefono()
+                    'telefono' => $usuario->getTelefono(),
+                    'padre' => $categoria->getNombre()
                 ];
                 array_push($arrayCompleto, $array_new);
             }
 
             $publicaciones = $em->getRepository(PublicacionServicios::class)->getPublicacionesPorTitulo($titulo, $em);
             foreach ($publicaciones as $value) {
-                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);      
+                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);
+                $servicio = $em->getRepository(Servicios::class)->find($value["servicio_id_id"]);
+
                 $ubicacion = 'imagenesServicios/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
@@ -406,8 +350,10 @@ class PublicacionController extends AbstractFOSRestController
                     'precio' => $value["precio"],
                     'titulo' => $value["titulo"],
                     'descripcion' => $value["descripcion"],
+                    'destacado' => $value["destacada"],
                     'imagen' => $data,
-                    'telefono'=>$usuario->getTelefono()
+                    'telefono' => $usuario->getTelefono(),
+                    'padre' => $servicio->getNombre()
 
                 ];
                 array_push($arrayCompleto, $array_new);
@@ -415,6 +361,7 @@ class PublicacionController extends AbstractFOSRestController
             $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->getPublicacionesPorTitulo($titulo, $em);
             foreach ($publicaciones as $value) {
                 $usuario = $em->getRepository(User::class)->find($value["idusuari_id_id"]);
+                $emprendimiento = $em->getRepository(Emprendimientos::class)->find($value["emprendimiento_id"]);
                 $ubicacion = 'imagenesEmprendimientos/' . $value["id"] . '-0.png';
                 $img = file_get_contents(
                     $ubicacion
@@ -427,7 +374,9 @@ class PublicacionController extends AbstractFOSRestController
                     'titulo' => $value["titulo"],
                     'descripcion' => $value["descripcion"],
                     'imagen' => $data,
-                    'telefono'=>$usuario->getTelefono()
+                    'destacado' => $value["destacada"],
+                    'telefono' => $usuario->getTelefono(),
+                    'padre' => $emprendimiento->getNombre()
                 ];
                 array_push($arrayCompleto, $array_new);
             }
@@ -450,8 +399,13 @@ class PublicacionController extends AbstractFOSRestController
 
     /**
      * Retorna  las publicaciones que pertenecen al id de la categoria principal pasada por parametro
-     * @Rest\Post("/getpublicacionescategoria", name="getpublicacionescategoria")
-     *
+     * @Rest\Route(
+     *    "/getpublicacionescategoria", 
+     *    name="getpublicacionescategoria",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de publicaciones"
@@ -502,8 +456,13 @@ class PublicacionController extends AbstractFOSRestController
 
     /**
      * Retorna el listado de imagenes de una publicacion en particular
-     * @Rest\Post("/getImagenesPublicacion", name="getImagenesPublicacion")
-     *
+     * @Rest\Route(
+     *    "/getImagenesPublicacion", 
+     *    name="getImagenesPublicacion",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de imagnes"
@@ -566,10 +525,16 @@ class PublicacionController extends AbstractFOSRestController
         );
     }
 
+
     /**
-     * Retorna el listado de imagenes de una publicacion en particular
-     * @Rest\Post("/process_payment", name="process_payment")
-     *
+     * @Rest\Route(
+     *    "/process_payment", 
+     *    name="process_payment",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )
+     * 
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de imagnes"
@@ -591,31 +556,83 @@ class PublicacionController extends AbstractFOSRestController
      */
     public function pago()
     {
-        MercadoPago\SDK::setAccessToken("YOUR_ACCESS_TOKEN");
+        /*     // Agrega credenciales
+        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
 
-        $payment = new MercadoPago\Payment();
-        $payment->transaction_amount = (float)$_POST['transactionAmount'];
-        $payment->token = $_POST['token'];
-        $payment->description = $_POST['description'];
-        $payment->installments = (int)$_POST['installments'];
-        $payment->payment_method_id = $_POST['paymentMethodId'];
-        $payment->issuer_id = (int)$_POST['issuer'];
+// Crea un objeto de preferencia
+        $preference = new MercadoPago\Preference();
 
-        $payer = new MercadoPago\Payer();
-        $payer->email = $_POST['email'];
-        $payer->identification = array(
-            "type" => $_POST['docType'],
-            "number" => $_POST['docNumber']
+// Crea un ítem en la preferencia
+        $item = new MercadoPago\Item();
+        $item->title = 'Mi producto';
+        $item->description = 'Descripción de Mi producto';
+        $item->quantity = 1;
+        $item->unit_price = 75;
+        $preference->items = array($item);   
+        $preference->save();
+
+        return $this->render('index.html.twig'); */
+        /* public key TEST-062c5ddc-eeb4-40c6-b068-efde028b2af1 */
+
+        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647'); // Either Production or SandBox AccessToken
+        // Crea un objeto de preferencia
+        $preference = new MercadoPago\Preference();
+        $mp = new MP("2514124411818500", "TEST-062c5ddc-eeb4-40c6-b068-efde028b2af1");
+        $mp->sandbox_mode(TRUE);
+        // Armamos un array de Items, para reutilizar el codigo con mas de un producto.
+        $items = array();
+        $titulo =  "Curso de Symfony 3";
+        $cantidad =  2;
+        $precio = 100;
+        $item = array("title" => $titulo, "quantity" => $cantidad, "currency_id" => "ARS", "unit_price" => $precio);
+        array_push($items, $item);
+
+        // URLs de retorno a nuestro sistema.
+        $back = array(
+            "success" => 'http://localhost/BLOOMIT/web/respuestapago/success',
+            "failure" => 'http://localhost/BLOOMIT/web/respuestapago/failure',
+            "pending" => 'http://localhost/BLOOMIT/web/respuestapago/pending'
         );
-        $payment->payer = $payer;
 
-        $payment->save();
-
-        $response = array(
-            'status' => $payment->status,
-            'status_detail' => $payment->status_detail,
-            'id' => $payment->id
+        //
+        $preference_data = array(
+            "items" => $items,
+            "back_urls" => $back,
+            "external_reference" => "1"
         );
-        echo json_encode($response);
+
+        $preference = $mp->create_preference($preference_data);
+
+        return $this->render('default/mercadopago.html.twig', [
+            'url' => $preference['response']['sandbox_init_point'],
+        ]);
+
+
+
+
+
+
+
+
+
+
+        // Crea un ítem en la preferencia
+        /*  $item = new MercadoPago\Item();
+        $item->title = 'Mi producto';
+        $item->description = 'Descripción de Mi producto';
+        $item->quantity = 1;
+        $item->unit_price = 75;
+        $preference->items = array($item);
+        $preference->save();
+        $code = 200;
+        $error = false;
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $preference
+        ];
+        return new JsonResponse(
+            $response
+        ); */
     }
 }

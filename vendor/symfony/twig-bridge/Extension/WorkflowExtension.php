@@ -21,6 +21,8 @@ use Twig\TwigFunction;
  * WorkflowExtension.
  *
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
+ *
+ * @final since Symfony 4.4
  */
 class WorkflowExtension extends AbstractExtension
 {
@@ -31,6 +33,9 @@ class WorkflowExtension extends AbstractExtension
         $this->workflowRegistry = $workflowRegistry;
     }
 
+    /**
+     * @return TwigFunction[]
+     */
     public function getFunctions()
     {
         return [
@@ -112,7 +117,7 @@ class WorkflowExtension extends AbstractExtension
      *                                                Use a string (the place name) to get place metadata
      *                                                Use a Transition instance to get transition metadata
      */
-    public function getMetadata($subject, string $key, $metadataSubject = null, string $name = null): ?string
+    public function getMetadata($subject, string $key, $metadataSubject = null, string $name = null)
     {
         return $this
             ->workflowRegistry

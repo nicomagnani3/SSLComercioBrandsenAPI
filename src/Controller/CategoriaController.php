@@ -15,7 +15,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
-
+/**
+ * Class CategoriaController
+ *
+ * @Route("/api")
+ */
 class CategoriaController extends AbstractFOSRestController
 {
     private $permission;
@@ -27,8 +31,14 @@ class CategoriaController extends AbstractFOSRestController
 
     /**
      * Retorna el listado de categorias
-     * @Rest\Get("/get_categorias", name="get_categorias")
-     *
+     * @Rest\Route(
+     *    "/get_categorias", 
+     *    name="get_categorias",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )
+     * 
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de categorias"
@@ -72,7 +82,13 @@ class CategoriaController extends AbstractFOSRestController
     }
     /**
      * Retorna el listado de categorias hijas de una categoria en particular
-     * @Rest\Get("/get_categoriasHijas", name="/get_categoriasHijas")
+     * @Rest\Route(
+     *    "/get_categoriasHijas", 
+     *    name="get_categoriasHijas",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )
      *
      * @SWG\Response(
      *     response=200,

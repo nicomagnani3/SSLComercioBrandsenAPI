@@ -11,26 +11,45 @@
 
 namespace FOS\RestBundle\EventListener;
 
+@trigger_error(sprintf('The %s\ExceptionListener class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use FOS\RestBundle\FOSRestBundle;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
-use Symfony\Component\HttpKernel\EventListener\ExceptionListener as HttpKernelExceptionListener;
+use Symfony\Component\Debug\Exception\FlattenException as LegacyFlattenException;
+use Symfony\Component\ErrorHandler\Exception\FlattenException;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\EventListener\ExceptionListener as LegacyExceptionListener;
+use Symfony\Component\HttpKernel\EventListener\ErrorListener;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 
 /**
  * ExceptionListener.
  *
  * @author Ener-Getick <egetick@gmail.com>
  *
- * @internal
+ * @deprecated since 2.8
  */
-class ExceptionListener extends HttpKernelExceptionListener
+class ExceptionListener implements EventSubscriberInterface
 {
+    private $exceptionListener;
+    private $dispatcher;
+
+    public function __construct($exceptionListener, EventDispatcherInterface $dispatcher)
+    {
+        if (!$exceptionListener instanceof ErrorListener && !$exceptionListener instanceof LegacyExceptionListener) {
+            throw new \TypeError(sprintf('The first argument of %s() must be an instance of %s or %s (%s given).', __METHOD__, ErrorListener::class, LegacyExceptionListener::class, is_object($errorListener) ? get_class($errorListener) : gettype($errorListener)));
+        }
+
+        $this->exceptionListener = $exceptionListener;
+        $this->dispatcher = $dispatcher;
+    }
+
     /**
-     * {@inheritdoc}
+     * @param ExceptionEvent $event
      */
-    public function onKernelException(GetResponseForExceptionEvent $event)
+    public function onKernelException($event)
     {
         $request = $event->getRequest();
 
@@ -38,7 +57,28 @@ class ExceptionListener extends HttpKernelExceptionListener
             return;
         }
 
-        parent::onKernelException($event);
+        if (method_exists($event, 'getThrowable')) {
+            $exception = $event->getThrowable();
+        } else {
+            $exception = $event->getException();
+        }
+
+        $controllerArgsListener = function ($event) use (&$controllerArgsListener, $exception) {
+            /** @var ControllerArgumentsEvent $event */
+            $arguments = $event->getArguments();
+            foreach ($arguments as $k => $argument) {
+                if ($argument instanceof FlattenException || $argument instanceof LegacyFlattenException) {
+                    $arguments[$k] = $exception;
+                    $event->setArguments($arguments);
+
+                    break;
+                }
+            }
+            $this->dispatcher->removeListener(KernelEvents::CONTROLLER_ARGUMENTS, $controllerArgsListener);
+        };
+        $this->dispatcher->addListener(KernelEvents::CONTROLLER_ARGUMENTS, $controllerArgsListener, -100);
+
+        $this->exceptionListener->onKernelException($event);
     }
 
     /**
@@ -46,24 +86,8 @@ class ExceptionListener extends HttpKernelExceptionListener
      */
     public static function getSubscribedEvents()
     {
-        return array(
-            KernelEvents::EXCEPTION => array('onKernelException', -100),
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function duplicateRequest(\Exception $exception, Request $request)
-    {
-        $attributes = array(
-            '_controller' => $this->controller,
-            'exception' => $exception,
-            'logger' => $this->logger instanceof DebugLoggerInterface ? $this->logger : null,
-        );
-        $request = $request->duplicate(null, null, $attributes);
-        $request->setMethod('GET');
-
-        return $request;
+        return [
+            KernelEvents::EXCEPTION => ['onKernelException', -100],
+        ];
     }
 }

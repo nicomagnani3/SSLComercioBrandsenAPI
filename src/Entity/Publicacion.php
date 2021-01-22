@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\AbstractClass\PublicacionAbstract;
+
 /**
 
  * @ORM\Entity(repositoryClass="App\Repository\PublicacionRepository")
@@ -19,7 +20,7 @@ class Publicacion extends PublicacionAbstract
      */
     private $id;
 
-  
+
 
     /**
      * @ORM\Column(type="datetime")
@@ -34,13 +35,13 @@ class Publicacion extends PublicacionAbstract
     /**
      * @ORM\Column(type="decimal", precision=18, scale=2, nullable=true)
      */
-    private $precio;  
+    private $precio;
 
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
-    private $descripcion;   
+    private $descripcion;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="publicaciones")
@@ -48,7 +49,7 @@ class Publicacion extends PublicacionAbstract
      */
     private $IDusuario;
 
-    
+
 
 
     /**
@@ -61,13 +62,18 @@ class Publicacion extends PublicacionAbstract
      */
     private $categoriaHija;
 
-  
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $destacada;
 
-   
+
+
+
+
 
     public function __construct()
     {
-      
     }
 
     public function getId(): ?int
@@ -75,8 +81,8 @@ class Publicacion extends PublicacionAbstract
         return $this->id;
     }
 
- 
-  
+
+
 
 
     public function getFecha(): ?\DateTimeInterface
@@ -115,18 +121,6 @@ class Publicacion extends PublicacionAbstract
         return $this;
     }
 
-    public function getEsOferta(): ?bool
-    {
-        return $this->esOferta;
-    }
-
-    public function setEsOferta(?bool $esOferta): self
-    {
-        $this->esOferta = $esOferta;
-
-        return $this;
-    }
-  
 
     public function getdescripcion(): ?string
     {
@@ -139,7 +133,7 @@ class Publicacion extends PublicacionAbstract
 
         return $this;
     }
-  
+
     public function getIDusuario(): ?User
     {
         return $this->IDusuario;
@@ -152,9 +146,9 @@ class Publicacion extends PublicacionAbstract
         return $this;
     }
 
-   
 
-    
+
+
 
     public function getCategoria(): ?Categorias
     {
@@ -180,11 +174,17 @@ class Publicacion extends PublicacionAbstract
         return $this;
     }
 
-   
+    public function getDestacada(): ?bool
+    {
+        return $this->destacada;
+    }
 
-  
-   
-    
+    public function setDestacada(?bool $destacada): self
+    {
+        $this->destacada = $destacada;
 
-  
+        return $this;
+    }
+
+   
 }

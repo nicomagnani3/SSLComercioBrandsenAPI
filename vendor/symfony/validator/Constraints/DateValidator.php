@@ -21,20 +21,14 @@ use Symfony\Component\Validator\Exception\UnexpectedValueException;
  */
 class DateValidator extends ConstraintValidator
 {
-    const PATTERN = '/^(\d{4})-(\d{2})-(\d{2})$/';
+    public const PATTERN = '/^(\d{4})-(\d{2})-(\d{2})$/';
 
     /**
      * Checks whether a date is valid.
      *
-     * @param int $year  The year
-     * @param int $month The month
-     * @param int $day   The day
-     *
-     * @return bool Whether the date is valid
-     *
      * @internal
      */
-    public static function checkDate($year, $month, $day)
+    public static function checkDate(int $year, int $month, int $day): bool
     {
         return checkdate($month, $day, $year);
     }
@@ -45,7 +39,7 @@ class DateValidator extends ConstraintValidator
     public function validate($value, Constraint $constraint)
     {
         if (!$constraint instanceof Date) {
-            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Date');
+            throw new UnexpectedTypeException($constraint, Date::class);
         }
 
         if (null === $value || '' === $value) {
@@ -53,7 +47,7 @@ class DateValidator extends ConstraintValidator
         }
 
         if ($value instanceof \DateTimeInterface) {
-            @trigger_error(sprintf('Validating a \\DateTimeInterface with "%s" is deprecated since version 4.2. Use "%s" instead or remove the constraint if the underlying model is already type hinted to \\DateTimeInterface.', Date::class, Type::class), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Validating a \\DateTimeInterface with "%s" is deprecated since version 4.2. Use "%s" instead or remove the constraint if the underlying model is already type hinted to \\DateTimeInterface.', Date::class, Type::class), \E_USER_DEPRECATED);
 
             return;
         }

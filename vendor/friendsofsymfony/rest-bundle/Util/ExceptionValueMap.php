@@ -16,6 +16,8 @@ namespace FOS\RestBundle\Util;
  * Resolves value by exception.
  *
  * @author Mikhail Shamin <munk13@gmail.com>
+ *
+ * @internal since 2.8
  */
 class ExceptionValueMap
 {
@@ -23,13 +25,11 @@ class ExceptionValueMap
      * Map of values mapped to exception class
      * key => exception class
      * value => value associated with exception.
-     *
-     * @var array
      */
     private $map;
 
     /**
-     * @param array $map
+     * @param array<string,bool>|array<string,int> $map
      */
     public function __construct(array $map)
     {
@@ -39,23 +39,37 @@ class ExceptionValueMap
     /**
      * Resolves the value corresponding to an exception object.
      *
-     * @param \Exception $exception
-     *
-     * @return mixed|false Value found or false is not found
+     * @return bool|int|false Value found or false is not found
      */
     public function resolveException(\Exception $exception)
+    {
+        return $this->resolveThrowable($exception);
+    }
+
+    /**
+     * Resolves the value corresponding to an exception object.
+     *
+     * @return bool|int|false Value found or false is not found
+     *
+     * @internal since 2.8
+     */
+    public function resolveThrowable(\Throwable $exception)
     {
         return $this->doResolveClass(get_class($exception));
     }
 
     /**
-     * Resolves the value corresponding to an exception class.
-     *
-     * @param string $class
-     *
-     * @return mixed|false if not found
+     * @internal
      */
-    private function doResolveClass($class)
+    public function resolveFromClassName(string $className)
+    {
+        return $this->doResolveClass($className);
+    }
+
+    /**
+     * @return bool|int|false if not found
+     */
+    private function doResolveClass(string $class)
     {
         foreach ($this->map as $mapClass => $value) {
             if (!$value) {

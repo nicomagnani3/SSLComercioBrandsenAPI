@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+
 use App\Entity\ImagenesPublicacion;
 use App\Entity\Categoria;
 use App\Security\Permission;
@@ -16,19 +17,30 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
 
+/**
+ * Class ImagenesPublicacionController
+ *
+ * @Route("/api")
+ */
 class ImagenesPublicacionController extends AbstractFOSRestController
 {
     private $permission;
 
 
-    public function __construct (Permission $permission) {
+    public function __construct(Permission $permission)
+    {
         $this->permission = $permission;
     }
 
     /**
      * Retorna el listado de imagnes
-     * @Rest\Get("/get_imagenes", name="get_imagenes")
-     *
+     * @Rest\Route(
+     *    "/get_imagenes", 
+     *    name="get_imagenes",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
      * @SWG\Response(
      *     response=200,
      *     description="Se obtuvo el listado de imagenes"
@@ -43,18 +55,16 @@ class ImagenesPublicacionController extends AbstractFOSRestController
      */
     public function Imagenes(EntityManagerInterface $em, Request $request)
     {
-    
+
         $errors = [];
         try {
             $code = 200;
             $error = false;
             $imagenes = $em->getRepository(ImagenesPublicacion::class)->findAll();
-         
-            $array = array_map(function ($item) {               
-                    return $item->getArray();               
-               
+
+            $array = array_map(function ($item) {
+                return $item->getArray();
             }, $imagenes);
-           
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;

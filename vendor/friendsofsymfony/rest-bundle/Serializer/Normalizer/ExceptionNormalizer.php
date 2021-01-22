@@ -11,12 +11,16 @@
 
 namespace FOS\RestBundle\Serializer\Normalizer;
 
+@trigger_error(sprintf('The %s\ExceptionNormalizer class is deprecated since FOSRestBundle 2.8.', __NAMESPACE__), E_USER_DEPRECATED);
+
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * Normalizes Exception instances.
  *
  * @author Ener-Getick <egetick@gmail.com>
+ *
+ * @deprecated since 2.8
  */
 class ExceptionNormalizer extends AbstractExceptionNormalizer implements NormalizerInterface
 {
@@ -29,9 +33,11 @@ class ExceptionNormalizer extends AbstractExceptionNormalizer implements Normali
 
         if (isset($context['template_data']['status_code'])) {
             $data['code'] = $statusCode = $context['template_data']['status_code'];
+        } elseif (isset($context['status_code'])) {
+            $data['code'] = $statusCode = $context['status_code'];
         }
 
-        $data['message'] = $this->getExceptionMessage($object, isset($statusCode) ? $statusCode : null);
+        $data['message'] = $this->getMessageFromThrowable($object, isset($statusCode) ? $statusCode : null);
 
         return $data;
     }
@@ -41,6 +47,6 @@ class ExceptionNormalizer extends AbstractExceptionNormalizer implements Normali
      */
     public function supportsNormalization($data, $format = null)
     {
-        return $data instanceof \Exception;
+        return $data instanceof \Throwable;
     }
 }

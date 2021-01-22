@@ -32,6 +32,8 @@ use Symfony\Component\Validator\ConstraintViolation;
  * @author Lukas Kahwe Smith <smith@pooteeweet.org>
  * @author Jordi Boggiano <j.boggiano@seld.be>
  * @author Boris Guéry <guery.b@gmail.com>
+ *
+ * @final since 2.8
  */
 class ParamFetcher implements ParamFetcherInterface
 {
@@ -42,16 +44,12 @@ class ParamFetcher implements ParamFetcherInterface
     private $requestStack;
     private $validator;
 
-    /**
-     * Initializes fetcher.
-     *
-     * @param ContainerInterface   $container
-     * @param ParamReaderInterface $paramReader
-     * @param RequestStack         $requestStack
-     * @param ValidatorInterface   $validator
-     */
     public function __construct(ContainerInterface $container, ParamReaderInterface $paramReader, RequestStack $requestStack, ValidatorInterface $validator = null)
     {
+        if (null === $validator) {
+            @trigger_error(sprintf('Using no validator is deprecated since FOSRestBundle 2.6. The `$validator` constructor argument of the `%s` will become mandatory in 3.0.', __CLASS__), E_USER_DEPRECATED);
+        }
+
         $this->container = $container;
         $this->requestStack = $requestStack;
         $this->validator = $validator;
@@ -71,8 +69,6 @@ class ParamFetcher implements ParamFetcherInterface
      * Add additional params to the ParamFetcher during runtime.
      *
      * Note that adding a param that has the same name as an existing param will override that param.
-     *
-     * @param ParamInterface $param
      */
     public function addParam(ParamInterface $param)
     {
@@ -110,34 +106,23 @@ class ParamFetcher implements ParamFetcherInterface
     }
 
     /**
-     * @param ParamInterface $param
-     * @param mixed          $paramValue
-     * @param bool           $strict
-     * @param mixed          $default
-     *
-     * @throws BadRequestHttpException
-     * @throws \RuntimeException
-     *
-     * @return mixed
-     *
      * @internal
      */
-    protected function cleanParamWithRequirements(ParamInterface $param, $paramValue, $strict, $default)
+    protected function cleanParamWithRequirements(ParamInterface $param, $paramValue, bool $strict, $default)
     {
         $this->checkNotIncompatibleParams($param);
         if (null !== $default && $default === $paramValue) {
             return $paramValue;
         }
 
+        if (null === $this->validator) {
+            throw new \RuntimeException('The ParamFetcher requirements feature requires the symfony/validator component.');
+        }
+
         $constraints = $param->getConstraints();
         $this->resolveConstraints($constraints);
         if (empty($constraints)) {
             return $paramValue;
-        }
-        if (null === $this->validator) {
-            throw new \RuntimeException(
-                'The ParamFetcher requirements feature requires the symfony/validator component.'
-            );
         }
 
         try {
@@ -146,14 +131,14 @@ class ParamFetcher implements ParamFetcherInterface
             $violation = new ConstraintViolation(
                 $e->getMessage(),
                 $e->getMessage(),
-                array(),
+                [],
                 $paramValue,
                 '',
                 null,
                 null,
                 $e->getCode()
             );
-            $errors = new ConstraintViolationList(array($violation));
+            $errors = new ConstraintViolationList([$violation]);
         }
 
         if (0 < count($errors)) {
@@ -183,14 +168,6 @@ class ParamFetcher implements ParamFetcherInterface
     }
 
     /**
-     * Check if current param is not in conflict with other parameters
-     * according to the "incompatibles" field.
-     *
-     * @param ParamInterface $param the configuration for the param fetcher
-     *
-     * @throws InvalidArgumentException
-     * @throws BadRequestHttpException
-     *
      * @internal
      */
     protected function checkNotIncompatibleParams(ParamInterface $param)
@@ -208,7 +185,7 @@ class ParamFetcher implements ParamFetcherInterface
 
             if (null !== $incompatibleParam->getValue($this->getRequest(), null)) {
                 $exceptionMessage = sprintf(
-                    "'%s' param is incompatible with %s param.",
+                    '"%s" param is incompatible with %s param.',
                     $param->getName(),
                     $incompatibleParam->getName()
                 );
@@ -230,12 +207,7 @@ class ParamFetcher implements ParamFetcherInterface
         }
     }
 
-    /**
-     * @throws \RuntimeException
-     *
-     * @return Request
-     */
-    private function getRequest()
+    private function getRequest(): Request
     {
         $request = $this->requestStack->getCurrentRequest();
         if (null === $request) {
