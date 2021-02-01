@@ -19,7 +19,8 @@ abstract class PublicacionServicioAbstract
             'imagen'=>$data,
             'destacado'=>$this->getDestacada(),
             'telefono'=>$this->getIdusuario()->getTelefono(),
-            'padre'=>$this->getServicioId()->getNombre()
+            'padre'=>$this->getServicioId()->getNombre(),
+            'tipo'=>'SERVICIO'
           
         ];  
     }

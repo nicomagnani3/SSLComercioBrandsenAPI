@@ -213,7 +213,8 @@ class EmprendimientosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['emprendimiento' => $id]);
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['emprendimiento' => $id],
+                                                                                           ['fecha' => 'DESC']);
             $array = array_map(function ($item) {
                 return $item->getArray();
             }, $publicaciones);

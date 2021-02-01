@@ -19,32 +19,17 @@ class ImagenesPublicacionRepository extends ServiceEntityRepository
         parent::__construct($registry, ImagenesPublicacion::class);
     }
 
-    // /**
-    //  * @return ImagenesPublicacion[] Returns an array of ImagenesPublicacion objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    
+    public function borrarImagen($id)
     {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $conn = $this->getEntityManager()->getConnection();
 
-    /*
-    public function findOneBySomeField($value): ?ImagenesPublicacion
-    {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $query =  "DELETE FROM imagenes_publicacion 
+                                 where id ='$id'";        
+             
+        $stmt = $conn->prepare($query);       
+        $stmt->execute();
+        return $stmt->fetchAll();
+     
     }
-    */
 }

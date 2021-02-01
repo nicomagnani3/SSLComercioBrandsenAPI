@@ -19,7 +19,8 @@ abstract class PublicacionAbstract
             'destacado'=>$this->getDestacada(),
             'imagen'=>$data,
             'telefono'=>$this->getIDusuario()->getTelefono(),
-            'padre'=>$this->getCategoria()->getNombre()
+            'padre'=>$this->getCategoria()->getNombre(),
+            'tipo'=>'PRODUCTO'
            
         ];  
     }

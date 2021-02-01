@@ -30,4 +30,16 @@ class PublicacionEmprendimientosRepository extends ServiceEntityRepository
         return $stmt->fetchAll();
      
     }
+    public function borrarPublicacion($id)
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $query =  "DELETE FROM Publicacion_emprendimientos 
+                                 where id ='$id'";        
+             
+        $stmt = $conn->prepare($query);       
+        $stmt->execute();
+        return $stmt->fetchAll();
+     
+    }
 }

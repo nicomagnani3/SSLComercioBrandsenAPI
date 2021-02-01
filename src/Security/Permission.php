@@ -15,22 +15,31 @@ class Permission {
 
     /************ GRUPOS  *************/
 
-    public const GENERAL = [
-        'VER_PRODUCTOS',
+    public const GENERAL = [ 
+        'CREAR',  
         'CREAR_PRODUCTOS',
+        'MIS_PRODUCTOS'
      
     ];
     public const EMPRESA = [
-        'CREAR_PRODUCTO',      
+        'CREAR', 
+        'CREAR_PRODUCTO',
+        'MIS_PRODUCTOS'      
     ];
     public const COMERCIO = [
-        'CREAR_PRODUCTO',      
+        'CREAR', 
+        'CREAR_PRODUCTO',  
+        'MIS_PRODUCTOS'    
     ];
     public const EMPRENDEDOR = [
-        'CREAR_PRODUCTO',      
+        'CREAR', 
+        'CREAR_EMPRENDIMIENTO',   
+        'MIS_PRODUCTOS'   
     ];
     public const PROFESIONAL = [
-        'CREAR_PRODUCTO',      
+        'CREAR', 
+        'CREAR_SERVICIO',      
+        'MIS_PRODUCTOS'
     ];
  
     public const ADMINISTRADOR  = [
@@ -39,9 +48,9 @@ class Permission {
     public const GRUPOS = [
         'GENERAL' => self::GENERAL,
         'EMPRESA' => self::EMPRESA,     
-        'COMERCIO' => self::EMPRESA,       
-        'EMPRENDEDOR' => self::EMPRESA,       
-        'PROFESIONAL' => self::EMPRESA,
+        'COMERCIO' => self::COMERCIO,       
+        'EMPRENDEDOR' => self::EMPRENDEDOR,       
+        'PROFESIONAL' => self::PROFESIONAL,
         'ADMINISTRADOR' => self::ADMINISTRADOR
     ];
     /****************************** */

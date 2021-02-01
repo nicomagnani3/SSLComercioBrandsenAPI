@@ -14,7 +14,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
 use App\Entity\Empresa;
 use App\Entity\Cliente;
+use App\Entity\PublicacionEmprendimientos;
+use App\Entity\Publicacion;
 use App\Entity\TiposUsuarios;
+use App\Entity\PublicacionServicios;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -392,5 +395,84 @@ class UserController extends AbstractFOSRestController
         return $this->json([
             'errors' => $errors
         ], 400);
+    }
+
+    /**
+     * retorna las publicaciones,emprendimientos,servicios de los usuarios
+     * @Rest\Route(
+     *    "/get_publicaciones_usuarios", 
+     *    name="get_publicaciones_usuarios",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvieron las publicaciones  del usuario"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="no se pudieron obtener"
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="id",
+     *     in="body",
+     *     type="id",
+     *     description="The id del usuario",
+     *     schema={
+     *     }
+     * )
+     *
+     *   * @SWG\Tag(name="User")
+     */
+    public function get_productosUser(EntityManagerInterface $em, Request $request)
+    {
+        $id = $request->request->get("idUsuario");
+
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $user = $em->getRepository(User::class)->find($id);
+            $publicaciones=[];
+            if ($user->getGrupos()[0] == 'EMPRENDEDOR'){
+                $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['idusuariId' => $id]);
+            }
+            if ($user->getGrupos()[0] == 'GENERAL'){
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
+            }
+            if ($user->getGrupos()[0] == 'EMPRESA'){
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
+            }
+            if ($user->getGrupos()[0] == 'COMERCIO'){
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
+            }          
+            if ($user->getGrupos()[0] == 'PROFESIONAL'){
+                $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id]);
+            }
+
+        
+
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $publicaciones);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
     }
 }

@@ -19,7 +19,8 @@ abstract class PublicacionEmprendimientoAbstract
             'imagen'=>$data,
             'destacado'=>$this->getDestacada(),
             'telefono'=>$this->getIdusuariId()->getTelefono(),
-            'padre'=>$this->getEmprendimiento()->getNombre()
+            'padre'=>$this->getEmprendimiento()->getNombre(),
+            'tipo'=>'EMPRENDIMIENTO'
         ];  
     }
     public function crearPublicacion( $titulo,

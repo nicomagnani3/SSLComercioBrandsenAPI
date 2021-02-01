@@ -11,6 +11,8 @@ use App\Entity\PublicacionServicios;
 use App\Entity\PublicacionEmprendimientos;
 use App\Entity\CategoriasHijas;
 use App\Entity\Categorias;
+use App\Entity\ImagenesServicios;
+use App\Entity\ImagenesEmprendimientos;
 use App\Entity\Emprendimientos;
 use App\Entity\ImagenesPublicacion;
 use App\Entity\Servicios;
@@ -434,7 +436,8 @@ class PublicacionController extends AbstractFOSRestController
             $code = 200;
             $error = false;
 
-            $publicaciones = $em->getRepository(Publicacion::class)->findBy(['categoria' => $id]);
+            $publicaciones = $em->getRepository(Publicacion::class)->findBy(['categoria' => $id],
+                                                                        ['fecha' => 'DESC']);
             $array = array_map(function ($item) {
                 return $item->getArray();
             }, $publicaciones);
@@ -606,16 +609,6 @@ class PublicacionController extends AbstractFOSRestController
         return $this->render('default/mercadopago.html.twig', [
             'url' => $preference['response']['sandbox_init_point'],
         ]);
-
-
-
-
-
-
-
-
-
-
         // Crea un ítem en la preferencia
         /*  $item = new MercadoPago\Item();
         $item->title = 'Mi producto';
@@ -634,5 +627,91 @@ class PublicacionController extends AbstractFOSRestController
         return new JsonResponse(
             $response
         ); */
+    }
+    
+      /**
+     *Elimina la publicacion pasada por parametro, se pasa por parametro el tipo de publicacion (emprendimiento,producto,servicio)
+     * @Rest\Route(
+     *    "/eliminar_publicacion", 
+     *    name="eliminar_publicacion",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se elimino la publicacion"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo eliminar la publicacion"
+     * )
+     *  @SWG\Parameter(
+     *     name="idPublicacion",
+     *       in="body",
+     *     type="array",
+     *     description="idPublicacion ",
+     *      schema={
+     *     }
+     * )
+     *    @SWG\Parameter(
+     *     name="tipo",
+     *       in="body",
+     *     type="array",
+     *     description="tipo de publicacion (producto,emprnedimiento,servicio) ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function eliminarPublicacion(EntityManagerInterface $em, Request $request)
+    {
+        $idPublicacion = $request->request->get("idPublicacion");
+        $tipo = $request->request->get("tipo");       
+        try {
+            $code = 200;
+            $error = false;
+            if ($tipo == 'PRODUCTO'){
+                $publicacion = $em->getRepository(Publicacion::class)->find($idPublicacion);              
+                $imagenes = $em->getRepository(ImagenesPublicacion::class)->findBy(['publicacionId' =>  $publicacion->getId()]);               
+                foreach ($imagenes as $clave => $valor) {                 
+                    $imagen = $em->getRepository(ImagenesPublicacion::class)->borrarImagen($valor->getId());
+                }
+                $publicacion = $em->getRepository(Publicacion::class)->borrarPublicacion($idPublicacion);                        
+            }
+            if ($tipo == 'EMPRENDIMIENTO'){
+                $publicacion = $em->getRepository(PublicacionEmprendimientos::class)->find($idPublicacion);              
+                $imagenes = $em->getRepository(ImagenesEmprendimientos::class)->findBy(['emprendimientoId' =>  $publicacion->getId()]);               
+                foreach ($imagenes as $clave => $valor) {                 
+                    $imagen = $em->getRepository(ImagenesEmprendimientos::class)->borrarImagen($valor->getId());
+                }
+                $publicacion = $em->getRepository(PublicacionEmprendimientos::class)->borrarPublicacion($idPublicacion);                        
+            }
+            if ($tipo == 'SERVICIO'){
+                $publicacion = $em->getRepository(PublicacionServicios::class)->find($idPublicacion);              
+                $imagenes = $em->getRepository(ImagenesServicios::class)->findBy(['serviciosId' =>  $publicacion->getId()]);               
+                foreach ($imagenes as $clave => $valor) {                 
+                    $imagen = $em->getRepository(ImagenesServicios::class)->borrarImagen($valor->getId());
+                }
+                $publicacion = $em->getRepository(PublicacionServicios::class)->borrarPublicacion($idPublicacion);                        
+            }
+            $respuesta="Se borro con exito la publicacion";
+            
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+            $respuesta="No se pudo borrar la publicacion";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $respuesta : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
     }
 }

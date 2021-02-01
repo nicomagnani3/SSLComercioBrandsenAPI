@@ -217,7 +217,8 @@ class ServiciosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['servicioId' => $id]);
+            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['servicioId' => $id],
+                                                                                       ['fecha' => 'DESC']);
             $array = array_map(function ($item) {
                 return $item->getArray();
             }, $publicaciones);

@@ -18,33 +18,16 @@ class ImagenesEmprendimientosRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, ImagenesEmprendimientos::class);
     }
-
-    // /**
-    //  * @return ImagenesEmprendimientos[] Returns an array of ImagenesEmprendimientos objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function borrarImagen($id)
     {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $conn = $this->getEntityManager()->getConnection();
 
-    /*
-    public function findOneBySomeField($value): ?ImagenesEmprendimientos
-    {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $query =  "DELETE FROM imagenes_emprendimientos 
+                                 where id ='$id'";        
+             
+        $stmt = $conn->prepare($query);       
+        $stmt->execute();
+        return $stmt->fetchAll();
+     
     }
-    */
 }

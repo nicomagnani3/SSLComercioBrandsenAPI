@@ -29,6 +29,18 @@ class PublicacionServiciosRepository extends ServiceEntityRepository
         return $stmt->fetchAll();
      
     }
+    public function borrarPublicacion($id)
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $query =  "DELETE FROM Publicacion_servicios 
+                                 where id ='$id'";        
+             
+        $stmt = $conn->prepare($query);       
+        $stmt->execute();
+        return $stmt->fetchAll();
+     
+    }
 
     
 }
