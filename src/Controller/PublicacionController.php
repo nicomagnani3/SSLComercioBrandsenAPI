@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
+use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 
 /**
  * Class PublicacionController
@@ -337,6 +338,7 @@ class PublicacionController extends AbstractFOSRestController
             }
 
             $publicaciones = $em->getRepository(PublicacionServicios::class)->getPublicacionesPorTitulo($titulo, $em);
+            
             foreach ($publicaciones as $value) {
                 $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);
                 $servicio = $em->getRepository(Servicios::class)->find($value["servicio_id_id"]);
@@ -559,74 +561,39 @@ class PublicacionController extends AbstractFOSRestController
      */
     public function pago()
     {
-        /*     // Agrega credenciales
-        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
+     // Claves otorogadas por MP
+     $mp = new MP("50778135626636", "zi6W1vPBE77h65CoiFTQXEeh9S1jX05T");
 
-// Crea un objeto de preferencia
-        $preference = new MercadoPago\Preference();
+     // Modo SANDBOX
+     $mp->sandbox_mode(TRUE);
 
-// Crea un ítem en la preferencia
-        $item = new MercadoPago\Item();
-        $item->title = 'Mi producto';
-        $item->description = 'Descripción de Mi producto';
-        $item->quantity = 1;
-        $item->unit_price = 75;
-        $preference->items = array($item);   
-        $preference->save();
+     // Armamos un array de Items, para reutilizar el codigo con mas de un producto.
+     $items = array();
+     $titulo =  "Curso de Symfony 3";
+     $cantidad =  2;
+     $precio = 100;
+     $item = array("title" => $titulo,"quantity" => $cantidad, "currency_id" => "ARS", "unit_price" => $precio);
+     array_push($items, $item);
 
-        return $this->render('index.html.twig'); */
-        /* public key TEST-062c5ddc-eeb4-40c6-b068-efde028b2af1 */
+     // URLs de retorno a nuestro sistema.
+     $back = array(
+         "success" => 'http://localhost/BLOOMIT/web/respuestapago/success',
+         "failure" => 'http://localhost/BLOOMIT/web/respuestapago/failure',
+         "pending" => 'http://localhost/BLOOMIT/web/respuestapago/pending'
+     );
 
-        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647'); // Either Production or SandBox AccessToken
-        // Crea un objeto de preferencia
-        $preference = new MercadoPago\Preference();
-        $mp = new MP("2514124411818500", "TEST-062c5ddc-eeb4-40c6-b068-efde028b2af1");
-        $mp->sandbox_mode(TRUE);
-        // Armamos un array de Items, para reutilizar el codigo con mas de un producto.
-        $items = array();
-        $titulo =  "Curso de Symfony 3";
-        $cantidad =  2;
-        $precio = 100;
-        $item = array("title" => $titulo, "quantity" => $cantidad, "currency_id" => "ARS", "unit_price" => $precio);
-        array_push($items, $item);
+     //
+     $preference_data = array(
+         "items" => $items,
+         "back_urls"=>$back,
+         "external_reference"=> "1"
+     );
 
-        // URLs de retorno a nuestro sistema.
-        $back = array(
-            "success" => 'http://localhost/BLOOMIT/web/respuestapago/success',
-            "failure" => 'http://localhost/BLOOMIT/web/respuestapago/failure',
-            "pending" => 'http://localhost/BLOOMIT/web/respuestapago/pending'
-        );
+     $preference = $mp->create_preference ($preference_data);
 
-        //
-        $preference_data = array(
-            "items" => $items,
-            "back_urls" => $back,
-            "external_reference" => "1"
-        );
-
-        $preference = $mp->create_preference($preference_data);
-
-        return $this->render('default/mercadopago.html.twig', [
-            'url' => $preference['response']['sandbox_init_point'],
-        ]);
-        // Crea un ítem en la preferencia
-        /*  $item = new MercadoPago\Item();
-        $item->title = 'Mi producto';
-        $item->description = 'Descripción de Mi producto';
-        $item->quantity = 1;
-        $item->unit_price = 75;
-        $preference->items = array($item);
-        $preference->save();
-        $code = 200;
-        $error = false;
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $preference
-        ];
-        return new JsonResponse(
-            $response
-        ); */
+     return $this->render('templates/mercadopago.html.twig', [
+         'url' => $preference['response']['sandbox_init_point'],
+     ]);
     }
     
       /**

@@ -23,24 +23,29 @@ class PublicacionRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        $query =    "SELECT * from Publicacion where titulo LIKE '%$titulo%'
-                        order by fecha DESC";       
-        $stmt = $conn->prepare($query);       
+        $query =    "SELECT P.id,P.idusuario_id,P.fecha,P.titulo,P.descripcion,P.precio,P.categoria_id,P.categoria_hija_id,P.destacada
+        FROM Publicacion P 
+           inner join categorias C on p.categoria_id = c.id
+           inner join categorias_hijas CH on p.categoria_hija_id =ch.id
+           where p.titulo COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
+           or c.nombre COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
+           or ch.descripcion COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
+           or p.titulo LIKE '%$titulo%'
+            order by p.fecha DESC   
+           SET NOCOUNT ON;";
+        $stmt = $conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll();
-     
     }
     public function borrarPublicacion($id)
     {
         $conn = $this->getEntityManager()->getConnection();
 
         $query =  "DELETE FROM Publicacion 
-                                 where id ='$id'";        
-             
-        $stmt = $conn->prepare($query);       
+                                 where id ='$id'";
+
+        $stmt = $conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll();
-     
     }
-    
 }
