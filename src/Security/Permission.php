@@ -34,6 +34,7 @@ class Permission {
     public const EMPRENDEDOR = [
         'CREAR', 
         'CREAR_EMPRENDIMIENTO',   
+        'CREAR_PRODUCTO',
         'MIS_PRODUCTOS'   
     ];
     public const PROFESIONAL = [
