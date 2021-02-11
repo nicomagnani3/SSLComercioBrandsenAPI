@@ -38,7 +38,8 @@ class Permission {
     ];
     public const PROFESIONAL = [
         'CREAR', 
-        'CREAR_SERVICIO',      
+        'CREAR_SERVICIO', 
+        'CREAR_PRODUCTO',     
         'MIS_PRODUCTOS'
     ];
  
