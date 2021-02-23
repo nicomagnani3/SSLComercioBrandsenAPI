@@ -236,7 +236,7 @@ class EmprendimientosController extends AbstractFOSRestController
 
 
     /**
-     * Genera una nueva  publicacion de un emprendimiento con los datos correspondientes 
+     * Genera una nueva  publicacion de un emprendimiento con los datos correspondientes , retorna el id del emprendimiento creado
      * @Rest\Route(
      *    "/nuevo_emprendimiento", 
      *    name="nuevo_emprendimiento",
@@ -373,7 +373,7 @@ class EmprendimientosController extends AbstractFOSRestController
                     $em->flush();
                 }
             }
-            $message = "Se creo con exito la publicacion,gracias por confiar en Mercado Local";
+            $message = $nuevaPublicacion->getId();
         } catch (Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -384,6 +384,54 @@ class EmprendimientosController extends AbstractFOSRestController
             'code' => $code,
             'error' => $error,
             'data' => $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    
+    /**
+     *Setea la publicacion pasada por el parametro como pagada (true)
+     * @Rest\Route(
+     *    "/set_pago_publicacion/{publicacion}", 
+     *    name="set_pago_publicacion/{publicacion}",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se seteo como pagada la publicacion"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener pagar la publicacion"
+     * )
+     *
+     * @SWG\Tag(name="Emprendimientos")
+     */
+    public function set_pago_publicacion(EntityManagerInterface $em, Request $request, $publicacion)
+    {
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicacionObj = $em->getRepository(PublicacionEmprendimientos::class)->find($publicacion);           
+            $publicacionObj->setPago(1);
+            $em->persist($publicacionObj);
+                    $em->flush();
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? 'Se realizo el pago' : $message,
         ];
         return new JsonResponse(
             $response

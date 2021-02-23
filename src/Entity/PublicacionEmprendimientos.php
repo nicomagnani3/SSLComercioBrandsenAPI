@@ -52,6 +52,11 @@ class PublicacionEmprendimientos extends PublicacionEmprendimientoAbstract
      */
     private $destacada;
 
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $pago;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -137,6 +142,18 @@ class PublicacionEmprendimientos extends PublicacionEmprendimientoAbstract
     public function setDestacada(?bool $destacada): self
     {
         $this->destacada = $destacada;
+
+        return $this;
+    }
+
+    public function getPago(): ?bool
+    {
+        return $this->pago;
+    }
+
+    public function setPago(?bool $pago): self
+    {
+        $this->pago = $pago;
 
         return $this;
     }

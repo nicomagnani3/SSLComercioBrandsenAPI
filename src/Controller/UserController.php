@@ -366,7 +366,8 @@ class UserController extends AbstractFOSRestController
     {
         $email      = $request->request->get("email");
         $password   = $request->request->get("password");
-        $errors = [];
+        $errors = [];    
+        
         $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
         if (!$user) {
             $errors[] = "Usuario o contraseña incorrecta";
@@ -440,7 +441,10 @@ class UserController extends AbstractFOSRestController
             $user = $em->getRepository(User::class)->find($id);
             $publicaciones=[];
             if ($user->getGrupos()[0] == 'EMPRENDEDOR'){
-                $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['idusuariId' => $id]);
+                $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(
+                      ['pago' => '1',
+                    'idusuariId' =>  $id]
+                  );
             }
             if ($user->getGrupos()[0] == 'GENERAL'){
                 $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
@@ -457,8 +461,8 @@ class UserController extends AbstractFOSRestController
 
         
 
-            $array = array_map(function ($item) {
-                return $item->getArray();
+            $array = array_map(function ($item) {  
+                    return $item->getArray();                             
             }, $publicaciones);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
