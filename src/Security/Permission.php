@@ -17,7 +17,7 @@ class Permission {
 
     public const GENERAL = [ 
         'CREAR',  
-        'CREAR_PRODUCTOS',
+        'CREAR_PRODUCTO',
         'MIS_PRODUCTOS'
      
     ];

@@ -57,6 +57,10 @@ class PublicacionServicios extends PublicacionServicioAbstract
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $destacada;
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $pago;
 
     public function getId(): ?int
     {
@@ -155,6 +159,17 @@ class PublicacionServicios extends PublicacionServicioAbstract
     public function setDestacada(?bool $destacada): self
     {
         $this->destacada = $destacada;
+
+        return $this;
+    }
+    public function getPago(): ?bool
+    {
+        return $this->pago;
+    }
+
+    public function setPago(?bool $pago): self
+    {
+        $this->pago = $pago;
 
         return $this;
     }
