@@ -311,7 +311,8 @@ class MercadoPagoController extends AbstractController
         $url= "http://localhost:8080/crearPublicacion/publicacion$publicacion/tipo$tipo";
         $preference->items = array($item);
            $preference->back_urls = array(
-            "success" => $url,            
+            "success" => $url,  
+            "pending"=>$url          
         );   
         //$preference->auto_return = "approved"; 
 

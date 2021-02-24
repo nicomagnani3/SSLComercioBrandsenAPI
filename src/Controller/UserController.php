@@ -126,12 +126,12 @@ class UserController extends AbstractFOSRestController
                 throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
                 $error = true;
             }
-            $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);   
+            $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
             $user->setEmail($email);
             $user->setUsername($email);
             $user->setPassword($encodedPassword);
-            $user->addGrupos(strtoupper($tipoUsuario->getDescripcion() ));
+            $user->addGrupos(strtoupper($tipoUsuario->getDescripcion()));
             $user->setTelefono($celular);
             $user->setTipousuarioId($tipoUsuario);
             $em->persist($user);
@@ -235,13 +235,13 @@ class UserController extends AbstractFOSRestController
                 throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
                 $error = true;
             }
-            $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);   
+            $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);
 
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
             $user->setEmail($email);
             $user->setUsername($email);
             $user->setPassword($encodedPassword);
-            $user->addGrupos(strtoupper($tipoUsuario->getDescripcion() ));
+            $user->addGrupos(strtoupper($tipoUsuario->getDescripcion()));
             $user->setTipousuarioId($tipoUsuario);
             $user->setTelefono($celular);
 
@@ -366,8 +366,8 @@ class UserController extends AbstractFOSRestController
     {
         $email      = $request->request->get("email");
         $password   = $request->request->get("password");
-        $errors = [];    
-        
+        $errors = [];
+
         $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
         if (!$user) {
             $errors[] = "Usuario o contraseña incorrecta";
@@ -439,31 +439,43 @@ class UserController extends AbstractFOSRestController
             $code = 200;
             $error = false;
             $user = $em->getRepository(User::class)->find($id);
-            $publicaciones=[];
-            if ($user->getGrupos()[0] == 'EMPRENDEDOR'){
-                $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(
-                      ['pago' => '1',
-                    'idusuariId' =>  $id]
-                  );
+            $publicaciones = [];
+            $arrayResponse= [];
+       
+            if ($user->getGrupos()[0] == 'EMPRENDEDOR') {
+                $publicacionesEmp = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['pago' => '1','idusuariId' =>  $id ]);
+                $publicacionesEmp = $this->arrayProductos($publicacionesEmp);   
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
+                $publicaciones=$this->arrayProductos($publicaciones); 
+                $arrayResponse=array_merge($publicaciones, $publicacionesEmp);
+
             }
-            if ($user->getGrupos()[0] == 'GENERAL'){
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
+            if ($user->getGrupos()[0] == 'GENERAL') {
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
+                $arrayResponse=$this->arrayProductos($publicaciones); 
+
             }
-            if ($user->getGrupos()[0] == 'EMPRESA'){
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
+            if ($user->getGrupos()[0] == 'EMPRESA') {
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
+                $arrayResponse=$this->arrayProductos($publicaciones); 
+
             }
-            if ($user->getGrupos()[0] == 'COMERCIO'){
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id]);
-            }          
-            if ($user->getGrupos()[0] == 'PROFESIONAL'){
-                $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id]);
+            if ($user->getGrupos()[0] == 'COMERCIO') {
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
+                $arrayResponse=$this->arrayProductos($publicaciones); 
+
+            }
+            if ($user->getGrupos()[0] == 'PROFESIONAL') {
+                $publicacionServ = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id, 'pago' => '1']);    
+                $publicacionServ = $this->arrayProductos($publicacionServ);              
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id , 'pago' => '1']);
+                $publicaciones=$this->arrayProductos($publicaciones); 
+                $arrayResponse=array_merge($publicaciones, $publicacionServ);
+                 
             }
 
-        
 
-            $array = array_map(function ($item) {  
-                    return $item->getArray();                             
-            }, $publicaciones);
+
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -473,10 +485,19 @@ class UserController extends AbstractFOSRestController
         $response = [
             'code' => $code,
             'error' => $error,
-            'data' => $code == 200 ? $array : $message,
+            'data' => $code == 200 ? $arrayResponse : $message,
         ];
         return new JsonResponse(
             $response
         );
+    }
+
+
+    private function arrayProductos($productos)
+    {
+        $array = array_map(function ($item) {
+            return $item->getArray();
+        }, $productos);
+        return $array;
     }
 }
