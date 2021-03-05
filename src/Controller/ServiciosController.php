@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\Contratos;
 use App\Entity\ServiciosHijos;
 use App\Entity\Servicios;
 use App\Entity\PublicacionServicios;
@@ -238,7 +239,7 @@ class ServiciosController extends AbstractFOSRestController
         );
     }
     /**
-     * Genera una nueva  publicacion de un servicio con los datos correspondientes y retorna el ID generado
+     * Genera una nueva  publicacion de un servicio con los datos correspondientes y retorna el ID generado, resta la cant de publicaciones en el contrato del usuario
      * @Rest\Route(
      *    "/nuevo_servicio", 
      *    name="nuevo_servicio",
@@ -292,6 +293,7 @@ class ServiciosController extends AbstractFOSRestController
      * )  
      *   @SWG\Parameter(
      *     name="imgPrimera",
+     * required=true,
      *       in="body",
      *     type="Array",
      *     description="imgPrimera  ",
@@ -340,6 +342,24 @@ class ServiciosController extends AbstractFOSRestController
             $code = 200;
             $error = false;
             $usuario = $em->getRepository(User::class)->find($usuarioID);
+            if ($usuarioID != null){
+                $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
+                if ($contratoOBJ != null){
+                    if ($destacada){
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()){
+                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() -1);
+                        }                    
+                    }else{
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()){
+                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() -1);   
+                        }                    
+                    }
+                    $em->persist($contratoOBJ);
+                    $em->flush();
+                }
+
+                
+            }
             if ($servicio != NULL) {
                 $servicioOBJ = $em->getRepository(Servicios::class)->find($servicio);
             }

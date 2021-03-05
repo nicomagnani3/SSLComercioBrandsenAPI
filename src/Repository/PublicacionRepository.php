@@ -27,10 +27,10 @@ class PublicacionRepository extends ServiceEntityRepository
         FROM Publicacion P 
            inner join categorias C on p.categoria_id = c.id
            inner join categorias_hijas CH on p.categoria_hija_id =ch.id
-           where p.titulo COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
+           where p.pago is not null and ( p.titulo COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
            or c.nombre COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
            or ch.descripcion COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
-           or p.titulo LIKE '%$titulo%'
+           or p.titulo LIKE '%$titulo%')
             order by p.fecha DESC   
            SET NOCOUNT ON;";
         $stmt = $conn->prepare($query);

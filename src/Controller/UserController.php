@@ -56,6 +56,7 @@ class UserController extends AbstractFOSRestController
      * @SWG\Parameter(
      *     name="email",
      *     in="body",
+     * required=true,
      *     type="string",
      *     description="The email",
      *     schema={}
@@ -64,6 +65,7 @@ class UserController extends AbstractFOSRestController
      * @SWG\Parameter(
      *     name="password",
      *     in="body",
+     * required=true,
      *     type="string",
      *     description="The password",
      *     schema={}
@@ -72,12 +74,14 @@ class UserController extends AbstractFOSRestController
      * @SWG\Parameter(
      *     name="grupo",
      *     in="body",
+     * required=true,
      *     type="string",
      *     description="The grupo user",
      *     schema={}
      * )
      * @SWG\Parameter(
      *     name="nombre",
+     * required=true,
      *     in="body",
      *     type="string",
      *     description="The nombre persona",
@@ -85,6 +89,7 @@ class UserController extends AbstractFOSRestController
      * )
      *    * @SWG\Parameter(
      *     name="apellido",
+     * required=true,
      *     in="body",
      *     type="string",
      *     description="The apellido",
@@ -92,6 +97,7 @@ class UserController extends AbstractFOSRestController
      * )
      *     @SWG\Parameter(
      *     name="DNI",
+     * required=true,
      *     in="body",
      *     type="integer",
      *     description="The DNI",
@@ -99,6 +105,7 @@ class UserController extends AbstractFOSRestController
      * )
      *   @SWG\Parameter(
      *     name="celular",
+     * required=true,
      *     in="body",
      *     type="integer",
      *     description="celular",
@@ -180,6 +187,7 @@ class UserController extends AbstractFOSRestController
      * @SWG\Parameter(
      *     name="email",
      *     in="body",
+     * required=true,
      *     type="string",
      *     description="The email",
      *     schema={}
@@ -188,6 +196,7 @@ class UserController extends AbstractFOSRestController
      * @SWG\Parameter(
      *     name="password",
      *     in="body",
+     * required=true,
      *     type="string",
      *     description="The password",
      *     schema={}
@@ -196,12 +205,14 @@ class UserController extends AbstractFOSRestController
      * @SWG\Parameter(
      *     name="grupo",
      *     in="body",
-     *     type="string",
-     *     description="The grupo user",
+     * required=true,
+     *     type="integer",
+     *     description="The grupo user, ID traido de tabla tipo_usuarios",
      *     schema={}
      * )
      * @SWG\Parameter(
      *     name="nombre",
+     * required=true,
      *     in="body",
      *     type="string",
      *     description="The nombre persona",
@@ -209,9 +220,18 @@ class UserController extends AbstractFOSRestController
      * )    
      *     @SWG\Parameter(
      *     name="celular",
+     * required=true,
      *     in="body",
      *     type="integer",
      *     description="celular",
+     *     schema={}
+     * ) 
+     *      @SWG\Parameter(
+     *     name="web",
+     * required=false,
+     *     in="body",
+     *     type="string",
+     *     description="web de la empresa",
      *     schema={}
      * ) 
      * @throws \InvalidArgumentException 
@@ -226,7 +246,8 @@ class UserController extends AbstractFOSRestController
         $grupo   = $request->request->get("grupo");
         $nombre   = $request->request->get("nombre");
         $celular   = $request->request->get("celular");
-
+        $web   = $request->request->get("web");
+       
         $code = 200;
         $error = false;
         try {
@@ -244,7 +265,8 @@ class UserController extends AbstractFOSRestController
             $user->addGrupos(strtoupper($tipoUsuario->getDescripcion()));
             $user->setTipousuarioId($tipoUsuario);
             $user->setTelefono($celular);
-
+            $user->setWeb($web);
+            
             $em->persist($user);
             $em->flush();
             $empresa = new Empresa();

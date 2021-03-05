@@ -2,11 +2,11 @@
 
 namespace App\Controller;
 
-use MercadoPago;
 
+use App\Entity\PreciosPublicaciones;
 use App\Entity\Publicacion;
 use App\Entity\User;
-use App\Entity\MP;
+use App\Entity\Contratos;
 use App\Entity\PublicacionServicios;
 use App\Entity\PublicacionEmprendimientos;
 use App\Entity\CategoriasHijas;
@@ -211,12 +211,33 @@ class PublicacionController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
+            $pago=NULL;
             $usuario = $em->getRepository(User::class)->find($usuarioID);
             if ($categoria != NULL) {
                 $categoriaPadre = $em->getRepository(Categorias::class)->find($categoria);
             }
             if ($categoriasHija != NULL) {
                 $categoriasHija = $em->getRepository(CategoriasHijas::class)->find($categoriasHija);
+            }
+            if ($usuarioID != null){
+                $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
+                if ($contratoOBJ != null){
+                    if ($destacada){
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada() && $contratoOBJ->getCantDestacadas() > 0){
+                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() - 1);
+                                $pago=1;
+                        }                    
+                    }else{
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal() && $contratoOBJ->getCantPublicaciones() > 0 ){
+                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() - 1);   
+                                    $pago=1;
+                        }                    
+                    }
+                    $em->persist($contratoOBJ);
+                    $em->flush();
+                }
+
+                
             }
             $nuevaPublicacion = new Publicacion();
             $nuevaPublicacion->crearPublicacion(
@@ -227,7 +248,8 @@ class PublicacionController extends AbstractFOSRestController
                 $usuario,
                 $categoriaPadre,
                 $categoriasHija,
-                $destacada
+                $destacada,
+                $pago
             );
             $em->persist($nuevaPublicacion);
             $em->flush();
@@ -442,10 +464,12 @@ class PublicacionController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-
+                
             $publicaciones = $em->getRepository(Publicacion::class)->findBy(
-                ['categoria' => $id],
-                ['fecha' => 'DESC']
+                ['pago' => '1',
+                'categoria' => $id],
+                [ 'fecha' => 'DESC']
+               
             );
             $array = array_map(function ($item) {
                 return $item->getArray();
@@ -539,7 +563,7 @@ class PublicacionController extends AbstractFOSRestController
 
 
     /**
-     *Elimina la publicacion pasada por parametro, se pasa por parametro el tipo de publicacion (emprendimiento,producto,servicio)
+     *Elimina la publicacion pasada por parametro, se pasa por parametro el tipo de publicacion (emprendimiento,producto,servicio), si el usuario tiene contrato se incrementa la publicacion dependendiendo el tipo
      * @Rest\Route(
      *    "/eliminar_publicacion", 
      *    name="eliminar_publicacion",
@@ -572,15 +596,51 @@ class PublicacionController extends AbstractFOSRestController
      *      schema={
      *     }
      * )
+     *    @SWG\Parameter(
+     *     name="destacada",
+     *       in="body",
+     *     type="array",
+     *     description="destacada publicaicon ",
+     *      schema={
+     *     }
+     * )
+     *    @SWG\Parameter(
+     *     name="idUsuario",
+     *       in="body",
+     *     type="array",
+     *     description="idUsuario ",
+     *      schema={
+     *     }
+     * )
      * @SWG\Tag(name="Publicaciones")
      */
     public function eliminarPublicacion(EntityManagerInterface $em, Request $request)
     {
         $idPublicacion = $request->request->get("idPublicacion");
         $tipo = $request->request->get("tipo");
-        try {
+        $destacada = $request->request->get("destacada");        
+        $idUsuario = $request->request->get("idUsuario");                
+        try {            
             $code = 200;
             $error = false;
+            if ($idUsuario != null){
+                $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $idUsuario]);
+                if ($contratoOBJ != null){
+                    if ($destacada){
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()  && $contratoOBJ->getCantDestacadas() > 0){
+                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() + 1);
+                        }                    
+                    }else{
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()  && $contratoOBJ->getCantPublicaciones() > 0){
+                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() + 1);   
+                        }                    
+                    }
+                    $em->persist($contratoOBJ);
+                    $em->flush();
+                }
+
+                
+            }
             if ($tipo == 'PRODUCTO') {
                 $publicacion = $em->getRepository(Publicacion::class)->find($idPublicacion);
                 $imagenes = $em->getRepository(ImagenesPublicacion::class)->findBy(['publicacionId' =>  $publicacion->getId()]);
@@ -665,6 +725,55 @@ class PublicacionController extends AbstractFOSRestController
             'code' => $code,
             'error' => $error,
             'data' => $code == 200 ? 'Se realizo el pago' : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    
+    /**
+     * Retorna el precio de las publicaciones para los que no usan contratos
+     * @Rest\Route(
+     *    "/get_precios_publicaciones", 
+     *    name="get_precios_publicaciones",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el precio"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de precios"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_precios_publicaciones(EntityManagerInterface $em, Request $request)
+    {
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(PreciosPublicaciones::class)->findAll();
+
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $publicaciones);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
         ];
         return new JsonResponse(
             $response

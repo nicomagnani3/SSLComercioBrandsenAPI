@@ -327,4 +327,95 @@ class MercadoPagoController extends AbstractController
             $response
         );
     }
+        /**
+     * @Rest\Route(
+     *    "/create_contrato", 
+     *    name="create_contrato",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se pudo pagar por mercado pago"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo pagar por mercado pagoo"
+     * )
+     *  @SWG\Parameter(
+     *     name="titulo",     *     
+     *       in="body",
+     *     type="string",
+     *     description="titulo publicacion",
+     *      schema={
+     *     }
+     * )
+     *     @SWG\Parameter(
+     *     name="precioPublicacion",     
+     *       in="body",
+     *     type="integer",
+     *     description="precioPublicacion   ",
+     *      schema={
+     *     }
+     * )   
+     *   @SWG\Parameter(
+     *     name="idPublicacion",  
+     *       in="body",
+     *     type="integer",
+     *     description="idPublicacion creada ",
+     *      schema={
+     *     }
+     * )
+     *    @SWG\Parameter(
+     *     name="tipo",  
+     *       in="body",
+     *     type="integer",
+     *     description="tipo de publicacion (publicacion,emprendimiento, servicio) ",
+     *      schema={
+     *     }
+     * )      
+     *   @SWG\Tag(name="MercadoPago")
+     */
+    public function create_contrato(EntityManagerInterface $em, Request $request)
+    {
+        $titulo      = $request->request->get("titulo");
+        $precioPublicacion   = $request->request->get("precioPublicacion");
+        $publicacion = $request->request->get("idPublicacion");;
+        $observaciones = $request->request->get("observaciones");
+        $tipo = $request->request->get("tipo");  
+        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
+
+        $preference = new MercadoPago\Preference();
+        $preference->payment_methods = array(
+            "excluded_payment_types" => array(
+                array("id" => "ticket")
+            ),
+        );
+        $item = new MercadoPago\Item();
+        $item->title = $titulo;
+        $item->quantity = 1;
+        $item->unit_price = $precioPublicacion;
+        $item->currency_id = "ARS";        
+        $url= "http://localhost:8080/crearContrato/publicacion$publicacion";
+        $preference->items = array($item);
+           $preference->back_urls = array(
+            "success" => $url,  
+            "pending"=>$url          
+        );   
+        //$preference->auto_return = "approved"; 
+        $preference->save();
+       
+     
+        $response = array(
+            'id' => $preference->id,
+            "preferencia" => $preference
+        );
+        return new JsonResponse(
+            $response
+        );
+    }
+    
 }

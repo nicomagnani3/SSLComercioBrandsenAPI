@@ -89,7 +89,11 @@ class User implements UserInterface
      * @ORM\OneToOne(targetEntity=TiposUsuarios::class, cascade={"persist", "remove"})
      */
     private $tipousuarioId;
-
+    
+    /**
+     * @ORM\Column(name="web", type="string", length=255, unique=true)
+     */
+    protected $web;
 
  
     public function __construct()
@@ -398,5 +402,29 @@ class User implements UserInterface
 
         return $this;
     }
+    /**
+     * Set web
+     *
+     * @param string $web
+     *
+     * @return User
+     */
+    public function setWeb($telefono)
+    {
+        $this->web = $telefono;
+ 
+        return $this;
+    }
+ 
+    /**
+     * Get web
+     *
+     * @return string
+     */
+    public function getWeb()
+    {
+        return $this->web;
+    }
+ 
  
 }

@@ -24,24 +24,35 @@ class Permission {
     public const EMPRESA = [
         'CREAR', 
         'CREAR_PRODUCTO',
-        'MIS_PRODUCTOS'      
+        'MIS_PRODUCTOS',
+        'CREAR_CONTRATO',
+        'MIS_CONTRATOS',
+        'VER_CONTRATO',
     ];
     public const COMERCIO = [
         'CREAR', 
         'CREAR_PRODUCTO',  
-        'MIS_PRODUCTOS'    
+        'MIS_PRODUCTOS',       
+        'MIS_CONTRATOS',      
+        'VER_CONTRATO',
+   
     ];
     public const EMPRENDEDOR = [
         'CREAR', 
         'CREAR_EMPRENDIMIENTO',   
         'CREAR_PRODUCTO',
-        'MIS_PRODUCTOS'   
+        'MIS_PRODUCTOS',
+        'MIS_CONTRATOS',
+        'VER_CONTRATO',
+  
     ];
     public const PROFESIONAL = [
         'CREAR', 
         'CREAR_SERVICIO', 
         'CREAR_PRODUCTO',     
-        'MIS_PRODUCTOS'
+        'MIS_PRODUCTOS',
+        'MIS_CONTRATOS',
+        'VER_CONTRATO',
     ];
  
     public const ADMINISTRADOR  = [

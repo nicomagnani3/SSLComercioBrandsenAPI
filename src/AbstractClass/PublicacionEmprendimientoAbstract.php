@@ -37,7 +37,7 @@ abstract class PublicacionEmprendimientoAbstract
                 $this->setPrecio($importe);                
                 $this->setEmprendimiento($emprendimiento);
                 $this->setDestacada($destacada);
-                
+                $this->setPago(1);
                 if($observaciones == NULL){  
                     $this->setDescripcion('SN');
                 } else{

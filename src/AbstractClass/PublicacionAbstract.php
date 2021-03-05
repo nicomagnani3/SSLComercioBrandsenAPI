@@ -31,14 +31,16 @@ abstract class PublicacionAbstract
     $usuario,
     $categoria,
     $categoriaHija,
-    $destacada     ){                  
+    $destacada,
+    $pago     ){                  
                 $this->setIDusuario($usuario);         
                 $this->setFecha($fecha);               
                 $this->setTitulo($titulo);     
                 $this->setPrecio($importe);                
                 $this->setCategoria($categoria);
                 $this->setCategoriaHija($categoriaHija);  
-                $this->setDestacada($destacada);                 
+                $this->setDestacada($destacada);  
+                $this->setPago($pago);               
                 if($observaciones == NULL){  
                     $this->setdescripcion('SN');
                 } else{

@@ -40,7 +40,8 @@ abstract class PublicacionServicioAbstract
                 $this->setPrecio($importe);                
                 $this->setServicioId($servicioOBJ);
                 $this->setServiciohijoId($servicioHijoOBJ);                
-                $this->setDestacada($destacada);                
+                $this->setDestacada($destacada);
+                $this->setPago(1);                
                 if($observaciones == NULL){  
                     $this->setDescripcion('SN');
                 } else{

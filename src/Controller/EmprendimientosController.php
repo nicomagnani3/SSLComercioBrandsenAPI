@@ -11,7 +11,7 @@ use App\Entity\ImagenesEmprendimientos;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Swagger\Annotations as SWG;
-use Doctrine\ORM\EntityNotFoundException;
+use App\Entity\Contratos;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -236,7 +236,7 @@ class EmprendimientosController extends AbstractFOSRestController
 
 
     /**
-     * Genera una nueva  publicacion de un emprendimiento con los datos correspondientes , retorna el id del emprendimiento creado
+     * Genera una nueva  publicacion de un emprendimiento con los datos correspondientes , retorna el id del emprendimiento creado, resta la cant de publicaciones en el contrato del usuario
      * @Rest\Route(
      *    "/nuevo_emprendimiento", 
      *    name="nuevo_emprendimiento",
@@ -328,6 +328,24 @@ class EmprendimientosController extends AbstractFOSRestController
 
 
         try {
+            if ($usuarioID != null){
+                $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
+                if ($contratoOBJ != null){
+                    if ($destacada){
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()){
+                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() -1);
+                        }                    
+                    }else{
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()){
+                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() -1);   
+                        }                    
+                    }
+                    $em->persist($contratoOBJ);
+                    $em->flush();
+                }
+
+                
+            }
             $code = 200;
             $error = false;
             $usuario = $em->getRepository(User::class)->find($usuarioID);
