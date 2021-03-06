@@ -133,10 +133,10 @@ class ServiciosController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de publicaciones de servicios
+     * Retorna el listado de publicaciones de servicios destacados ordenados por fecha
      * @Rest\Route(
-     *    "/get_publicaciones_servicios", 
-     *    name="get_publicaciones_servicios",
+     *    "/get_publicaciones_servicios_destacados", 
+     *    name="get_publicaciones_servicios_destacados",
      *    methods = {
      *      Request::METHOD_GET,
      *    }
@@ -160,7 +160,10 @@ class ServiciosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(PublicacionServicios::class)->findAll();
+            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(
+                ['destacada' => 1],
+                ['fecha' => 'DESC']
+            );
 
             $array = array_map(function ($item) {
                 return $item->getArray();

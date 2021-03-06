@@ -47,10 +47,10 @@ class PublicacionController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de publicaciones
+     * Retorna el listado de publicaciones destacadas ordenadas por fecha de publicacion
      * @Rest\Route(
-     *    "/get_publicaciones", 
-     *    name="get_publicaciones",
+     *    "/get_publicaciones_destacadas", 
+     *    name="get_publicaciones_destacadas",
      *    methods = {
      *      Request::METHOD_GET,
      *    }
@@ -74,7 +74,11 @@ class PublicacionController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(Publicacion::class)->findAll();
+            $publicaciones = $em->getRepository(Publicacion::class)->findBy(
+                ['pago' => '1',
+                'destacada' => 1],              
+                [ 'fecha' => 'DESC']
+            );
 
             $array = array_map(function ($item) {
                 return $item->getArray();

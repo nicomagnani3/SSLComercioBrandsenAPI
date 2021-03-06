@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
+
 /**
  * Class EmprendimientosController
  *
@@ -130,10 +131,10 @@ class EmprendimientosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna el listado de publicaciones de emnprendimientos
+     * Retorna el listado de publicaciones de emnprendimientos destacados ordenados por fecha
      * @Rest\Route(
-     *    "/get_publicaciones_emprendimientos", 
-     *    name="get_publicaciones_emprendimientos",
+     *    "/get_publicaciones_emprendimientos_destacados", 
+     *    name="get_publicaciones_emprendimientos_destacados",
      *    methods = {
      *      Request::METHOD_GET,
      *    }
@@ -157,7 +158,10 @@ class EmprendimientosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findAll();
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(
+                ['destacada' => 1],
+                ['fecha' => 'DESC']
+            );
 
             $array = array_map(function ($item) {
                 return $item->getArray();
@@ -213,8 +217,10 @@ class EmprendimientosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['emprendimiento' => $id],
-                                                                                           ['fecha' => 'DESC']);
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(
+                ['emprendimiento' => $id],
+                ['fecha' => 'DESC']
+            );
             $array = array_map(function ($item) {
                 return $item->getArray();
             }, $publicaciones);
@@ -328,23 +334,21 @@ class EmprendimientosController extends AbstractFOSRestController
 
 
         try {
-            if ($usuarioID != null){
+            if ($usuarioID != null) {
                 $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
-                if ($contratoOBJ != null){
-                    if ($destacada){
-                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()){
-                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() -1);
-                        }                    
-                    }else{
-                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()){
-                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() -1);   
-                        }                    
+                if ($contratoOBJ != null) {
+                    if ($destacada) {
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()) {
+                            $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() - 1);
+                        }
+                    } else {
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()) {
+                            $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() - 1);
+                        }
                     }
                     $em->persist($contratoOBJ);
                     $em->flush();
                 }
-
-                
             }
             $code = 200;
             $error = false;
@@ -407,7 +411,7 @@ class EmprendimientosController extends AbstractFOSRestController
             $response
         );
     }
-    
+
     /**
      *Setea la publicacion pasada por el parametro como pagada (true)
      * @Rest\Route(
@@ -436,10 +440,10 @@ class EmprendimientosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $publicacionObj = $em->getRepository(PublicacionEmprendimientos::class)->find($publicacion);           
+            $publicacionObj = $em->getRepository(PublicacionEmprendimientos::class)->find($publicacion);
             $publicacionObj->setPago(1);
             $em->persist($publicacionObj);
-                    $em->flush();
+            $em->flush();
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
