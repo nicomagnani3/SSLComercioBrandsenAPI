@@ -21,7 +21,8 @@ abstract class PublicacionAbstract
             'telefono'=>$this->getIDusuario()->getTelefono(),
             'padre'=>$this->getCategoria()->getNombre(),
             'tipo'=>'PRODUCTO',
-            'email'=> $this->getIDusuario()->getEmail()
+            'email'=> $this->getIDusuario()->getEmail(),
+            'web'=>$this->getIDusuario()->getWeb(),
         ];  
     }
     public function crearPublicacion( $titulo,

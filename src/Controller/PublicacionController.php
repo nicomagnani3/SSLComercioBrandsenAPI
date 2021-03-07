@@ -364,7 +364,8 @@ class PublicacionController extends AbstractFOSRestController
                     'telefono' => $usuario->getTelefono(),
                     'padre' => $categoria->getNombre(),
                     'email'=> $usuario->getEmail(),
-                    'tipo'=>"PRODUCTO"
+                    'tipo'=>"PRODUCTO",
+                    'web'=>$usuario->getWeb(),
                 ];
                 array_push($arrayCompleto, $array_new);
             }
@@ -391,7 +392,7 @@ class PublicacionController extends AbstractFOSRestController
                     'telefono' => $usuario->getTelefono(),
                     'padre' => $servicio->getNombre(),
                     'email'=> $usuario->getEmail(),
-                    
+
                     'tipo'=> 'SERVICIO'
 
                 ];
