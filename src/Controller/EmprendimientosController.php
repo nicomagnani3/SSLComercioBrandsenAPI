@@ -84,7 +84,7 @@ class EmprendimientosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna el listado de categorias hijas de una categoria en particular
+     * Retorna el listado de emprendimientos hijos 
      * @Rest\Route(
      *    "/get_emprendimientosHijos", 
      *    name="get_emprendimientosHijos",
@@ -102,7 +102,7 @@ class EmprendimientosController extends AbstractFOSRestController
      *     description="No se pudo obtener el listado de categorias"
      * )
      *
-     * @SWG\Tag(name="categorias")
+     * @SWG\Tag(name="Emprendimientos")
      */
     public function EmprendimientosHijos(EntityManagerInterface $em, Request $request)
     {
@@ -131,7 +131,7 @@ class EmprendimientosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna el listado de publicaciones de emnprendimientos destacados ordenados por fecha
+     * Retorna el listado de publicaciones de emnprendimientos destacados ordenados por fecha HOME
      * @Rest\Route(
      *    "/get_publicaciones_emprendimientos_destacados", 
      *    name="get_publicaciones_emprendimientos_destacados",
@@ -182,7 +182,7 @@ class EmprendimientosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna  las publicaciones de emprendimientos que pertenecen al id del emprendimiento principal pasada por parametro
+     * Retorna  las publicaciones de emprendimientos que pertenecen al id del emprendimiento principal pasada por parametro ordenados por fecha BUSCADOR
      * @Rest\Route(
      *    "/search_publicaciones_emprendimientos", 
      *    name="search_publicaciones_emprendimientos",
@@ -413,7 +413,7 @@ class EmprendimientosController extends AbstractFOSRestController
     }
 
     /**
-     *Setea la publicacion pasada por el parametro como pagada (true)
+     *Setea la publicacion pasada por el parametro como pagada (true), DESDE CONTRATOS NO SE USA MAS
      * @Rest\Route(
      *    "/set_pago_publicacion/{publicacion}", 
      *    name="set_pago_publicacion/{publicacion}",

@@ -47,7 +47,7 @@ class PublicacionController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de publicaciones destacadas ordenadas por fecha de publicacion
+     * Retorna el listado de publicaciones destacadas ordenadas por fecha de publicacion HOME
      * @Rest\Route(
      *    "/get_publicaciones_destacadas", 
      *    name="get_publicaciones_destacadas",
@@ -99,7 +99,7 @@ class PublicacionController extends AbstractFOSRestController
         );
     }
     /**
-     * Genera una nueva  publicacion con los datos correspondientes  y retorna el id de la publicacion
+     * Genera una nueva  publicacion con los datos correspondientes  y retorna el id de la publicacion, si es por contrato automaticamente le resta la cantidad de publicaciones al contrato
      * @Rest\Route(
      *    "/nueva_publicacion", 
      *    name="nueva_publicacion",
@@ -116,6 +116,15 @@ class PublicacionController extends AbstractFOSRestController
      *     response=500,
      *     description="No se pudo generar publicacion"
      * )     
+     *    @SWG\Parameter(
+     *     name="usuarioID",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="usuarioID ID del usuario",
+     *         schema={
+     *     }
+     * )
      *   @SWG\Parameter(
      *     name="titulo",
      *       in="body",
@@ -124,8 +133,7 @@ class PublicacionController extends AbstractFOSRestController
      *     description="titulo",
      *         schema={
      *     }
-     * )
-    
+     * )    
      *  @SWG\Parameter(
      *     name="importe",
      * required=true,
@@ -134,15 +142,7 @@ class PublicacionController extends AbstractFOSRestController
      *     description="importe  ",
      *      schema={
      *     }
-     * )  
-     *  @SWG\Parameter(
-     *     name="fecha",
-     *       in="body",
-     *     type="date",
-     *     description="fecha  ",
-     *      schema={
-     *     }
-     * )
+     * )      
      *    @SWG\Parameter(
      *     name="observaciones",
      *       in="body",
@@ -152,11 +152,10 @@ class PublicacionController extends AbstractFOSRestController
      *     }
      * )
      *   @SWG\Parameter(
-     *     name="imagenes",
-     * 
+     *     name="imagenes",     * 
      *       in="body",
      *     type="Array",
-     *     description="imagenes  ",
+     *     description="imagenes secundarias  ",
      *      schema={
      *     }
      * )  
@@ -174,7 +173,7 @@ class PublicacionController extends AbstractFOSRestController
      * required=true,
      *       in="body",
      *     type="array",
-     *     description="categoria principal  ",
+     *     description="categoria principal  ID ",
      *      schema={
      *     }
      * ) 
@@ -184,7 +183,7 @@ class PublicacionController extends AbstractFOSRestController
      * required=true,
      *       in="body",
      *     type="array",
-     *     description="categoriasHija elegida  ",
+     *     description="categoriasHija elegida ID ",
      *      schema={
      *     }
      * )  
@@ -363,7 +362,9 @@ class PublicacionController extends AbstractFOSRestController
                     'destacado' => $value["destacada"],
                     'imagen' => $data,
                     'telefono' => $usuario->getTelefono(),
-                    'padre' => $categoria->getNombre()
+                    'padre' => $categoria->getNombre(),
+                    'email'=> $usuario->getEmail(),
+                    'tipo'=>"PRODUCTO"
                 ];
                 array_push($arrayCompleto, $array_new);
             }
@@ -388,7 +389,10 @@ class PublicacionController extends AbstractFOSRestController
                     'destacado' => $value["destacada"],
                     'imagen' => $data,
                     'telefono' => $usuario->getTelefono(),
-                    'padre' => $servicio->getNombre()
+                    'padre' => $servicio->getNombre(),
+                    'email'=> $usuario->getEmail(),
+                    
+                    'tipo'=> 'SERVICIO'
 
                 ];
                 array_push($arrayCompleto, $array_new);
@@ -411,7 +415,9 @@ class PublicacionController extends AbstractFOSRestController
                     'imagen' => $data,
                     'destacado' => $value["destacada"],
                     'telefono' => $usuario->getTelefono(),
-                    'padre' => $emprendimiento->getNombre()
+                    'padre' => $emprendimiento->getNombre(),
+                    'email'=> $usuario->getEmail(),
+                    'tipo'=> "EMPRENDIMIENTO"
                 ];
                 array_push($arrayCompleto, $array_new);
             }
@@ -433,7 +439,7 @@ class PublicacionController extends AbstractFOSRestController
 
 
     /**
-     * Retorna  las publicaciones que pertenecen al id de la categoria principal pasada por parametro
+     * Retorna  las publicaciones (pagadas=1) que pertenecen al id de la categoria principalpasada por parametro, ordenados por fecha BUSCADOR
      * @Rest\Route(
      *    "/getpublicacionescategoria", 
      *    name="getpublicacionescategoria",
@@ -458,7 +464,7 @@ class PublicacionController extends AbstractFOSRestController
      *      schema={
      *     }
      * )
-     * @SWG\Tag(name="Categorias")
+     * @SWG\Tag(name="categorias")
      */
     public function getpublicacionescategoria(EntityManagerInterface $em, Request $request)
     {
@@ -495,7 +501,7 @@ class PublicacionController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de imagenes de una publicacion en particular
+     * Retorna el listado de imagenes de una publicacion en particular segun el tipo de publicacion (PRODUCTO,EMPRENDIMIENTO O SERVICIO)
      * @Rest\Route(
      *    "/getImagenesPublicacion", 
      *    name="getImagenesPublicacion",
@@ -520,35 +526,109 @@ class PublicacionController extends AbstractFOSRestController
      *      schema={
      *     }
      * )
+     *    @SWG\Parameter(
+     *     name="tipo",
+     *       in="body",
+     *     type="array",
+     *     description="tipo publicacion(PRODCUTO,EMPRENDIMIENTO,SERVICIO)  ",
+     *      schema={
+     *     }
+     * )
      * @SWG\Tag(name="Publicaciones")
      */
     public function getImagenesPublicacion(EntityManagerInterface $em, Request $request)
     {
         $idPublicacion = $request->request->get("idPublicacion");
+        $tipo = $request->request->get("tipo");
+        
         $errors = [];
         try {
             $code = 200;
             $error = false;
-            $imagenes = $em->getRepository(ImagenesPublicacion::class)->findBy(['publicacionId' => $idPublicacion]);
-            $array = array_map(function ($item) {
-                return $item->getArray();
-            }, $imagenes);
-            $cantidadElementos = count($array);
-            $array_new = [];
-            $arrayCompleto = [];
-            for ($i = 0; $i < $cantidadElementos; $i++) {
-                $ubicacion = 'imagenes/' . $idPublicacion . '-' . $i . '.png';
-                $img = file_get_contents(
-                    $ubicacion
-                );
-                $data = base64_encode($img);
-                $array_new = [
-                    'id' => $idPublicacion,
-                    'imagen' => $data,
-                    'numero' => $i
-                ];
-                array_push($arrayCompleto, $array_new);
+            if ($tipo == 'PRODUCTO') {
+                $imagenes = $em->getRepository(ImagenesPublicacion::class)->findBy(['publicacionId' => $idPublicacion]);
+                $array = array_map(function ($item) {
+                    return $item->getArray();
+                }, $imagenes);
+                $cantidadElementos = count($array);
+                $array_new = [];
+                $arrayCompleto = [];
+                for ($i = 0; $i < $cantidadElementos; $i++) {
+                    $ubicacion = 'imagenes/' . $idPublicacion . '-' . $i . '.png';
+                    $img = file_get_contents(
+                        $ubicacion
+                    );
+                    $data = base64_encode($img);
+                    $array_new = [
+                        'id' => $idPublicacion,
+                        'imagen' => $data,
+                        'numero' => $i
+                    ];
+                    array_push($arrayCompleto, $array_new);
+                }
             }
+            if ($tipo == 'EMPRENDIMIENTO') {
+                $imagenes = $em->getRepository(ImagenesEmprendimientos::class)->findBy(['emprendimientoId' => $idPublicacion]);
+                $array = array_map(function ($item) {
+                    return $item->getArray();
+                }, $imagenes);
+                $cantidadElementos = count($array);
+                $array_new = [];
+                $arrayCompleto = [];
+                for ($i = 0; $i < $cantidadElementos; $i++) {
+                    $ubicacion = 'imagenesEmprendimientos/' . $idPublicacion . '-' . $i . '.png';
+                    $img = file_get_contents(
+                        $ubicacion
+                    );
+                    $data = base64_encode($img);
+                    $array_new = [
+                        'id' => $idPublicacion,
+                        'imagen' => $data,
+                        'numero' => $i
+                    ];
+                    array_push($arrayCompleto, $array_new);
+                }
+            }
+            if ($tipo == 'SERVICIO') {
+                $imagenes = $em->getRepository(ImagenesServicios::class)->findBy(['serviciosId' => $idPublicacion]);
+                $array = array_map(function ($item) {
+                    return $item->getArray();
+                }, $imagenes);
+                $cantidadElementos = count($array);
+                $array_new = [];
+                $arrayCompleto = [];
+                for ($i = 0; $i < $cantidadElementos; $i++) {
+                    $ubicacion = 'imagenesServicios/' . $idPublicacion . '-' . $i . '.png';
+                    $img = file_get_contents(
+                        $ubicacion
+                    );
+                    $data = base64_encode($img);
+                    $array_new = [
+                        'id' => $idPublicacion,
+                        'imagen' => $data,
+                        'numero' => $i
+                    ];
+                    array_push($arrayCompleto, $array_new);
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;

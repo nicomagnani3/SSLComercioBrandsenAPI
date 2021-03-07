@@ -85,7 +85,7 @@ class ServiciosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna el listado de servicios hijas de un servicio en particular
+     * Retorna el listado de servicios hijos 
      * @Rest\Route(
      *    "/get_serviciossHijos", 
      *    name="get_serviciossHijos",
@@ -95,15 +95,15 @@ class ServiciosController extends AbstractFOSRestController
      * )     *
      * @SWG\Response(
      *     response=200,
-     *     description="Se obtuvo el listado de categorias"
+     *     description="Se obtuvo el listado de servicios"
      * )
      *
      * @SWG\Response(
      *     response=500,
-     *     description="No se pudo obtener el listado de categorias"
+     *     description="No se pudo obtener el listado de servicios"
      * )
      *
-     * @SWG\Tag(name="categorias")
+     * @SWG\Tag(name="Servicios")
      */
     public function get_serviciossHijos(EntityManagerInterface $em, Request $request)
     {
@@ -133,7 +133,7 @@ class ServiciosController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de publicaciones de servicios destacados ordenados por fecha
+     * Retorna el listado de publicaciones de servicios destacados ordenados por fecha para la HOME
      * @Rest\Route(
      *    "/get_publicaciones_servicios_destacados", 
      *    name="get_publicaciones_servicios_destacados",
@@ -186,7 +186,7 @@ class ServiciosController extends AbstractFOSRestController
 
 
     /**
-     * Retorna  las publicaciones de servicios que pertenecen al id del emprendimiento principal pasada por parametro
+     * Retorna los servicios que pertenecen al id de Servicios(tabla) pasado por parametro ordenados por fecha BUSCADOR
      * @Rest\Route(
      *    "/search_publicaciones_servicios", 
      *    name="search_publicaciones_servicios",
@@ -215,9 +215,7 @@ class ServiciosController extends AbstractFOSRestController
      */
     public function search_publicaciones_servicios(EntityManagerInterface $em, Request $request)
     {
-        $id = $request->request->get("id");
-
-        $errors = [];
+        $id = $request->request->get("id");     
         try {
             $code = 200;
             $error = false;
@@ -268,16 +266,7 @@ class ServiciosController extends AbstractFOSRestController
      *     description="titulo",
      *         schema={
      *     }
-     * )
-    
-     *  @SWG\Parameter(
-     *     name="importe",
-     *       in="body",
-     *     type="string",
-     *     description="importe  ",
-     *      schema={
-     *     }
-     * )    
+     * ) 
      *    @SWG\Parameter(
      *     name="observaciones",
      *       in="body",
@@ -290,7 +279,7 @@ class ServiciosController extends AbstractFOSRestController
      *     name="imagenes",
      *       in="body",
      *     type="Array",
-     *     description="imagenes  ",
+     *     description="imagenes secundarias  ",
      *      schema={
      *     }
      * )  
@@ -315,7 +304,7 @@ class ServiciosController extends AbstractFOSRestController
      *     name="servicioHijo",
      *       in="body",
      *     type="array",
-     *     description="servicioHijo   ",
+     *     description="servicioHijo  ID ",
      *      schema={
      *     }
      * )  
@@ -332,7 +321,7 @@ class ServiciosController extends AbstractFOSRestController
     public function nueva_publicacionServicio(EntityManagerInterface $em, Request $request)
     {
         $titulo = $request->request->get("titulo");
-        $importe = $request->request->get("importe");
+        $importe = NULL;
         $observaciones = $request->request->get("observaciones");
         $imagenes = $request->request->get("imagenes");
         $imgPrimera = $request->request->get("imgPrimera");
@@ -426,7 +415,7 @@ class ServiciosController extends AbstractFOSRestController
         );
     }
      /**
-     *Setea la publicacion de servicio pasada por el parametro como pagada
+     *Setea la publicacion de servicio pasada por el parametro como pagada, DESDE QUE ESTA CONTRATOS NO SE USA MAS 
      * @Rest\Route(
      *    "/set_pago_publicacion_servicio/{publicacion}", 
      *    name="set_pago_publicacion_servicio/{publicacion}",

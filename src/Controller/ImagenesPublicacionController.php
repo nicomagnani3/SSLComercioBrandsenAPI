@@ -33,7 +33,7 @@ class ImagenesPublicacionController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de imagnes
+     * Retorna el listado de  la tabla imagenes
      * @Rest\Route(
      *    "/get_imagenes", 
      *    name="get_imagenes",

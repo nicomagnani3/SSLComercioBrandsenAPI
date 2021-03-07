@@ -20,7 +20,9 @@ abstract class PublicacionEmprendimientoAbstract
             'destacado'=>$this->getDestacada(),
             'telefono'=>$this->getIdusuariId()->getTelefono(),
             'padre'=>$this->getEmprendimiento()->getNombre(),
-            'tipo'=>'EMPRENDIMIENTO'
+            'tipo'=>'EMPRENDIMIENTO',
+            'email'=> $this->getIdusuariId()->getEmail()
+
         ];  
     }
     public function crearPublicacion( $titulo,

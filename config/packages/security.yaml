@@ -56,7 +56,13 @@ security:
             anonymous: true 
         process_payment:
             pattern: ^/api/process_payment
-            anonymous: true                             
+            anonymous: true   
+        get_rubros:
+            pattern: ^/api/get_rubros
+            anonymous: true    
+        get_empresas_rubro:
+            pattern: ^/api/get_empresas_rubro
+            anonymous: true               
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -90,7 +96,8 @@ security:
         - { path: ^/api/search_publicaciones_servicios, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
         - { path: ^/api/get_servicios, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
         - { path: ^/api/process_payment, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
-
+        - { path: ^/api/get_rubros, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
+        - { path: ^/api/get_empresas_rubro, roles: IS_AUTHENTICATED_ANONYMOUSLY }     
 
         # login:
         #     pattern:  ^/api/login

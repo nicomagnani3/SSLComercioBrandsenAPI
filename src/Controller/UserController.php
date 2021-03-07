@@ -18,6 +18,7 @@ use App\Entity\PublicacionEmprendimientos;
 use App\Entity\Publicacion;
 use App\Entity\TiposUsuarios;
 use App\Entity\PublicacionServicios;
+use App\Entity\Rubros;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -234,6 +235,14 @@ class UserController extends AbstractFOSRestController
      *     description="web de la empresa",
      *     schema={}
      * ) 
+     *     @SWG\Parameter(
+     *     name="rubro",
+     * required=false,
+     *     in="body",
+     *     type="integer",
+     *     description="id del rubro que pertenece",
+     *     schema={}
+     * ) 
      * @throws \InvalidArgumentException 
      * @SWG\Tag(name="User")
      */
@@ -247,7 +256,7 @@ class UserController extends AbstractFOSRestController
         $nombre   = $request->request->get("nombre");
         $celular   = $request->request->get("celular");
         $web   = $request->request->get("web");
-       
+        $rubro   = $request->request->get("rubro");
         $code = 200;
         $error = false;
         try {
@@ -256,6 +265,7 @@ class UserController extends AbstractFOSRestController
                 throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
                 $error = true;
             }
+            
             $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);
 
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
@@ -272,6 +282,11 @@ class UserController extends AbstractFOSRestController
             $empresa = new Empresa();
             $empresa->setUsuarios($user);
             $empresa->setNombre($nombre);
+            if ($rubro != null){
+                $rubroOBJ = $em->getRepository(Rubros::class)->find($rubro);
+                 $empresa->setRubroId($rubroOBJ);
+            }
+           
             $em->persist($empresa);
             $em->flush();
         } catch (\Exception $ex) {
@@ -290,7 +305,7 @@ class UserController extends AbstractFOSRestController
     }
 
     /**
-     * Recupera clave del email pasado FALTA FINALIZAR
+     * Cambia la contraseña del user 
      * @Rest\Route(
      *    "/recuperarClave", 
      *    name="recuperarClave",
@@ -315,21 +330,42 @@ class UserController extends AbstractFOSRestController
      *     description="The email",
      *     schema={}
      * )     
+     *  * @SWG\Parameter(
+     *     name="user",
+     *     in="body",
+     *     type="integer",
+     *     description="The user id",
+     *     schema={}
+     * )  
+     *  * @SWG\Parameter(
+     *     name="pasword",
+     *     in="body",
+     *     type="string",
+     *     description="The email",
+     *     schema={}
+     * )  
      * @throws \InvalidArgumentException 
      * @SWG\Tag(name="User")
      */
     public function recuperarClave(EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder, Request $request)
     {
 
-        $user = new User();
-        $email     = $request->request->get("email");
+        $usuario = new User();
+        $user     = $request->request->get("user");
+        $password     = $request->request->get("password");
         $code = 200;
         $error = false;
         try {
-            $existeUser = $em->getRepository(User::class)->findOneBy(['email' => $email]);
-            if ($existeUser == NULL) {
+            $userOBJ = $em->getRepository(User::class)->find($user);
+            if ($userOBJ == NULL) {
                 throw new \InvalidArgumentException('El email ingresado no se encuentra en el sistema');
                 $error = true;
+            }else{
+                $encodedPassword = $passwordEncoder->encodePassword($usuario, $password);               
+                $userOBJ->setPassword($encodedPassword);           
+                $em->persist($userOBJ);
+                $em->flush();
+             
             }
         } catch (\Exception $ex) {
             $code = 500;
@@ -339,7 +375,7 @@ class UserController extends AbstractFOSRestController
         $response = [
             'code' => $code,
             'error' => $error,
-            'data' => $code == 200 ? $user->getEmail() : $message,
+            'data' => $code == 200 ? $userOBJ->getEmail() : $message,
         ];
         return new JsonResponse(
             $response
@@ -465,7 +501,7 @@ class UserController extends AbstractFOSRestController
             $arrayResponse= [];
        
             if ($user->getGrupos()[0] == 'EMPRENDEDOR') {
-                $publicacionesEmp = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['pago' => '1','idusuariId' =>  $id ]);
+                $publicacionesEmp = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['idusuariId' =>  $id ]);
                 $publicacionesEmp = $this->arrayProductos($publicacionesEmp);   
                 $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
                 $publicaciones=$this->arrayProductos($publicaciones); 
@@ -488,7 +524,7 @@ class UserController extends AbstractFOSRestController
 
             }
             if ($user->getGrupos()[0] == 'PROFESIONAL') {
-                $publicacionServ = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id, 'pago' => '1']);    
+                $publicacionServ = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id]);    
                 $publicacionServ = $this->arrayProductos($publicacionServ);              
                 $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id , 'pago' => '1']);
                 $publicaciones=$this->arrayProductos($publicaciones); 

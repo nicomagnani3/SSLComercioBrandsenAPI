@@ -20,7 +20,10 @@ abstract class PublicacionServicioAbstract
             'destacado'=>$this->getDestacada(),
             'telefono'=>$this->getIdusuario()->getTelefono(),
             'padre'=>$this->getServicioId()->getNombre(),
-            'tipo'=>'SERVICIO'
+            'tipo'=>'SERVICIO',
+            'email'=> $this->getIdusuario()->getEmail()
+
+            
           
         ];  
     }

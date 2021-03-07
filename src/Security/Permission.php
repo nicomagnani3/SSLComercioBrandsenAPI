@@ -18,7 +18,8 @@ class Permission {
     public const GENERAL = [ 
         'CREAR',  
         'CREAR_PRODUCTO',
-        'MIS_PRODUCTOS'
+        'MIS_PRODUCTOS',
+        'CAMBIAR_CLAVE'
      
     ];
     public const EMPRESA = [
@@ -28,6 +29,7 @@ class Permission {
         'CREAR_CONTRATO',
         'MIS_CONTRATOS',
         'VER_CONTRATO',
+        'CAMBIAR_CLAVE'
     ];
     public const COMERCIO = [
         'CREAR', 
@@ -35,6 +37,7 @@ class Permission {
         'MIS_PRODUCTOS',       
         'MIS_CONTRATOS',      
         'VER_CONTRATO',
+        'CAMBIAR_CLAVE'
    
     ];
     public const EMPRENDEDOR = [
@@ -44,6 +47,7 @@ class Permission {
         'MIS_PRODUCTOS',
         'MIS_CONTRATOS',
         'VER_CONTRATO',
+        'CAMBIAR_CLAVE'
   
     ];
     public const PROFESIONAL = [
@@ -53,6 +57,7 @@ class Permission {
         'MIS_PRODUCTOS',
         'MIS_CONTRATOS',
         'VER_CONTRATO',
+        'CAMBIAR_CLAVE'
     ];
  
     public const ADMINISTRADOR  = [

@@ -20,8 +20,8 @@ abstract class PublicacionAbstract
             'imagen'=>$data,
             'telefono'=>$this->getIDusuario()->getTelefono(),
             'padre'=>$this->getCategoria()->getNombre(),
-            'tipo'=>'PRODUCTO'
-           
+            'tipo'=>'PRODUCTO',
+            'email'=> $this->getIDusuario()->getEmail()
         ];  
     }
     public function crearPublicacion( $titulo,

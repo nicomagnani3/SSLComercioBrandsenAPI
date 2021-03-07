@@ -27,6 +27,11 @@ class Empresa
      */
     private $usuarios;
 
+    /**
+     * @ORM\OneToOne(targetEntity=Rubros::class, cascade={"persist", "remove"})
+     */
+    private $rubroId;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -53,6 +58,18 @@ class Empresa
     public function setUsuarios(User $usuarios): self
     {
         $this->usuarios = $usuarios;
+
+        return $this;
+    }
+
+    public function getRubroId(): ?Rubros
+    {
+        return $this->rubroId;
+    }
+
+    public function setRubroId(?Rubros $rubroId): self
+    {
+        $this->rubroId = $rubroId;
 
         return $this;
     }

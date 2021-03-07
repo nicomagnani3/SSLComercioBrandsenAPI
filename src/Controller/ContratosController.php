@@ -34,12 +34,12 @@ class ContratosController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de los tipos de paquetes  disponibles
+     * Retorna el listado de los  paquetes  disponibles
      * @Rest\Get("/get_paquetes", name="get_paquetes")
      *
      * @SWG\Response(
      *     response=200,
-     *     description="Se obtuvo el listado de tipos de paquetes"
+     *     description="Se obtuvo el listado de los paquetes, traidos de la tabla PAQUETE"
      * )
      *
      * @SWG\Response(
@@ -77,17 +77,17 @@ class ContratosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna el listado de contratos del usuario pasado como parametro
+     * Retorna el listado de contratos del usuario pasado como parametro, tienen que estar pagos, pago=1
      * @Rest\Get("/get_contratos_user/{user}", name="get_contratos_user/{user}")
      *
      * @SWG\Response(
      *     response=200,
-     *     description="Se obtuvo el listado de tipos de contratos"
+     *     description="Se obtuvo el listado de LOS contratos del usuario"
      * )
      *
      * @SWG\Response(
      *     response=500,
-     *     description="No se pudo obtener el listado de tipos de contratos"
+     *     description="No se pudo obtener el listado de LOS contratos del usuario"
      * )
      *
      * @SWG\Tag(name="Contratos")
@@ -99,7 +99,7 @@ class ContratosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-           
+
             if ($user != null) {
                 $contratos = $em->getRepository(Contratos::class)->findBy(['pago' => '1', 'usuario' =>  $user]);
                 $array = array_map(function ($item) {
@@ -123,7 +123,7 @@ class ContratosController extends AbstractFOSRestController
     }
 
     /**
-     * Genera un nuevo contrato o actualiza el del usuario
+     * Genera un nuevo contrato o actualiza el del usuario, Retrona el id del contrato
      * @Rest\Route(
      *    "/add_contrato", 
      *    name="add_contrato",
@@ -148,8 +148,7 @@ class ContratosController extends AbstractFOSRestController
      *     description="usuario",
      *         schema={
      *     }
-     * )
-    
+     * )    
      *  @SWG\Parameter(
      *     name="desde",
      * required=true,
@@ -158,41 +157,16 @@ class ContratosController extends AbstractFOSRestController
      *     description="fecha desde  ",
      *      schema={
      *     }
-     * )  
-     *  @SWG\Parameter(
-     *     name="hasta",
-     *       in="body",
-     *     type="date",
-     *     description="fecha hsata  ",
-     *      schema={
-     *     }
-     * )
+     * )    
      *    @SWG\Parameter(
      *     name="paquete",
+     * required=true,
      *       in="body",
      *     type="string",
-     *     description="paquete qe corresponde estandar/premium  ",
-     *      schema={
-     *     }
-     * )
-     *   @SWG\Parameter(
-     *     name="cantpublicaciones",
-     * 
-     *       in="body",
-     *     type="Integer",
-     *     description="cantpublicaciones sumadas ya  ",
+     *     description="ID del paquete qe corresponde estandar/premium  ",
      *      schema={
      *     }
      * )  
-     *   @SWG\Parameter(
-     *     name="cantdestacadas",
-     * required=true,
-     *       in="body",
-     *     type="Array",
-     *     description="cantpublicaciones destacadas sumadas   ",
-     *      schema={
-     *     }
-     * ) 
      * @SWG\Tag(name="Contratos")
      */
     public function add_contrato(EntityManagerInterface $em, Request $request)
@@ -200,13 +174,10 @@ class ContratosController extends AbstractFOSRestController
         $usuarioID = $request->request->get("usuario");
         $desde = $request->request->get("desde");
         $desde = new Datetime($desde);
-        $hasta = $request->request->get("hasta");
         $fecha_actual = date("d-m-Y");
         $hasta = date("d-m-Y", strtotime($fecha_actual . "+ 1 month"));
         $hasta = new Datetime($hasta);
-        $paqueteID = $request->request->get("paquete");
-        $cantpublicaciones = $request->request->get("cantpublicaciones");
-        $cantdestacadas = $request->request->get("cantdestacadas");
+        $paqueteID = $request->request->get("paquete");     
         try {
             $code = 200;
             $error = false;
@@ -236,18 +207,14 @@ class ContratosController extends AbstractFOSRestController
                     $desde,
                     $hasta,
                     $paqueteOBJ,
-                    $cantpublicaciones,
-                    $cantdestacadas
+                    $paqueteOBJ->getCantNormal(),
+                    $paqueteOBJ->getCantDestacada()
                 );
                 $em->persist($nuevoContrato);
                 $em->flush();
-                
-            $message = $nuevoContrato->getId();
+
+                $message = $nuevoContrato->getId();
             }
-
-
-
-
         } catch (Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;

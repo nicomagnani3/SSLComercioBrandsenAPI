@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controller;
-use App\Entity\CategoriasHijas;
+use App\Entity\Rubros;
 use App\Entity\Categorias;
 use App\Security\Permission;
 use Doctrine\ORM\EntityManagerInterface;
@@ -16,11 +16,11 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
 /**
- * Class CategoriaController
+ * Class RubrosController
  *
  * @Route("/api")
  */
-class CategoriaController extends AbstractFOSRestController
+class RubrosController extends AbstractFOSRestController
 {
     private $permission;
 
@@ -30,10 +30,10 @@ class CategoriaController extends AbstractFOSRestController
     }
 
     /**
-     * Retorna el listado de categorias
+     * Retorna el listado de rubros
      * @Rest\Route(
-     *    "/get_categorias", 
-     *    name="get_categorias",
+     *    "/get_rubros", 
+     *    name="get_rubros",
      *    methods = {
      *      Request::METHOD_GET,
      *    }
@@ -41,29 +41,29 @@ class CategoriaController extends AbstractFOSRestController
      * 
      * @SWG\Response(
      *     response=200,
-     *     description="Se obtuvo el listado de categorias"
+     *     description="Se obtuvo el listado de rubros"
      * )
      *
      * @SWG\Response(
      *     response=500,
-     *     description="No se pudo obtener el listado de categorias"
+     *     description="No se pudo obtener el listado de rubros"
      * )
      *
-     * @SWG\Tag(name="categorias")
+     * @SWG\Tag(name="Rubros")
      */
-    public function categorias(EntityManagerInterface $em, Request $request)
+    public function get_rubros(EntityManagerInterface $em, Request $request)
     {
       
         $errors = [];
         try {
             $code = 200;
             $error = false;
-            $categorias = $em->getRepository(Categorias::class)->findAll();
+            $rubros = $em->getRepository(Rubros::class)->findAll();
         
             $array = array_map(function ($item) {               
                     return $item->getArray();               
                
-            }, $categorias);
+            }, $rubros);
            
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
@@ -81,39 +81,41 @@ class CategoriaController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna el listado de categorias hijas 
+     * Retorna las empresas que tienen un contrato disponible y pertenecen al id del rubro pasado por parametro
      * @Rest\Route(
-     *    "/get_categoriasHijas", 
-     *    name="get_categoriasHijas",
+     *    "/get_empresas_rubro/{rubro}", 
+     *    name="/get_empresas_rubro/{rubro}",
      *    methods = {
      *      Request::METHOD_GET,
      *    }
      * )
-     *
+     * 
      * @SWG\Response(
      *     response=200,
-     *     description="Se obtuvo el listado de categorias hijas"
+     *     description="Se obtuvo el listado de rubros"
      * )
      *
      * @SWG\Response(
      *     response=500,
-     *     description="No se pudo obtener el listado de categorias hijas"
+     *     description="No se pudo obtener el listado de rubros"
      * )
      *
-     * @SWG\Tag(name="categorias")
+     * @SWG\Tag(name="Rubros")
      */
-    public function categoriasHijas(EntityManagerInterface $em, Request $request)
+    public function get_empresas_rubro(EntityManagerInterface $em, Request $request,$rubro)
     {
       
         $errors = [];
         try {
             $code = 200;
-            $error = false;     
-            $categorias = $em->getRepository(CategoriasHijas::class)->findAll();    
-            $array = array_map(function ($item) {               
+            $error = false;
+            $rubros = $em->getRepository(Rubros::class)->getEmpresasConContratoYRubro($rubro);
+
+        
+          /*   $array = array_map(function ($item) {               
                     return $item->getArray();               
                
-            }, $categorias);
+            }, $rubros); */
            
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
@@ -124,12 +126,12 @@ class CategoriaController extends AbstractFOSRestController
         $response = [
             'code' => $code,
             'error' => $error,
-            'data' => $code == 200 ? $array : $message,
+            'data' => $code == 200 ? $rubros : $message,
         ];
         return new JsonResponse(
             $response
         );
     }
-
+   
 
 }

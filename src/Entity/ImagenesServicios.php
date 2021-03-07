@@ -3,11 +3,11 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-
+use App\AbstractClass\ImagenesServiciosAbstract;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ImagenesServiciosRepository")
  */
-class ImagenesServicios
+class ImagenesServicios extends ImagenesServiciosAbstract
 {
     /**
      * @ORM\Id()
