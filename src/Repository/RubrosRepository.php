@@ -22,12 +22,13 @@ class RubrosRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        $query =  "SELECT e.id as idEmpresa, e.nombre as nombreEmpresa, u.username as nombreUsuario, u.telefono as telefono
-        FROM Contratos c
+        $query =  "SELECT p.id, p.fecha,p.precio,p.titulo,p.descripcion,p.destacada ,u.telefono, cat.nombre as padre, u.email, u.web
+        FROM  Contratos c
         INNER JOIN usuarios u on u.id = c.usuario_id
         INNER JOIN Empresa e on e.usuarios_id = u.id
         INNER JOIN Rubros r on r.id = e.rubro_id_id
 		INNER JOIN Publicacion p on p.idusuario_id = u.id
+		INNER JOIN Categorias cat on cat.id = p.categoria_id
         where c.hasta > GETDATE() and r.id ='$id'
         ";
 

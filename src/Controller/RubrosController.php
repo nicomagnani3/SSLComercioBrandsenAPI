@@ -81,10 +81,10 @@ class RubrosController extends AbstractFOSRestController
         );
     }
     /**
-     * Retorna las empresas que tienen un contrato disponible y pertenecen al id del rubro pasado por parametro
+     * Retorna los productos de un rubro pasado por parametro con contrato activo
      * @Rest\Route(
-     *    "/get_empresas_rubro/{rubro}", 
-     *    name="/get_empresas_rubro/{rubro}",
+     *    "/get_productos_rubro/{rubro}", 
+     *    name="/get_productos_rubro/{rubro}",
      *    methods = {
      *      Request::METHOD_GET,
      *    }
@@ -102,15 +102,38 @@ class RubrosController extends AbstractFOSRestController
      *
      * @SWG\Tag(name="Rubros")
      */
-    public function get_empresas_rubro(EntityManagerInterface $em, Request $request,$rubro)
+    public function get_productos_rubro(EntityManagerInterface $em, Request $request,$rubro)
     {
       
-        $errors = [];
+     
         try {
             $code = 200;
             $error = false;
-            $rubros = $em->getRepository(Rubros::class)->getEmpresasConContratoYRubro($rubro);
-
+            $array_new = [];
+            $arrayCompleto = [];
+            $rubros = $em->getRepository(Rubros::class)->getEmpresasConContratoYRubro($rubro);            
+            foreach ($rubros as $value) {
+                $ubicacion = 'imagenes/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [
+                    'id' => $value["id"],
+                    'fecha' => $value["fecha"],
+                    'precio' => $value["precio"],
+                    'titulo' => $value["titulo"],
+                    'descripcion' => $value["descripcion"],
+                    'destacado' => $value["destacada"],
+                    'imagen' => $data,
+                    'telefono' => $value["telefono"],
+                    'padre' =>  $value["padre"],
+                    'email'=>  $value["email"],
+                    'tipo'=>"PRODUCTO",
+                    'web'=> $value["web"],
+                ];
+                array_push($arrayCompleto, $array_new);
+            }    
         
           /*   $array = array_map(function ($item) {               
                     return $item->getArray();               
@@ -126,7 +149,7 @@ class RubrosController extends AbstractFOSRestController
         $response = [
             'code' => $code,
             'error' => $error,
-            'data' => $code == 200 ? $rubros : $message,
+            'data' => $code == 200 ? $arrayCompleto : $message,
         ];
         return new JsonResponse(
             $response
