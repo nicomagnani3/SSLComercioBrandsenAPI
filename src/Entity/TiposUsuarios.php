@@ -4,11 +4,12 @@ namespace App\Entity;
 
 use App\Repository\TiposUsuariosRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\AbstractClass\TipoUsuarioAbstract;
 
 /**
  * @ORM\Entity(repositoryClass=TiposUsuariosRepository::class)
  */
-class TiposUsuarios
+class TiposUsuarios extends TipoUsuarioAbstract
 {
     /**
      * @ORM\Id

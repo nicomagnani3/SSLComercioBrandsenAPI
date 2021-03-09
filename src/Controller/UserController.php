@@ -265,7 +265,7 @@ class UserController extends AbstractFOSRestController
                 throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
                 $error = true;
             }
-            
+
             $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);
 
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
@@ -276,17 +276,17 @@ class UserController extends AbstractFOSRestController
             $user->setTipousuarioId($tipoUsuario);
             $user->setTelefono($celular);
             $user->setWeb($web);
-            
+
             $em->persist($user);
             $em->flush();
             $empresa = new Empresa();
             $empresa->setUsuarios($user);
             $empresa->setNombre($nombre);
-            if ($rubro != null){
+            if ($rubro != null) {
                 $rubroOBJ = $em->getRepository(Rubros::class)->find($rubro);
-                 $empresa->setRubroId($rubroOBJ);
+                $empresa->setRubroId($rubroOBJ);
             }
-           
+
             $em->persist($empresa);
             $em->flush();
         } catch (\Exception $ex) {
@@ -360,12 +360,11 @@ class UserController extends AbstractFOSRestController
             if ($userOBJ == NULL) {
                 throw new \InvalidArgumentException('El email ingresado no se encuentra en el sistema');
                 $error = true;
-            }else{
-                $encodedPassword = $passwordEncoder->encodePassword($usuario, $password);               
-                $userOBJ->setPassword($encodedPassword);           
+            } else {
+                $encodedPassword = $passwordEncoder->encodePassword($usuario, $password);
+                $userOBJ->setPassword($encodedPassword);
                 $em->persist($userOBJ);
                 $em->flush();
-             
             }
         } catch (\Exception $ex) {
             $code = 500;
@@ -498,42 +497,34 @@ class UserController extends AbstractFOSRestController
             $error = false;
             $user = $em->getRepository(User::class)->find($id);
             $publicaciones = [];
-            $arrayResponse= [];
-       
-            if ($user->getGrupos()[0] == 'EMPRENDEDOR') {
-                $publicacionesEmp = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['idusuariId' =>  $id ]);
-                $publicacionesEmp = $this->arrayProductos($publicacionesEmp);   
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
-                $publicaciones=$this->arrayProductos($publicaciones); 
-                $arrayResponse=array_merge($publicaciones, $publicacionesEmp);
+            $arrayResponse = [];
 
+            if ($user->getGrupos()[0] == 'EMPRENDEDOR') {
+                $publicacionesEmp = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['idusuariId' =>  $id]);
+                $publicacionesEmp = $this->arrayProductos($publicacionesEmp);
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id, 'pago' => '1']);
+                $publicaciones = $this->arrayProductos($publicaciones);
+                $arrayResponse = array_merge($publicaciones, $publicacionesEmp);
             }
             if ($user->getGrupos()[0] == 'GENERAL') {
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
-                $arrayResponse=$this->arrayProductos($publicaciones); 
-
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id, 'pago' => '1']);
+                $arrayResponse = $this->arrayProductos($publicaciones);
             }
             if ($user->getGrupos()[0] == 'EMPRESA') {
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
-                $arrayResponse=$this->arrayProductos($publicaciones); 
-
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id, 'pago' => '1']);
+                $arrayResponse = $this->arrayProductos($publicaciones);
             }
             if ($user->getGrupos()[0] == 'COMERCIO') {
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id,'pago' => '1']);
-                $arrayResponse=$this->arrayProductos($publicaciones); 
-
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id, 'pago' => '1']);
+                $arrayResponse = $this->arrayProductos($publicaciones);
             }
             if ($user->getGrupos()[0] == 'PROFESIONAL') {
-                $publicacionServ = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id]);    
-                $publicacionServ = $this->arrayProductos($publicacionServ);              
-                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id , 'pago' => '1']);
-                $publicaciones=$this->arrayProductos($publicaciones); 
-                $arrayResponse=array_merge($publicaciones, $publicacionServ);
-                 
+                $publicacionServ = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' => $id]);
+                $publicacionServ = $this->arrayProductos($publicacionServ);
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id, 'pago' => '1']);
+                $publicaciones = $this->arrayProductos($publicaciones);
+                $arrayResponse = array_merge($publicaciones, $publicacionServ);
             }
-
-
-
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -557,5 +548,115 @@ class UserController extends AbstractFOSRestController
             return $item->getArray();
         }, $productos);
         return $array;
+    }
+    /**
+     * Retorna el listado de tipo usuarios
+     * @Rest\Route(
+     *    "/tipos_usuarios", 
+     *    name="tipos_usuarios",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de usuaros"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de usuarips"
+     * )
+     *
+     * @SWG\Tag(name="User")
+     */
+    public function tipos_usuarios(EntityManagerInterface $em, Request $request)
+    {
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $tipos = $em->getRepository(TiposUsuarios::class)->findAll();
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $tipos);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    /**
+     * Retorna el nombre de empresa,profesionales,comercios,emprendedores para crear un contrato
+     * @Rest\Route(
+     *    "/get_nombres_users", 
+     *    name="get_nombres_users",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de usuaros"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de usuarips"
+     * )
+     *
+     * @SWG\Tag(name="User")
+     */
+    public function get_nombres_users(EntityManagerInterface $em, Request $request)
+    {
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $arrayResponse = [];
+
+            $tiposEmpresas = $em->getRepository(Empresa::class)->findAll();
+            $arrayEmpresas = array_map(function ($item) {
+                return $item->getArray();
+            }, $tiposEmpresas);
+
+            $clientes = $em->getRepository(Cliente::class)->findAll();
+            $arrayClientes = array_map(function ($item) {
+                return $item->getArray();
+            }, $clientes);
+            $arrCliente = [];
+            foreach ($arrayClientes as $clave => $cliente) {
+                if ($cliente["tipo"][0] != 'GENERAL') {
+                    array_push($arrCliente, $cliente);
+                }
+            }
+            $arrayResponse=array_merge($arrayEmpresas, $arrCliente);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $arrayResponse : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
     }
 }

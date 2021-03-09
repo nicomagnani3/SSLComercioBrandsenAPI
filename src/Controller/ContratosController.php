@@ -166,7 +166,16 @@ class ContratosController extends AbstractFOSRestController
      *     description="ID del paquete qe corresponde estandar/premium  ",
      *      schema={
      *     }
-     * )  
+     * )
+     *    @SWG\Parameter(
+     *     name="pago",
+     * required=false,
+     *       in="body",
+     *     type="Integer",
+     *     description="Si el usuario pago se envia un 1 sino nada",
+     *      schema={
+     *     }
+     * )    
      * @SWG\Tag(name="Contratos")
      */
     public function add_contrato(EntityManagerInterface $em, Request $request)
@@ -177,7 +186,12 @@ class ContratosController extends AbstractFOSRestController
         $fecha_actual = date("d-m-Y");
         $hasta = date("d-m-Y", strtotime($fecha_actual . "+ 1 month"));
         $hasta = new Datetime($hasta);
-        $paqueteID = $request->request->get("paquete");     
+        $paqueteID = $request->request->get("paquete");  
+        
+        $pago = $request->request->get("pago");  
+        if ($pago == NULL){
+            $pago=0;
+        }
         try {
             $code = 200;
             $error = false;
@@ -185,6 +199,7 @@ class ContratosController extends AbstractFOSRestController
             if ($paqueteID != NULL) {
                 $paqueteOBJ = $em->getRepository(Paquete::class)->find($paqueteID);
             }
+            
             $contratosUser = $em->getRepository(Contratos::class)->findBy(['pago' => '1', 'usuario' =>  $usuarioID]);
             if ($contratosUser != null) {
                 $array = array_map(function ($item) {
@@ -196,7 +211,7 @@ class ContratosController extends AbstractFOSRestController
                 $contrato->setPaquete($paqueteOBJ);
                 $contrato->setCantPublicaciones($paqueteOBJ->getCantNormal());
                 $contrato->setCantDestacadas($paqueteOBJ->getCantDestacada());
-                $contrato->setPago(0);
+                $contrato->setPago($pago);
                 $em->persist($contrato);
                 $em->flush();
                 $message = $contrato->getId();
@@ -208,7 +223,8 @@ class ContratosController extends AbstractFOSRestController
                     $hasta,
                     $paqueteOBJ,
                     $paqueteOBJ->getCantNormal(),
-                    $paqueteOBJ->getCantDestacada()
+                    $paqueteOBJ->getCantDestacada(),
+                    $pago
                 );
                 $em->persist($nuevoContrato);
                 $em->flush();

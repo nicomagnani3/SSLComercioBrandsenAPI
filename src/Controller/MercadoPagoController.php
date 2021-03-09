@@ -6,16 +6,8 @@ use MercadoPago;
 
 use App\Entity\User;
 
-use App\Entity\MP;
-use App\Entity\PublicacionServicios;
-use App\Entity\PublicacionEmprendimientos;
-use App\Entity\CategoriasHijas;
-use App\Entity\Categorias;
-use App\Entity\ImagenesServicios;
-use App\Entity\ImagenesEmprendimientos;
-use App\Entity\Emprendimientos;
-use App\Entity\ImagenesPublicacion;
-use App\Entity\Servicios;
+use App\Entity\Publicacion;
+use App\Entity\Contratos;
 use App\Security\Permission;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
@@ -26,13 +18,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use \Datetime;
-use phpDocumentor\Reflection\DocBlock\Tags\Var_;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
+
 
 /**
  * Class MercadoPagoController
@@ -121,9 +110,9 @@ class MercadoPagoController extends AbstractController
         $observaciones = $request->request->get("observaciones");
         $tipo = $request->request->get("tipo");
   
-
-        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
-
+      
+        //MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
+        MercadoPago\SDK::setAccessToken('  TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
         $preference = new MercadoPago\Preference();
         $preference->payment_methods = array(
             "excluded_payment_types" => array(
@@ -145,8 +134,11 @@ class MercadoPagoController extends AbstractController
         //$preference->auto_return = "approved"; 
 
         $preference->save();
-       
-     
+       /*  $publicacionObj = $em->getRepository(Publicacion::class)->find($publicacion);
+        $publicacionObj->setPago(1);
+        $em->persist($publicacionObj);
+        $em->flush();
+      */
         $response = array(
             'id' => $preference->id,
             "preferencia" => $preference
@@ -213,10 +205,9 @@ class MercadoPagoController extends AbstractController
         $titulo      = $request->request->get("titulo");
         $precioPublicacion   = $request->request->get("precioPublicacion");
         $publicacion = $request->request->get("idPublicacion");;
-        $observaciones = $request->request->get("observaciones");
-        $tipo = $request->request->get("tipo");  
-        MercadoPago\SDK::setAccessToken('TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
 
+        //MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
+        MercadoPago\SDK::setAccessToken('  TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
         $preference = new MercadoPago\Preference();
         $preference->payment_methods = array(
             "excluded_payment_types" => array(
@@ -237,7 +228,10 @@ class MercadoPagoController extends AbstractController
         //$preference->auto_return = "approved"; 
         $preference->save();
        
-     
+       /*  $publicacionObj = $em->getRepository(Contratos::class)->find($publicacion);
+        $publicacionObj->setPago(1);
+        $em->persist($publicacionObj);
+        $em->flush(); */
         $response = array(
             'id' => $preference->id,
             "preferencia" => $preference

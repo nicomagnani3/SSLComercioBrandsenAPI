@@ -24,7 +24,8 @@ abstract class ContratoAbstract
         $hasta,
         $paqueteOBJ,
         $cantpublicaciones,
-        $cantdestacadas
+        $cantdestacadas,
+        $pago
     ) {
         $this->setUsuario($usuario);
         $this->setDesde($desde);
@@ -32,6 +33,6 @@ abstract class ContratoAbstract
         $this->setPaquete($paqueteOBJ);
         $this->setCantPublicaciones($cantpublicaciones);
         $this->setCantDestacadas($cantdestacadas);
-        $this->setPago(0);
+        $this->setPago($pago);
     }
 }

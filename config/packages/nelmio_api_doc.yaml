@@ -1,9 +1,9 @@
 nelmio_api_doc:
     documentation:
-        host: api.comercio.com.ar
+        host: malambobrandsenapi.com.ar
         info:
-            title: DESARROLLO DE SOFTWARE Rest API
-            description: Esta es la API REST desarrollada para el COMERCIO
+            title: API REST MALAMBO
+            description: Desarrollada por Magnani Nicolas
             version: 1.1.0
         securityDefinitions:
             Bearer:

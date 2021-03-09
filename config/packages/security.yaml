@@ -62,7 +62,11 @@ security:
             anonymous: true    
         get_productos_rubro:
             pattern: ^/api/get_productos_rubro
-            anonymous: true               
+            anonymous: true   
+        tipos_usuarios:
+            pattern: ^/api/tipos_usuarios
+            anonymous: true        
+                      
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -97,7 +101,8 @@ security:
         - { path: ^/api/get_servicios, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
         - { path: ^/api/process_payment, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
         - { path: ^/api/get_rubros, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
-        - { path: ^/api/get_productos_rubro, roles: IS_AUTHENTICATED_ANONYMOUSLY }     
+        - { path: ^/api/get_productos_rubro, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
+        - { path: ^/api/tipos_usuarios, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
 
         # login:
         #     pattern:  ^/api/login
