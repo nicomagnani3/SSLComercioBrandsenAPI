@@ -19,32 +19,21 @@ class EmpresaRepository extends ServiceEntityRepository
         parent::__construct($registry, Empresa::class);
     }
 
-    // /**
-    //  * @return Empresa[] Returns an array of Empresa objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function getPublicacionesEmpresa($empresa)
     {
-        return $this->createQueryBuilder('e')
-            ->andWhere('e.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('e.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $conn = $this->getEntityManager()->getConnection();
 
-    /*
-    public function findOneBySomeField($value): ?Empresa
-    {
-        return $this->createQueryBuilder('e')
-            ->andWhere('e.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $query =    "SELECT p.id, p.fecha,p.precio,p.titulo,p.descripcion,p.destacada ,u.telefono, cat.nombre as padre, u.email, u.web
+           FROM Empresa E 
+           INNER JOIN Publicacion P on E.usuarios_id = P.idusuario_id
+           INNER JOIN Contratos C on E.usuarios_id = c.usuario_id
+           INNER JOIN usuarios u on u.id = E.usuarios_id 
+           INNER JOIN Categorias cat on cat.id = p.categoria_id
+           where e.usuarios_id = '$empresa' and c.pago = 1 and c.hasta > GETDATE()
+           order by p.fecha desc";
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-    */
+
 }
