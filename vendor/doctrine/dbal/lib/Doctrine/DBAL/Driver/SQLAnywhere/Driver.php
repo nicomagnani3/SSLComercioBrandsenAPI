@@ -4,7 +4,6 @@ namespace Doctrine\DBAL\Driver\SQLAnywhere;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\AbstractSQLAnywhereDriver;
-
 use function array_keys;
 use function array_map;
 use function implode;
@@ -41,8 +40,6 @@ class Driver extends AbstractSQLAnywhereDriver
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated
      */
     public function getName()
     {
@@ -64,15 +61,8 @@ class Driver extends AbstractSQLAnywhereDriver
      *
      * @return string
      */
-    private function buildDsn(
-        $host,
-        $port,
-        $server,
-        $dbname,
-        $username = null,
-        $password = null,
-        array $driverOptions = []
-    ) {
+    private function buildDsn($host, $port, $server, $dbname, $username = null, $password = null, array $driverOptions = [])
+    {
         $host = $host ?: 'localhost';
         $port = $port ?: 2638;
 

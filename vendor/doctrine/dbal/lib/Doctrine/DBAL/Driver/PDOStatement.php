@@ -5,15 +5,9 @@ namespace Doctrine\DBAL\Driver;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 use PDO;
-
-use function array_slice;
-use function assert;
-use function func_get_args;
-use function is_array;
+use const E_USER_DEPRECATED;
 use function sprintf;
 use function trigger_error;
-
-use const E_USER_DEPRECATED;
 
 /**
  * The PDO implementation of the Statement interface.
@@ -87,20 +81,14 @@ class PDOStatement extends \PDOStatement implements Statement
     }
 
     /**
-     * @param mixed    $param
-     * @param mixed    $variable
-     * @param int      $type
-     * @param int|null $length
-     * @param mixed    $driverOptions
-     *
-     * @return bool
+     * {@inheritdoc}
      */
-    public function bindParam($param, &$variable, $type = ParameterType::STRING, $length = null, $driverOptions = null)
+    public function bindParam($column, &$variable, $type = ParameterType::STRING, $length = null, $driverOptions = null)
     {
         $type = $this->convertParamType($type);
 
         try {
-            return parent::bindParam($param, $variable, $type, ...array_slice(func_get_args(), 3));
+            return parent::bindParam($column, $variable, $type, $length, $driverOptions);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);
         }
@@ -137,14 +125,22 @@ class PDOStatement extends \PDOStatement implements Statement
      */
     public function fetch($fetchMode = null, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0)
     {
-        $args = func_get_args();
-
-        if (isset($args[0])) {
-            $args[0] = $this->convertFetchMode($args[0]);
-        }
+        $fetchMode = $this->convertFetchMode($fetchMode);
 
         try {
-            return parent::fetch(...$args);
+            if ($fetchMode === null && $cursorOrientation === PDO::FETCH_ORI_NEXT && $cursorOffset === 0) {
+                return parent::fetch();
+            }
+
+            if ($cursorOrientation === PDO::FETCH_ORI_NEXT && $cursorOffset === 0) {
+                return parent::fetch($fetchMode);
+            }
+
+            if ($cursorOffset === 0) {
+                return parent::fetch($fetchMode, $cursorOrientation);
+            }
+
+            return parent::fetch($fetchMode, $cursorOrientation, $cursorOffset);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);
         }
@@ -155,27 +151,22 @@ class PDOStatement extends \PDOStatement implements Statement
      */
     public function fetchAll($fetchMode = null, $fetchArgument = null, $ctorArgs = null)
     {
-        $args = func_get_args();
-
-        if (isset($args[0])) {
-            $args[0] = $this->convertFetchMode($args[0]);
-        }
-
-        if ($fetchMode === null && $fetchArgument === null && $ctorArgs === null) {
-            $args = [];
-        } elseif ($fetchArgument === null && $ctorArgs === null) {
-            $args = [$fetchMode];
-        } elseif ($ctorArgs === null) {
-            $args = [$fetchMode, $fetchArgument];
-        } else {
-            $args = [$fetchMode, $fetchArgument, $ctorArgs];
-        }
+        $fetchMode = $this->convertFetchMode($fetchMode);
 
         try {
-            $data = parent::fetchAll(...$args);
-            assert(is_array($data));
+            if ($fetchMode === null && $fetchArgument === null && $ctorArgs === null) {
+                return parent::fetchAll();
+            }
 
-            return $data;
+            if ($fetchArgument === null && $ctorArgs === null) {
+                return parent::fetchAll($fetchMode);
+            }
+
+            if ($ctorArgs === null) {
+                return parent::fetchAll($fetchMode, $fetchArgument);
+            }
+
+            return parent::fetchAll($fetchMode, $fetchArgument, $ctorArgs);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);
         }
@@ -198,12 +189,12 @@ class PDOStatement extends \PDOStatement implements Statement
      *
      * @param int $type Parameter type
      */
-    private function convertParamType(int $type): int
+    private function convertParamType(int $type) : int
     {
         if (! isset(self::PARAM_TYPE_MAP[$type])) {
             // TODO: next major: throw an exception
             @trigger_error(sprintf(
-                'Using a PDO parameter type (%d given) is deprecated and will cause an error in Doctrine DBAL 3.0',
+                'Using a PDO parameter type (%d given) is deprecated and will cause an error in Doctrine 3.0',
                 $type
             ), E_USER_DEPRECATED);
 
@@ -216,15 +207,19 @@ class PDOStatement extends \PDOStatement implements Statement
     /**
      * Converts DBAL fetch mode to PDO fetch mode
      *
-     * @param int $fetchMode Fetch mode
+     * @param int|null $fetchMode Fetch mode
      */
-    private function convertFetchMode(int $fetchMode): int
+    private function convertFetchMode(?int $fetchMode) : ?int
     {
+        if ($fetchMode === null) {
+            return null;
+        }
+
         if (! isset(self::FETCH_MODE_MAP[$fetchMode])) {
             // TODO: next major: throw an exception
             @trigger_error(sprintf(
                 'Using a PDO fetch mode or their combination (%d given)' .
-                ' is deprecated and will cause an error in Doctrine DBAL 3.0',
+                ' is deprecated and will cause an error in Doctrine 3.0',
                 $fetchMode
             ), E_USER_DEPRECATED);
 

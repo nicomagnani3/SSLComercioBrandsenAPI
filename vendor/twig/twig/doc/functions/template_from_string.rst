@@ -2,7 +2,6 @@
 ========================
 
 .. versionadded:: 2.8
-
     The name argument was added in Twig 2.8.
 
 The ``template_from_string`` function loads a template from a string:

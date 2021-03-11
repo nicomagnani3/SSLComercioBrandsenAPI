@@ -14,12 +14,13 @@ namespace Symfony\Contracts\HttpClient\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\TimeoutExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * A reference test suite for HttpClientInterface implementations.
+ *
+ * @experimental in 1.1
  */
 abstract class HttpClientTestCase extends TestCase
 {
@@ -740,35 +741,9 @@ abstract class HttpClientTestCase extends TestCase
         $response->getHeaders();
     }
 
-    public function testTimeoutIsNotAFatalError()
-    {
-        usleep(300000); // wait for the previous test to release the server
-        $client = $this->getHttpClient(__FUNCTION__);
-        $response = $client->request('GET', 'http://localhost:8057/timeout-body', [
-            'timeout' => 0.25,
-        ]);
-
-        try {
-            $response->getContent();
-            $this->fail(TimeoutExceptionInterface::class.' expected');
-        } catch (TimeoutExceptionInterface $e) {
-        }
-
-        for ($i = 0; $i < 10; ++$i) {
-            try {
-                $this->assertSame('<1><2>', $response->getContent());
-                break;
-            } catch (TimeoutExceptionInterface $e) {
-            }
-        }
-
-        if (10 === $i) {
-            throw $e;
-        }
-    }
-
     public function testTimeoutOnStream()
     {
+        usleep(300000); // wait for the previous test to release the server
         $client = $this->getHttpClient(__FUNCTION__);
         $response = $client->request('GET', 'http://localhost:8057/timeout-body');
 
@@ -857,18 +832,6 @@ abstract class HttpClientTestCase extends TestCase
             $this->fail(ClientExceptionInterface::class.' expected');
         } catch (ClientExceptionInterface $e) {
             $this->assertSame('GET', $e->getResponse()->toArray(false)['REQUEST_METHOD']);
-        }
-    }
-
-    public function testGetEncodedContentAfterDestruct()
-    {
-        $client = $this->getHttpClient(__FUNCTION__);
-
-        try {
-            $client->request('GET', 'http://localhost:8057/404-gzipped');
-            $this->fail(ClientExceptionInterface::class.' expected');
-        } catch (ClientExceptionInterface $e) {
-            $this->assertSame('some text', $e->getResponse()->getContent(false));
         }
     }
 

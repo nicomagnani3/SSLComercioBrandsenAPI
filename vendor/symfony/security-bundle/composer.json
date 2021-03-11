@@ -1,7 +1,7 @@
 {
     "name": "symfony/security-bundle",
     "type": "symfony-bundle",
-    "description": "Symfony SecurityBundle",
+    "description": "Provides a tight integration of the Security component into the Symfony full-stack framework",
     "keywords": [],
     "homepage": "https://symfony.com",
     "license": "MIT",
@@ -43,7 +43,7 @@
         "symfony/twig-bundle": "^4.4|^5.0",
         "symfony/validator": "^3.4|^4.0|^5.0",
         "symfony/yaml": "^3.4|^4.0|^5.0",
-        "twig/twig": "^1.41|^2.10|^3.0"
+        "twig/twig": "^1.43|^2.13|^3.0.4"
     },
     "conflict": {
         "symfony/browser-kit": "<4.2",

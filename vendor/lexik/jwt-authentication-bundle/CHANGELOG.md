@@ -1,7 +1,30 @@
 CHANGELOG
 =========
 
-For a diff between two versions https://github.com/lexik/LexikJWTAuthenticationBundle/compare/v1.0.0...v2.10.5
+For a diff between two versions https://github.com/lexik/LexikJWTAuthenticationBundle/compare/v1.0.0...v2.11.1
+
+## [2.11.2](https://github.com/lexik/LexikJWTAuthenticationBundle/tree/v2.11.1) (2020-02-17)
+1cdcc65 - bug #840 [Security] On Authentication failure, replace MessageData (mpiot)
+bb1e6c3 - bug #838 Fix wiring GenerateKeyPairCommand when key paths are null (chalasr)
+
+* bug [\#840](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/840) [Security] On Authentication failure, replace MessageData ([mpiot](https://github.com/mpiot))
+* bug [\#838](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/838) Fix wiring GenerateKeyPairCommand when key paths are null ([chalasr](https://github.com/chalasr))
+
+## [2.11.1](https://github.com/lexik/LexikJWTAuthenticationBundle/tree/v2.11.1) (2020-02-10)
+
+* bug [\#835](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/835) Fix #834: Re-add namshi/jose as required dependency until v3 ([filisko](https://github.com/filisko))
+
+## [2.11.0](https://github.com/lexik/LexikJWTAuthenticationBundle/tree/v2.11.0) (2020-02-9)
+
+* bug [\#833](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/833) KeyLoaderInterface::getPassphrase() might return null and we need a string ([drupol](https://github.com/drupol))
+* feature [\#832](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/832) Make AbstractKeyLoader::getSigningKey() and AbstractKeyLoader::getPublicKey public ([drupol](https://github.com/drupol))
+* feature [\#817](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/817) Feat: add keypair generation command ([bpolaszek](https://github.com/bpolaszek))
+* feature [\#816](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/816) Remove support for lcobucci/jwt <3.4 & symfony/* <4.4 ([chalasr](https://github.com/chalasr))
+
+## [2.10.6](https://github.com/lexik/LexikJWTAuthenticationBundle/tree/v2.10.6) (2020-01-20)
+
+* bug [\#827](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/827) Use named constructor for lcobucci/jwt Ecdsa signers ([chalasr](https://github.com/chalasr))
+* bug [\#826](https://github.com/lexik/LexikJWTAuthenticationBundle/pull/826) Fix creating tokens when iat is already set in the payload ([chalasr](https://github.com/chalasr))
 
 ## [2.10.5](https://github.com/lexik/LexikJWTAuthenticationBundle/tree/v2.10.5) (2020-12-19)
 

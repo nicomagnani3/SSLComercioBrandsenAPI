@@ -4,8 +4,7 @@ namespace Doctrine\DBAL\Driver\OCI8;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\AbstractOracleDriver;
-
-use const OCI_NO_AUTO_COMMIT;
+use const OCI_DEFAULT;
 
 /**
  * A Doctrine DBAL driver for the Oracle OCI8 PHP extensions.
@@ -19,11 +18,11 @@ class Driver extends AbstractOracleDriver
     {
         try {
             return new OCI8Connection(
-                (string) $username,
-                (string) $password,
+                $username,
+                $password,
                 $this->_constructDsn($params),
-                $params['charset'] ?? '',
-                $params['sessionMode'] ?? OCI_NO_AUTO_COMMIT,
+                $params['charset'] ?? null,
+                $params['sessionMode'] ?? OCI_DEFAULT,
                 $params['persistent'] ?? false
             );
         } catch (OCI8Exception $e) {
@@ -45,8 +44,6 @@ class Driver extends AbstractOracleDriver
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated
      */
     public function getName()
     {

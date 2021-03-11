@@ -20,7 +20,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolverInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
@@ -86,13 +85,32 @@ class SecurityListener implements EventSubscriberInterface
     {
         $request = $event->getRequest();
         $token = $this->tokenStorage->getToken();
+
+        if (method_exists($this->roleHierarchy, 'getReachableRoleNames')) {
+            if (null !== $this->roleHierarchy) {
+                $roles = $this->roleHierarchy->getReachableRoleNames($token->getRoleNames());
+            } else {
+                $roles = $token->getRoleNames();
+            }
+        } else {
+            if (null !== $this->roleHierarchy) {
+                $roles = $this->roleHierarchy->getReachableRoles($token->getRoles());
+            } else {
+                $roles = $token->getRoles();
+            }
+
+            $roles = array_map(function ($role) {
+                return $role->getRole();
+            }, $roles);
+        }
+
         $variables = [
             'token' => $token,
             'user' => $token->getUser(),
             'object' => $request,
             'subject' => $request,
             'request' => $request,
-            'roles' => $this->getRoles($token),
+            'roles' => $roles,
             'trust_resolver' => $this->trustResolver,
             // needed for the is_granted expression function
             'auth_checker' => $this->authChecker,
@@ -117,29 +135,6 @@ class SecurityListener implements EventSubscriberInterface
 
         // controller variables should also be accessible
         return array_merge($controllerArguments, $variables);
-    }
-
-    private function getRoles(TokenInterface $token): array
-    {
-        if (method_exists($this->roleHierarchy, 'getReachableRoleNames')) {
-            if (null !== $this->roleHierarchy) {
-                $roles = $this->roleHierarchy->getReachableRoleNames($token->getRoleNames());
-            } else {
-                $roles = $token->getRoleNames();
-            }
-        } else {
-            if (null !== $this->roleHierarchy) {
-                $roles = $this->roleHierarchy->getReachableRoles($token->getRoles());
-            } else {
-                $roles = $token->getRoles();
-            }
-
-            $roles = array_map(function ($role) {
-                return $role->getRole();
-            }, $roles);
-        }
-
-        return $roles;
     }
 
     /**

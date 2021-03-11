@@ -16,12 +16,11 @@ use Doctrine\Migrations\Events;
  */
 final class AutoCommitListener implements EventSubscriber
 {
-    public function onMigrationsMigrated(MigrationsEventArgs $args) : void
+    public function onMigrationsMigrated(MigrationsEventArgs $args): void
     {
         $conn = $args->getConnection();
-        $conf = $args->getMigratorConfiguration();
 
-        if ($conf->isDryRun() || $conn->isAutoCommit()) {
+        if ($args->isDryRun() || $conn->isAutoCommit()) {
             return;
         }
 

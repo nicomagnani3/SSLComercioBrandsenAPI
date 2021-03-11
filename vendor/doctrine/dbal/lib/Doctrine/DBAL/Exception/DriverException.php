@@ -7,8 +7,6 @@ use Exception;
 
 /**
  * Base class for all errors detected in the driver.
- *
- * @psalm-immutable
  */
 class DriverException extends DBALException
 {

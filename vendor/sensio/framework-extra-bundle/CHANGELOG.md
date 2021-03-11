@@ -1,11 +1,6 @@
 CHANGELOG
 =========
 
-5.6
----
-
- * Bump min dependency versions
-
 5.2
 ---
 

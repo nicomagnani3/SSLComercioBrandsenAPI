@@ -9,13 +9,23 @@ use Doctrine\DBAL\ParameterType;
 use InvalidArgumentException;
 use IteratorAggregate;
 use PDO;
-
+use const OCI_ASSOC;
+use const OCI_B_BIN;
+use const OCI_B_BLOB;
+use const OCI_BOTH;
+use const OCI_D_LOB;
+use const OCI_FETCHSTATEMENT_BY_COLUMN;
+use const OCI_FETCHSTATEMENT_BY_ROW;
+use const OCI_NUM;
+use const OCI_RETURN_LOBS;
+use const OCI_RETURN_NULLS;
+use const OCI_TEMP_BLOB;
+use const PREG_OFFSET_CAPTURE;
+use const SQLT_CHR;
 use function array_key_exists;
-use function assert;
 use function count;
 use function implode;
-use function is_int;
-use function is_resource;
+use function is_numeric;
 use function oci_bind_by_name;
 use function oci_cancel;
 use function oci_error;
@@ -32,20 +42,6 @@ use function preg_quote;
 use function sprintf;
 use function substr;
 
-use const OCI_ASSOC;
-use const OCI_B_BIN;
-use const OCI_B_BLOB;
-use const OCI_BOTH;
-use const OCI_D_LOB;
-use const OCI_FETCHSTATEMENT_BY_COLUMN;
-use const OCI_FETCHSTATEMENT_BY_ROW;
-use const OCI_NUM;
-use const OCI_RETURN_LOBS;
-use const OCI_RETURN_NULLS;
-use const OCI_TEMP_BLOB;
-use const PREG_OFFSET_CAPTURE;
-use const SQLT_CHR;
-
 /**
  * The OCI8 implementation of the Statement interface.
  */
@@ -60,11 +56,7 @@ class OCI8Statement implements IteratorAggregate, Statement
     /** @var OCI8Connection */
     protected $_conn;
 
-    /**
-     * @deprecated
-     *
-     * @var string
-     */
+    /** @var string */
     protected static $_PARAM = ':param';
 
     /** @var int[] */
@@ -100,20 +92,16 @@ class OCI8Statement implements IteratorAggregate, Statement
     /**
      * Creates a new OCI8Statement that uses the given connection handle and SQL statement.
      *
-     * @param resource $dbh   The connection handle.
-     * @param string   $query The SQL query.
+     * @param resource $dbh       The connection handle.
+     * @param string   $statement The SQL statement.
      */
-    public function __construct($dbh, $query, OCI8Connection $conn)
+    public function __construct($dbh, $statement, OCI8Connection $conn)
     {
-        [$query, $paramMap] = self::convertPositionalToNamedPlaceholders($query);
-
-        $stmt = oci_parse($dbh, $query);
-        assert(is_resource($stmt));
-
-        $this->_sth      = $stmt;
-        $this->_dbh      = $dbh;
-        $this->_paramMap = $paramMap;
-        $this->_conn     = $conn;
+        [$statement, $paramMap] = self::convertPositionalToNamedPlaceholders($statement);
+        $this->_sth             = oci_parse($dbh, $statement);
+        $this->_dbh             = $dbh;
+        $this->_paramMap        = $paramMap;
+        $this->_conn            = $conn;
     }
 
     /**
@@ -177,12 +165,10 @@ class OCI8Statement implements IteratorAggregate, Statement
      * @param string             $statement               The SQL statement to parse
      * @param string             $tokenOffset             The offset to start searching from
      * @param int                $fragmentOffset          The offset to build the next fragment from
-     * @param string[]           $fragments               Fragments of the original statement
-     *                                                    not containing placeholders
+     * @param string[]           $fragments               Fragments of the original statement not containing placeholders
      * @param string|null        $currentLiteralDelimiter The delimiter of the current string literal
      *                                                    or NULL if not currently in a literal
-     * @param array<int, string> $paramMap                Mapping of the original parameter positions
-     *                                                    to their named replacements
+     * @param array<int, string> $paramMap                Mapping of the original parameter positions to their named replacements
      *
      * @return bool Whether the token was found
      */
@@ -221,9 +207,10 @@ class OCI8Statement implements IteratorAggregate, Statement
     /**
      * Finds closing quote
      *
-     * @param string $statement               The SQL statement to parse
-     * @param string $tokenOffset             The offset to start searching from
-     * @param string $currentLiteralDelimiter The delimiter of the current string literal
+     * @param string      $statement               The SQL statement to parse
+     * @param string      $tokenOffset             The offset to start searching from
+     * @param string|null $currentLiteralDelimiter The delimiter of the current string literal
+     *                                             or NULL if not currently in a literal
      *
      * @return bool Whether the token was found
      */
@@ -253,7 +240,7 @@ class OCI8Statement implements IteratorAggregate, Statement
      * where the token was found.
      *
      * @param string $statement The SQL statement to parse
-     * @param int    $offset    The offset to start searching from
+     * @param string $offset    The offset to start searching from
      * @param string $regex     The regex containing token pattern
      *
      * @return string|null Token or NULL if not found
@@ -262,7 +249,6 @@ class OCI8Statement implements IteratorAggregate, Statement
     {
         if (preg_match($regex, $statement, $matches, PREG_OFFSET_CAPTURE, $offset)) {
             $offset = $matches[0][1];
-
             return $matches[0][0];
         }
 
@@ -280,34 +266,22 @@ class OCI8Statement implements IteratorAggregate, Statement
     /**
      * {@inheritdoc}
      */
-    public function bindParam($param, &$variable, $type = ParameterType::STRING, $length = null)
+    public function bindParam($column, &$variable, $type = ParameterType::STRING, $length = null)
     {
-        if (is_int($param)) {
-            if (! isset($this->_paramMap[$param])) {
-                throw new OCI8Exception(
-                    sprintf('Could not find variable mapping with index %d, in the SQL statement', $param)
-                );
-            }
-
-            $param = $this->_paramMap[$param];
-        }
+        $column = $this->_paramMap[$column] ?? $column;
 
         if ($type === ParameterType::LARGE_OBJECT) {
             $lob = oci_new_descriptor($this->_dbh, OCI_D_LOB);
-
-            $class = 'OCI-Lob';
-            assert($lob instanceof $class);
-
             $lob->writeTemporary($variable, OCI_TEMP_BLOB);
 
             $variable =& $lob;
         }
 
-        $this->boundValues[$param] =& $variable;
+        $this->boundValues[$column] =& $variable;
 
         return oci_bind_by_name(
             $this->_sth,
-            $param,
+            $column,
             $variable,
             $length ?? -1,
             $this->convertParameterType($type)
@@ -317,7 +291,7 @@ class OCI8Statement implements IteratorAggregate, Statement
     /**
      * Converts DBAL parameter type to oci8 parameter type
      */
-    private function convertParameterType(int $type): int
+    private function convertParameterType(int $type) : int
     {
         switch ($type) {
             case ParameterType::BINARY:
@@ -353,7 +327,7 @@ class OCI8Statement implements IteratorAggregate, Statement
      */
     public function columnCount()
     {
-        return oci_num_fields($this->_sth) ?: 0;
+        return oci_num_fields($this->_sth);
     }
 
     /**
@@ -374,13 +348,7 @@ class OCI8Statement implements IteratorAggregate, Statement
      */
     public function errorInfo()
     {
-        $error = oci_error($this->_sth);
-
-        if ($error === false) {
-            return [];
-        }
-
-        return $error;
+        return oci_error($this->_sth);
     }
 
     /**
@@ -390,9 +358,8 @@ class OCI8Statement implements IteratorAggregate, Statement
     {
         if ($params) {
             $hasZeroIndex = array_key_exists(0, $params);
-
             foreach ($params as $key => $val) {
-                if ($hasZeroIndex && is_int($key)) {
+                if ($hasZeroIndex && is_numeric($key)) {
                     $this->bindValue($key + 1, $val);
                 } else {
                     $this->bindValue($key, $val);
@@ -538,6 +505,6 @@ class OCI8Statement implements IteratorAggregate, Statement
      */
     public function rowCount()
     {
-        return oci_num_rows($this->_sth) ?: 0;
+        return oci_num_rows($this->_sth);
     }
 }

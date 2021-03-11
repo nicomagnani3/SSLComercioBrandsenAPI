@@ -2,9 +2,8 @@
 
 namespace Doctrine\DBAL\Logging;
 
-use function var_dump;
-
 use const PHP_EOL;
+use function var_dump;
 
 /**
  * A SQL logger that logs to the standard output using echo/var_dump.

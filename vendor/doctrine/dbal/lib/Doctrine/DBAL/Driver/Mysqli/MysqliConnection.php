@@ -7,7 +7,12 @@ use Doctrine\DBAL\Driver\PingableConnection;
 use Doctrine\DBAL\Driver\ServerInfoAwareConnection;
 use Doctrine\DBAL\ParameterType;
 use mysqli;
-
+use const MYSQLI_INIT_COMMAND;
+use const MYSQLI_OPT_CONNECT_TIMEOUT;
+use const MYSQLI_OPT_LOCAL_INFILE;
+use const MYSQLI_READ_DEFAULT_FILE;
+use const MYSQLI_READ_DEFAULT_GROUP;
+use const MYSQLI_SERVER_PUBLIC_KEY;
 use function defined;
 use function floor;
 use function func_get_args;
@@ -21,13 +26,6 @@ use function restore_error_handler;
 use function set_error_handler;
 use function sprintf;
 use function stripos;
-
-use const MYSQLI_INIT_COMMAND;
-use const MYSQLI_OPT_CONNECT_TIMEOUT;
-use const MYSQLI_OPT_LOCAL_INFILE;
-use const MYSQLI_READ_DEFAULT_FILE;
-use const MYSQLI_READ_DEFAULT_GROUP;
-use const MYSQLI_SERVER_PUBLIC_KEY;
 
 class MysqliConnection implements Connection, PingableConnection, ServerInfoAwareConnection
 {
@@ -70,11 +68,7 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
         });
         try {
             if (! $this->conn->real_connect($params['host'], $username, $password, $dbname, $port, $socket, $flags)) {
-                throw new MysqliException(
-                    $this->conn->connect_error,
-                    $this->conn->sqlstate ?? 'HY000',
-                    $this->conn->connect_errno
-                );
+                throw new MysqliException($this->conn->connect_error, $this->conn->sqlstate ?? 'HY000', $this->conn->connect_errno);
             }
         } finally {
             restore_error_handler();
@@ -132,9 +126,9 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
     /**
      * {@inheritdoc}
      */
-    public function prepare($sql)
+    public function prepare($prepareString)
     {
-        return new MysqliStatement($this->conn, $sql);
+        return new MysqliStatement($this->conn, $prepareString);
     }
 
     /**
@@ -153,17 +147,17 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
     /**
      * {@inheritdoc}
      */
-    public function quote($value, $type = ParameterType::STRING)
+    public function quote($input, $type = ParameterType::STRING)
     {
-        return "'" . $this->conn->escape_string($value) . "'";
+        return "'" . $this->conn->escape_string($input) . "'";
     }
 
     /**
      * {@inheritdoc}
      */
-    public function exec($sql)
+    public function exec($statement)
     {
-        if ($this->conn->query($sql) === false) {
+        if ($this->conn->query($statement) === false) {
             throw new MysqliException($this->conn->error, $this->conn->sqlstate, $this->conn->errno);
         }
 
@@ -206,8 +200,6 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
 
     /**
      * {@inheritdoc}
-     *
-     * @return int
      */
     public function errorCode()
     {
@@ -216,8 +208,6 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
 
     /**
      * {@inheritdoc}
-     *
-     * @return string
      */
     public function errorInfo()
     {
@@ -232,7 +222,7 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
      * @throws MysqliException When one of of the options is not supported.
      * @throws MysqliException When applying doesn't work - e.g. due to incorrect value.
      */
-    private function setDriverOptions(array $driverOptions = []): void
+    private function setDriverOptions(array $driverOptions = [])
     {
         $supportedDriverOptions = [
             MYSQLI_OPT_CONNECT_TIMEOUT,
@@ -291,10 +281,9 @@ class MysqliConnection implements Connection, PingableConnection, ServerInfoAwar
      *
      * @throws MysqliException
      */
-    private function setSecureConnection(array $params): void
+    private function setSecureConnection(array $params)
     {
-        if (
-            ! isset($params['ssl_key']) &&
+        if (! isset($params['ssl_key']) &&
             ! isset($params['ssl_cert']) &&
             ! isset($params['ssl_ca']) &&
             ! isset($params['ssl_capath']) &&

@@ -2,9 +2,9 @@
 
 namespace Doctrine\DBAL\Driver;
 
+use Doctrine\DBAL\ParameterType;
 use PDO;
-
-use function assert;
+use function count;
 use function func_get_args;
 
 /**
@@ -24,7 +24,7 @@ class PDOConnection extends PDO implements Connection, ServerInfoAwareConnection
     public function __construct($dsn, $user = null, $password = null, ?array $options = null)
     {
         try {
-            parent::__construct($dsn, (string) $user, (string) $password, (array) $options);
+            parent::__construct($dsn, $user, $password, $options);
             $this->setAttribute(PDO::ATTR_STATEMENT_CLASS, [PDOStatement::class, []]);
             $this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (\PDOException $exception) {
@@ -35,13 +35,10 @@ class PDOConnection extends PDO implements Connection, ServerInfoAwareConnection
     /**
      * {@inheritdoc}
      */
-    public function exec($sql)
+    public function exec($statement)
     {
         try {
-            $result = parent::exec($sql);
-            assert($result !== false);
-
-            return $result;
+            return parent::exec($statement);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);
         }
@@ -56,18 +53,12 @@ class PDOConnection extends PDO implements Connection, ServerInfoAwareConnection
     }
 
     /**
-     * @param string          $sql
-     * @param array<int, int> $driverOptions
-     *
-     * @return \PDOStatement
+     * {@inheritdoc}
      */
-    public function prepare($sql, $driverOptions = [])
+    public function prepare($prepareString, $driverOptions = [])
     {
         try {
-            $statement = parent::prepare($sql, $driverOptions);
-            assert($statement instanceof \PDOStatement);
-
-            return $statement;
+            return parent::prepare($prepareString, $driverOptions);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);
         }
@@ -75,21 +66,37 @@ class PDOConnection extends PDO implements Connection, ServerInfoAwareConnection
 
     /**
      * {@inheritdoc}
-     *
-     * @return \PDOStatement
      */
     public function query()
     {
-        $args = func_get_args();
+        $args      = func_get_args();
+        $argsCount = count($args);
 
         try {
-            $stmt = parent::query(...$args);
-            assert($stmt instanceof \PDOStatement);
+            if ($argsCount === 4) {
+                return parent::query($args[0], $args[1], $args[2], $args[3]);
+            }
 
-            return $stmt;
+            if ($argsCount === 3) {
+                return parent::query($args[0], $args[1], $args[2]);
+            }
+
+            if ($argsCount === 2) {
+                return parent::query($args[0], $args[1]);
+            }
+
+            return parent::query($args[0]);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function quote($input, $type = ParameterType::STRING)
+    {
+        return parent::quote($input, $type);
     }
 
     /**
@@ -98,10 +105,6 @@ class PDOConnection extends PDO implements Connection, ServerInfoAwareConnection
     public function lastInsertId($name = null)
     {
         try {
-            if ($name === null) {
-                return parent::lastInsertId();
-            }
-
             return parent::lastInsertId($name);
         } catch (\PDOException $exception) {
             throw new PDOException($exception);

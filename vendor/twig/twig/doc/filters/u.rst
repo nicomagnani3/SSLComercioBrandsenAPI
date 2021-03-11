@@ -2,7 +2,6 @@
 =====
 
 .. versionadded:: 2.12.1
-
     The ``u`` filter was added in Twig 2.12.1.
 
 The ``u`` filter wraps a text in a Unicode object (a `Symfony UnicodeString
@@ -31,13 +30,6 @@ Truncating a string:
 
     {{ 'Lorem ipsum'|u.truncate(8, '...') }}
     Lorem...
-
-The ``truncate`` method also accepts a third argument to preserve whole words:
-
-.. code-block:: twig
-
-    {{ 'Lorem ipsum dolor'|u.truncate(10, '...', false) }}
-    Lorem ipsum...
 
 Converting a string to *snake* case or *camelCase*:
 
@@ -75,7 +67,7 @@ For large strings manipulation, use the ``apply`` tag:
 
     .. code-block:: bash
 
-        $ composer require twig/string-extra
+        $ composer req twig/string-extra
 
     Then, use the ``twig/extra-bundle`` on Symfony projects or add the extension
     explicitly on the Twig environment::

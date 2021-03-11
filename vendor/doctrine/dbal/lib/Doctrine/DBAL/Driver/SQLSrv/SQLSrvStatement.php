@@ -8,12 +8,16 @@ use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 use IteratorAggregate;
 use PDO;
-
+use const SQLSRV_ENC_BINARY;
+use const SQLSRV_ERR_ERRORS;
+use const SQLSRV_FETCH_ASSOC;
+use const SQLSRV_FETCH_BOTH;
+use const SQLSRV_FETCH_NUMERIC;
+use const SQLSRV_PARAM_IN;
 use function array_key_exists;
 use function count;
 use function func_get_args;
 use function in_array;
-use function is_int;
 use function is_numeric;
 use function sqlsrv_errors;
 use function sqlsrv_execute;
@@ -29,13 +33,6 @@ use function sqlsrv_prepare;
 use function sqlsrv_rows_affected;
 use function SQLSRV_SQLTYPE_VARBINARY;
 use function stripos;
-
-use const SQLSRV_ENC_BINARY;
-use const SQLSRV_ERR_ERRORS;
-use const SQLSRV_FETCH_ASSOC;
-use const SQLSRV_FETCH_BOTH;
-use const SQLSRV_FETCH_NUMERIC;
-use const SQLSRV_PARAM_IN;
 
 /**
  * SQL Server Statement.
@@ -125,8 +122,6 @@ class SQLSrvStatement implements IteratorAggregate, Statement
 
     /**
      * Append to any INSERT query to retrieve the last insert id.
-     *
-     * @deprecated This constant has been deprecated and will be made private in 3.0
      */
     public const LAST_INSERT_ID_SQL = ';SELECT SCOPE_IDENTITY() AS LastInsertId;';
 
@@ -160,28 +155,22 @@ class SQLSrvStatement implements IteratorAggregate, Statement
 
         $this->variables[$param] = $value;
         $this->types[$param]     = $type;
-
-        return true;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function bindParam($param, &$variable, $type = ParameterType::STRING, $length = null)
+    public function bindParam($column, &$variable, $type = ParameterType::STRING, $length = null)
     {
-        if (! is_numeric($param)) {
-            throw new SQLSrvException(
-                'sqlsrv does not support named parameters to queries, use question mark (?) placeholders instead.'
-            );
+        if (! is_numeric($column)) {
+            throw new SQLSrvException('sqlsrv does not support named parameters to queries, use question mark (?) placeholders instead.');
         }
 
-        $this->variables[$param] =& $variable;
-        $this->types[$param]     = $type;
+        $this->variables[$column] =& $variable;
+        $this->types[$column]     = $type;
 
         // unset the statement resource if it exists as the new one will need to be bound to the new variable
         $this->stmt = null;
-
-        return true;
     }
 
     /**
@@ -190,7 +179,7 @@ class SQLSrvStatement implements IteratorAggregate, Statement
     public function closeCursor()
     {
         // not having the result means there's nothing to close
-        if ($this->stmt === null || ! $this->result) {
+        if (! $this->result) {
             return true;
         }
 
@@ -211,11 +200,7 @@ class SQLSrvStatement implements IteratorAggregate, Statement
      */
     public function columnCount()
     {
-        if ($this->stmt === null) {
-            return 0;
-        }
-
-        return sqlsrv_num_fields($this->stmt) ?: 0;
+        return sqlsrv_num_fields($this->stmt);
     }
 
     /**
@@ -236,7 +221,7 @@ class SQLSrvStatement implements IteratorAggregate, Statement
      */
     public function errorInfo()
     {
-        return (array) sqlsrv_errors(SQLSRV_ERR_ERRORS);
+        return sqlsrv_errors(SQLSRV_ERR_ERRORS);
     }
 
     /**
@@ -246,13 +231,9 @@ class SQLSrvStatement implements IteratorAggregate, Statement
     {
         if ($params) {
             $hasZeroIndex = array_key_exists(0, $params);
-
             foreach ($params as $key => $val) {
-                if ($hasZeroIndex && is_int($key)) {
-                    $this->bindValue($key + 1, $val);
-                } else {
-                    $this->bindValue($key, $val);
-                }
+                $key = $hasZeroIndex && is_numeric($key) ? $key + 1 : $key;
+                $this->bindValue($key, $val);
             }
         }
 
@@ -271,8 +252,6 @@ class SQLSrvStatement implements IteratorAggregate, Statement
         }
 
         $this->result = true;
-
-        return true;
     }
 
     /**
@@ -349,7 +328,7 @@ class SQLSrvStatement implements IteratorAggregate, Statement
     {
         // do not try fetching from the statement if it's not expected to contain result
         // in order to prevent exceptional situation
-        if ($this->stmt === null || ! $this->result) {
+        if (! $this->result) {
             return false;
         }
 
@@ -391,14 +370,12 @@ class SQLSrvStatement implements IteratorAggregate, Statement
                 while (($row = $this->fetch(...func_get_args())) !== false) {
                     $rows[] = $row;
                 }
-
                 break;
 
             case FetchMode::COLUMN:
                 while (($row = $this->fetchColumn()) !== false) {
                     $rows[] = $row;
                 }
-
                 break;
 
             default:
@@ -429,10 +406,6 @@ class SQLSrvStatement implements IteratorAggregate, Statement
      */
     public function rowCount()
     {
-        if ($this->stmt === null) {
-            return 0;
-        }
-
-        return sqlsrv_rows_affected($this->stmt) ?: 0;
+        return sqlsrv_rows_affected($this->stmt);
     }
 }

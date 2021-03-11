@@ -26,9 +26,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
 use function array_keys;
-use function assert;
 use function count;
 use function implode;
 
@@ -68,7 +66,9 @@ class ReservedWordsCommand extends Command
         $this->keywordListClasses[$name] = $class;
     }
 
-    /** @return void */
+    /**
+     * {@inheritdoc}
+     */
     protected function configure()
     {
         $this
@@ -122,8 +122,8 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        /** @var Connection $conn */
         $conn = $this->getHelper('db')->getConnection();
-        assert($conn instanceof Connection);
 
         $keywordLists = (array) $input->getOption('list');
         if (! $keywordLists) {
@@ -154,15 +154,11 @@ EOT
                     'Known lists: ' . implode(', ', array_keys($this->keywordListClasses))
                 );
             }
-
             $class      = $this->keywordListClasses[$keywordList];
             $keywords[] = new $class();
         }
 
-        $output->write(
-            'Checking keyword violations for <comment>' . implode(', ', $keywordLists) . '</comment>...',
-            true
-        );
+        $output->write('Checking keyword violations for <comment>' . implode(', ', $keywordLists) . '</comment>...', true);
 
         $schema  = $conn->getSchemaManager()->createSchema();
         $visitor = new ReservedKeywordsValidator($keywords);
@@ -170,12 +166,7 @@ EOT
 
         $violations = $visitor->getViolations();
         if (count($violations) !== 0) {
-            $output->write(
-                'There are <error>' . count($violations) . '</error> reserved keyword violations'
-                    . ' in your database schema:',
-                true
-            );
-
+            $output->write('There are <error>' . count($violations) . '</error> reserved keyword violations in your database schema:', true);
             foreach ($violations as $violation) {
                 $output->write('  - ' . $violation, true);
             }

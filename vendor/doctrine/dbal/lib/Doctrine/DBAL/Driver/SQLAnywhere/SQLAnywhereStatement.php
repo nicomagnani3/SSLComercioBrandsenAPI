@@ -11,14 +11,13 @@ use PDO;
 use ReflectionClass;
 use ReflectionObject;
 use stdClass;
-
+use const SASQL_BOTH;
 use function array_key_exists;
-use function assert;
 use function func_get_args;
 use function func_num_args;
 use function gettype;
 use function is_array;
-use function is_int;
+use function is_numeric;
 use function is_object;
 use function is_resource;
 use function is_string;
@@ -36,8 +35,6 @@ use function sasql_stmt_field_count;
 use function sasql_stmt_reset;
 use function sasql_stmt_result_metadata;
 use function sprintf;
-
-use const SASQL_BOTH;
 
 /**
  * SAP SQL Anywhere implementation of the Statement interface.
@@ -92,10 +89,8 @@ class SQLAnywhereStatement implements IteratorAggregate, Statement
      *
      * @throws SQLAnywhereException
      */
-    public function bindParam($param, &$variable, $type = ParameterType::STRING, $length = null)
+    public function bindParam($column, &$variable, $type = ParameterType::STRING, $length = null)
     {
-        assert(is_int($param));
-
         switch ($type) {
             case ParameterType::INTEGER:
             case ParameterType::BOOLEAN:
@@ -116,9 +111,9 @@ class SQLAnywhereStatement implements IteratorAggregate, Statement
                 throw new SQLAnywhereException('Unknown type: ' . $type);
         }
 
-        $this->boundValues[$param] =& $variable;
+        $this->boundValues[$column] =& $variable;
 
-        if (! sasql_stmt_bind_param_ex($this->stmt, $param - 1, $variable, $type, $variable === null)) {
+        if (! sasql_stmt_bind_param_ex($this->stmt, $column - 1, $variable, $type, $variable === null)) {
             throw SQLAnywhereException::fromSQLAnywhereError($this->conn, $this->stmt);
         }
 
@@ -130,8 +125,6 @@ class SQLAnywhereStatement implements IteratorAggregate, Statement
      */
     public function bindValue($param, $value, $type = ParameterType::STRING)
     {
-        assert(is_int($param));
-
         return $this->bindParam($param, $value, $type);
     }
 
@@ -184,11 +177,9 @@ class SQLAnywhereStatement implements IteratorAggregate, Statement
             $hasZeroIndex = array_key_exists(0, $params);
 
             foreach ($params as $key => $val) {
-                if ($hasZeroIndex && is_int($key)) {
-                    $this->bindValue($key + 1, $val);
-                } else {
-                    $this->bindValue($key, $val);
-                }
+                $key = $hasZeroIndex && is_numeric($key) ? $key + 1 : $key;
+
+                $this->bindValue($key, $val);
             }
         }
 
@@ -265,14 +256,12 @@ class SQLAnywhereStatement implements IteratorAggregate, Statement
                 while (($row = $this->fetch(...func_get_args())) !== false) {
                     $rows[] = $row;
                 }
-
                 break;
 
             case FetchMode::COLUMN:
                 while (($row = $this->fetchColumn()) !== false) {
                     $rows[] = $row;
                 }
-
                 break;
 
             default:
@@ -322,8 +311,6 @@ class SQLAnywhereStatement implements IteratorAggregate, Statement
         $this->defaultFetchMode          = $fetchMode;
         $this->defaultFetchClass         = $arg2 ?: $this->defaultFetchClass;
         $this->defaultFetchClassCtorArgs = $arg3 ? (array) $arg3 : $this->defaultFetchClassCtorArgs;
-
-        return true;
     }
 
     /**

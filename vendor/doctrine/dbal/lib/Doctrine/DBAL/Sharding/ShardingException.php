@@ -6,13 +6,11 @@ use Doctrine\DBAL\DBALException;
 
 /**
  * Sharding related Exceptions
- *
- * @psalm-immutable
  */
 class ShardingException extends DBALException
 {
     /**
-     * @return ShardingException
+     * @return \Doctrine\DBAL\Sharding\ShardingException
      */
     public static function notImplemented()
     {
@@ -20,7 +18,7 @@ class ShardingException extends DBALException
     }
 
     /**
-     * @return ShardingException
+     * @return \Doctrine\DBAL\Sharding\ShardingException
      */
     public static function missingDefaultFederationName()
     {
@@ -28,7 +26,7 @@ class ShardingException extends DBALException
     }
 
     /**
-     * @return ShardingException
+     * @return \Doctrine\DBAL\Sharding\ShardingException
      */
     public static function missingDefaultDistributionKey()
     {
@@ -36,7 +34,7 @@ class ShardingException extends DBALException
     }
 
     /**
-     * @return ShardingException
+     * @return \Doctrine\DBAL\Sharding\ShardingException
      */
     public static function activeTransaction()
     {
@@ -44,7 +42,7 @@ class ShardingException extends DBALException
     }
 
     /**
-     * @return ShardingException
+     * @return \Doctrine\DBAL\Sharding\ShardingException
      */
     public static function noShardDistributionValue()
     {
@@ -52,7 +50,7 @@ class ShardingException extends DBALException
     }
 
     /**
-     * @return ShardingException
+     * @return \Doctrine\DBAL\Sharding\ShardingException
      */
     public static function missingDistributionType()
     {

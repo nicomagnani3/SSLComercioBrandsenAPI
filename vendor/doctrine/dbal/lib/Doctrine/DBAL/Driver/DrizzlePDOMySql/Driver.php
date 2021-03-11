@@ -33,8 +33,6 @@ class Driver extends \Doctrine\DBAL\Driver\PDOMySql\Driver
 
     /**
      * {@inheritdoc}
-     *
-     * @return DrizzlePlatform
      */
     public function getDatabasePlatform()
     {
@@ -43,8 +41,6 @@ class Driver extends \Doctrine\DBAL\Driver\PDOMySql\Driver
 
     /**
      * {@inheritdoc}
-     *
-     * @return DrizzleSchemaManager
      */
     public function getSchemaManager(\Doctrine\DBAL\Connection $conn)
     {
@@ -53,8 +49,6 @@ class Driver extends \Doctrine\DBAL\Driver\PDOMySql\Driver
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated
      */
     public function getName()
     {

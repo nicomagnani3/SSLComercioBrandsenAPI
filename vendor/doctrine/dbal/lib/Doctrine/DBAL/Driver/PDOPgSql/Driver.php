@@ -7,7 +7,6 @@ use Doctrine\DBAL\Driver\AbstractPostgreSQLDriver;
 use Doctrine\DBAL\Driver\PDOConnection;
 use PDO;
 use PDOException;
-
 use function defined;
 
 /**
@@ -28,8 +27,7 @@ class Driver extends AbstractPostgreSQLDriver
                 $driverOptions
             );
 
-            if (
-                defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')
+            if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')
                 && (! isset($driverOptions[PDO::PGSQL_ATTR_DISABLE_PREPARES])
                     || $driverOptions[PDO::PGSQL_ATTR_DISABLE_PREPARES] === true
                 )
@@ -110,8 +108,6 @@ class Driver extends AbstractPostgreSQLDriver
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated
      */
     public function getName()
     {
