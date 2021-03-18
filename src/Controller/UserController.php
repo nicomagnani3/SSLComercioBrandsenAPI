@@ -573,5 +573,62 @@ class UserController extends AbstractFOSRestController
             $response
         );
     }
+    /**
+     * retorna si el usuario publico un producto o no
+     * @Rest\Route(
+     *    "/get_publico_usuario", 
+     *    name="get_publico_usuario",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvieron las publicaciones  del usuario"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="no se pudieron obtener"
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="idUsuario",
+     *     in="body",
+     *     type="idUsuario",
+     *     description="The id del usuario",
+     *     schema={
+     *     }
+     * )
+     *
+     *   * @SWG\Tag(name="User")
+     */
+    public function get_publico_usuario(EntityManagerInterface $em, Request $request)
+    {
+        $id = $request->request->get("idUsuario");
+        try {
+            $code = 200;
+            $error = false;           
+            $publico=false;      
+                $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' => $id, 'pago' => '1']);
+            if ($publicaciones != null){
+                $publico = true;
+            }
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $publico : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
     
 }
