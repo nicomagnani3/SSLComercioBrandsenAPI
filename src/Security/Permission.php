@@ -63,7 +63,8 @@ class Permission {
     public const ADMINISTRADOR  = [
         'ADMINISTRADOR',
         'CAMBIAR_CLAVE',
-        'ASIGNAR_CONTRATO'
+        'ASIGNAR_CONTRATO',
+        'VENCIMIENTO_CONTRATO'
     ];
     public const GRUPOS = [
         'GENERAL' => self::GENERAL,

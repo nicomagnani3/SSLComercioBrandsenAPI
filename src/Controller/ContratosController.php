@@ -293,4 +293,47 @@ class ContratosController extends AbstractFOSRestController
             $response
         );
     }
+     /**
+     * Retorna el listado de los contratos
+     * @Rest\Get("/get_contratos", name="get_contratos")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de los contratos, traidos de la tabla CONTRATOS"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de CONTRATOS"
+     * )
+     *
+     * @SWG\Tag(name="Contratos")
+     */
+    public function get_contratos(EntityManagerInterface $em, Request $request)
+    {
+
+
+        try {
+            $code = 200;
+            $error = false;
+            $paquetes = $em->getRepository(Contratos::class)->findBy(['pago' => '1'],[ 'hasta' => 'ASC']);
+
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $paquetes);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
 }

@@ -15,6 +15,9 @@ abstract class ContratoAbstract
             'cantDestacada' => $this->getCantDestacadas(),
             'cantnormal' => $this->getCantPublicaciones(),
             'pago' => $this->getPago(),
+            'userMail'=> $this->getUsuario()->getEmail(),
+            'userCel'=> $this->getUsuario()->getTelefono(),
+            'userTipo'=> $this->getUsuario()->getTipousuarioId()->getDescripcion(),
         ];
     }
 
