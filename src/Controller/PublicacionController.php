@@ -195,6 +195,14 @@ class PublicacionController extends AbstractFOSRestController
      *      schema={
      *     }
      * )    
+     *    @SWG\Parameter(
+     *     name="yapublico",
+     *       in="body",
+     *     type="boolean",
+     *     description="retorna si el usuario publico o no alguna vez, para su primera publicacion gratis   ",
+     *      schema={
+     *     }
+     * )   
      * @SWG\Tag(name="Publicaciones")
      */
     public function nueva_publicacion(EntityManagerInterface $em, Request $request)
@@ -210,6 +218,8 @@ class PublicacionController extends AbstractFOSRestController
         $destacada = $request->request->get("destacada");
         $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
+        $yapublico = $request->request->get("yapublico");
+        
 
         try {
             $code = 200;
@@ -241,6 +251,9 @@ class PublicacionController extends AbstractFOSRestController
                 }
 
                 
+            }
+            if (!$yapublico){
+                $pago=1;
             }
             $nuevaPublicacion = new Publicacion();
             $nuevaPublicacion->crearPublicacion(
