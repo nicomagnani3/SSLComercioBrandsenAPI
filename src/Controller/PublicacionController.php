@@ -232,7 +232,7 @@ class PublicacionController extends AbstractFOSRestController
             if ($categoriasHija != NULL) {
                 $categoriasHija = $em->getRepository(CategoriasHijas::class)->find($categoriasHija);
             }
-            if ($usuarioID != null){
+            if ($usuarioID != null && $usuario->getGrupos()[0] != 'EMPRENDEDOR' && $usuario->getGrupos()[0] != 'PROFESIONAL'){
                 $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
                 if ($contratoOBJ != null){
                     if ($destacada){
@@ -725,11 +725,11 @@ class PublicacionController extends AbstractFOSRestController
                 $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $idUsuario]);
                 if ($contratoOBJ != null){
                     if ($destacada){
-                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()  && $contratoOBJ->getCantDestacadas() > 0){
+                        if ($contratoOBJ->getCantDestacadas() < $contratoOBJ->getPaquete()->getCantDestacada()  && $contratoOBJ->getCantDestacadas() >= 0){
                                 $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() + 1);
                         }                    
                     }else{
-                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()  && $contratoOBJ->getCantPublicaciones() > 0){
+                        if ($contratoOBJ->getCantPublicaciones() < $contratoOBJ->getPaquete()->getCantNormal()  && $contratoOBJ->getCantPublicaciones() >= 0){
                                     $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() + 1);   
                         }                    
                     }

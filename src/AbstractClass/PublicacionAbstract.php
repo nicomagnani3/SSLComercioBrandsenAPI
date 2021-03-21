@@ -20,6 +20,7 @@ abstract class PublicacionAbstract
             'imagen'=>$data,
             'telefono'=>$this->getIDusuario()->getTelefono(),
             'padre'=>$this->getCategoria()->getNombre(),
+            'hijo'=>$this->getCategoriaHija()->getDescripcion(),
             'tipo'=>'PRODUCTO',
             'email'=> $this->getIDusuario()->getEmail(),
             'web'=>$this->getIDusuario()->getWeb(),
