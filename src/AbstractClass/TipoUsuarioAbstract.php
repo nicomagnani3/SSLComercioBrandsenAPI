@@ -10,7 +10,7 @@ abstract class TipoUsuarioAbstract
         return [
             'id'=>$this->getId(),
             'nombre' => $this->getDescripcion(),
-            
+            'nombreMuestra' => $this->getNombre(),
            
         ];  
     }

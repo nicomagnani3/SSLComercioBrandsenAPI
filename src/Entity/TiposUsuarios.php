@@ -22,6 +22,10 @@ class TiposUsuarios extends TipoUsuarioAbstract
      * @ORM\Column(type="string", length=50)
      */
     private $descripcion;
+     /**
+     * @ORM\Column(type="string", length=50)
+     */
+    private $nombre;
 
     public function getId(): ?int
     {
@@ -36,6 +40,17 @@ class TiposUsuarios extends TipoUsuarioAbstract
     public function setDescripcion(string $descripcion): self
     {
         $this->descripcion = $descripcion;
+
+        return $this;
+    }
+    public function getNombre(): ?string
+    {
+        return $this->nombre;
+    }
+
+    public function setNombre(string $nombre): self
+    {
+        $this->nombre = $nombre;
 
         return $this;
     }
