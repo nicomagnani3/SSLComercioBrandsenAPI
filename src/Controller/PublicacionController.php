@@ -75,9 +75,11 @@ class PublicacionController extends AbstractFOSRestController
             $code = 200;
             $error = false;
             $publicaciones = $em->getRepository(Publicacion::class)->findBy(
-                ['pago' => '1',
-                'destacada' => 1],              
-                [ 'fecha' => 'DESC']
+                [
+                    'pago' => '1',
+                    'destacada' => 1
+                ],
+                ['fecha' => 'DESC']
             );
 
             $array = array_map(function ($item) {
@@ -219,12 +221,15 @@ class PublicacionController extends AbstractFOSRestController
         $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
         $yapublico = $request->request->get("yapublico");
-        
-
+        $date_now = date('d-m-Y');
+        $hasta = strtotime('+30 day', strtotime($date_now));
+        $hasta = date('d-m-Y', $hasta);
+        $hasta = new Datetime($hasta);
+       
         try {
             $code = 200;
             $error = false;
-            $pago=NULL;
+            $pago = NULL;
             $usuario = $em->getRepository(User::class)->find($usuarioID);
             if ($categoria != NULL) {
                 $categoriaPadre = $em->getRepository(Categorias::class)->find($categoria);
@@ -232,28 +237,26 @@ class PublicacionController extends AbstractFOSRestController
             if ($categoriasHija != NULL) {
                 $categoriasHija = $em->getRepository(CategoriasHijas::class)->find($categoriasHija);
             }
-            if ($usuarioID != null && $usuario->getGrupos()[0] != 'EMPRENDEDOR' && $usuario->getGrupos()[0] != 'PROFESIONAL'){
+            if ($usuarioID != null && $usuario->getGrupos()[0] != 'EMPRENDEDOR' && $usuario->getGrupos()[0] != 'PROFESIONAL') {
                 $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
-                if ($contratoOBJ != null){
-                    if ($destacada){
-                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada() && $contratoOBJ->getCantDestacadas() > 0){
-                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() - 1);
-                                $pago=1;
-                        }                    
-                    }else{
-                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal() && $contratoOBJ->getCantPublicaciones() > 0 ){
-                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() - 1);   
-                                    $pago=1;
-                        }                    
+                if ($contratoOBJ != null) {
+                    if ($destacada) {
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada() && $contratoOBJ->getCantDestacadas() > 0) {
+                            $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() - 1);
+                            $pago = 1;
+                        }
+                    } else {
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal() && $contratoOBJ->getCantPublicaciones() > 0) {
+                            $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() - 1);
+                            $pago = 1;
+                        }
                     }
                     $em->persist($contratoOBJ);
                     $em->flush();
                 }
-
-                
             }
-            if (!$yapublico){
-                $pago=1;
+            if (!$yapublico) {
+                $pago = 1;
             }
             $nuevaPublicacion = new Publicacion();
             $nuevaPublicacion->crearPublicacion(
@@ -265,7 +268,8 @@ class PublicacionController extends AbstractFOSRestController
                 $categoriaPadre,
                 $categoriasHija,
                 $destacada,
-                $pago
+                $pago,
+                $hasta
             );
             $em->persist($nuevaPublicacion);
             $em->flush();
@@ -376,9 +380,9 @@ class PublicacionController extends AbstractFOSRestController
                     'imagen' => $data,
                     'telefono' => $usuario->getTelefono(),
                     'padre' => $categoria->getNombre(),
-                    'email'=> $usuario->getEmail(),
-                    'tipo'=>"PRODUCTO",
-                    'web'=>$usuario->getWeb(),
+                    'email' => $usuario->getEmail(),
+                    'tipo' => "PRODUCTO",
+                    'web' => $usuario->getWeb(),
                 ];
                 array_push($arrayCompleto, $array_new);
             }
@@ -404,9 +408,9 @@ class PublicacionController extends AbstractFOSRestController
                     'imagen' => $data,
                     'telefono' => $usuario->getTelefono(),
                     'padre' => $servicio->getNombre(),
-                    'email'=> $usuario->getEmail(),
+                    'email' => $usuario->getEmail(),
 
-                    'tipo'=> 'SERVICIO'
+                    'tipo' => 'SERVICIO'
 
                 ];
                 array_push($arrayCompleto, $array_new);
@@ -430,8 +434,8 @@ class PublicacionController extends AbstractFOSRestController
                     'destacado' => $value["destacada"],
                     'telefono' => $usuario->getTelefono(),
                     'padre' => $emprendimiento->getNombre(),
-                    'email'=> $usuario->getEmail(),
-                    'tipo'=> "EMPRENDIMIENTO"
+                    'email' => $usuario->getEmail(),
+                    'tipo' => "EMPRENDIMIENTO"
                 ];
                 array_push($arrayCompleto, $array_new);
             }
@@ -488,12 +492,14 @@ class PublicacionController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-                
+
             $publicaciones = $em->getRepository(Publicacion::class)->findBy(
-                ['pago' => '1',
-                'categoria' => $id],
-                [ 'fecha' => 'DESC']
-               
+                [
+                    'pago' => '1',
+                    'categoria' => $id
+                ],
+                ['fecha' => 'DESC']
+
             );
             $array = array_map(function ($item) {
                 return $item->getArray();
@@ -554,7 +560,7 @@ class PublicacionController extends AbstractFOSRestController
     {
         $idPublicacion = $request->request->get("idPublicacion");
         $tipo = $request->request->get("tipo");
-        
+
         $errors = [];
         try {
             $code = 200;
@@ -625,24 +631,6 @@ class PublicacionController extends AbstractFOSRestController
                     array_push($arrayCompleto, $array_new);
                 }
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -716,28 +704,26 @@ class PublicacionController extends AbstractFOSRestController
     {
         $idPublicacion = $request->request->get("idPublicacion");
         $tipo = $request->request->get("tipo");
-        $destacada = $request->request->get("destacada");        
-        $idUsuario = $request->request->get("idUsuario");                
-        try {            
+        $destacada = $request->request->get("destacada");
+        $idUsuario = $request->request->get("idUsuario");
+        try {
             $code = 200;
             $error = false;
-            if ($idUsuario != null){
+            if ($idUsuario != null) {
                 $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $idUsuario]);
-                if ($contratoOBJ != null){
-                    if ($destacada){
-                        if ($contratoOBJ->getCantDestacadas() < $contratoOBJ->getPaquete()->getCantDestacada()  && $contratoOBJ->getCantDestacadas() >= 0){
-                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() + 1);
-                        }                    
-                    }else{
-                        if ($contratoOBJ->getCantPublicaciones() < $contratoOBJ->getPaquete()->getCantNormal()  && $contratoOBJ->getCantPublicaciones() >= 0){
-                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() + 1);   
-                        }                    
+                if ($contratoOBJ != null) {
+                    if ($destacada) {
+                        if ($contratoOBJ->getCantDestacadas() < $contratoOBJ->getPaquete()->getCantDestacada()  && $contratoOBJ->getCantDestacadas() >= 0) {
+                            $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() + 1);
+                        }
+                    } else {
+                        if ($contratoOBJ->getCantPublicaciones() < $contratoOBJ->getPaquete()->getCantNormal()  && $contratoOBJ->getCantPublicaciones() >= 0) {
+                            $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() + 1);
+                        }
                     }
                     $em->persist($contratoOBJ);
                     $em->flush();
                 }
-
-                
             }
             if ($tipo == 'PRODUCTO') {
                 $publicacion = $em->getRepository(Publicacion::class)->find($idPublicacion);
@@ -806,7 +792,6 @@ class PublicacionController extends AbstractFOSRestController
 
         $errors = [];
         try {
-            var_dump($publicacion);
             $code = 200;
             $error = false;
             $publicacionObj = $em->getRepository(Publicacion::class)->find($publicacion);
@@ -828,7 +813,7 @@ class PublicacionController extends AbstractFOSRestController
             $response
         );
     }
-    
+
     /**
      * Retorna el precio de las publicaciones para los que no usan contratos
      * @Rest\Route(

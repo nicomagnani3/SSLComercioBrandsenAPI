@@ -331,7 +331,10 @@ class EmprendimientosController extends AbstractFOSRestController
         $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
         $destacada = $request->request->get("destacada");
-
+        $date_now = date('d-m-Y');
+        $hasta = strtotime('+30 day', strtotime($date_now));
+        $hasta = date('d-m-Y', $hasta);
+        $hasta = new Datetime($hasta);
 
         try {
             if ($usuarioID != null) {
@@ -364,7 +367,8 @@ class EmprendimientosController extends AbstractFOSRestController
                 $observaciones,
                 $usuario,
                 $emprendimientoOBJ,
-                $destacada
+                $destacada,
+                $hasta
             );
             $em->persist($nuevaPublicacion);
             $em->flush();

@@ -90,15 +90,7 @@ class MercadoPagoController extends AbstractController
      *     description="idPublicacion creada ",
      *      schema={
      *     }
-     * )
-     *    @SWG\Parameter(
-     *     name="tipo",  
-     *       in="body",
-     *     type="integer",
-     *     description="tipo de publicacion (publicacion,emprendimiento, servicio) ",
-     *      schema={
-     *     }
-     * )      
+     * )         
      *   @SWG\Tag(name="MercadoPago")
      */
     public function create_preference(EntityManagerInterface $em, Request $request)
@@ -108,7 +100,7 @@ class MercadoPagoController extends AbstractController
         $observaciones   = $request->request->get("descripcion");
         $publicacion = $request->request->get("idPublicacion");;
         $observaciones = $request->request->get("observaciones");
-        $tipo = $request->request->get("tipo");
+        
   
       
         //MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
@@ -125,7 +117,7 @@ class MercadoPagoController extends AbstractController
         $item->unit_price = $precioPublicacion;
         $item->currency_id = "ARS";
         $item->description = $observaciones;
-        $url= "http://localhost:8080/crearPublicacion/publicacion$publicacion/tipo$tipo";
+        $url= "http://localhost:8080/crearPublicacion/publicacion$publicacion";
         $preference->items = array($item);
            $preference->back_urls = array(
             "success" => $url,  
@@ -189,15 +181,7 @@ class MercadoPagoController extends AbstractController
      *     description="idPublicacion creada ",
      *      schema={
      *     }
-     * )
-     *    @SWG\Parameter(
-     *     name="tipo",  
-     *       in="body",
-     *     type="integer",
-     *     description="tipo de publicacion (publicacion,emprendimiento, servicio) ",
-     *      schema={
-     *     }
-     * )      
+     * )  
      *   @SWG\Tag(name="MercadoPago")
      */
     public function create_contrato(EntityManagerInterface $em, Request $request)

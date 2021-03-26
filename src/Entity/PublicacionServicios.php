@@ -27,7 +27,10 @@ class PublicacionServicios extends PublicacionServicioAbstract
      * @ORM\Column(type="datetime")
      */
     private $fecha;
-
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $hasta;
     /**
      * @ORM\Column(type="string", length=100)
      */
@@ -90,7 +93,17 @@ class PublicacionServicios extends PublicacionServicioAbstract
 
         return $this;
     }
+    public function getHasta(): ?\DateTimeInterface
+    {
+        return $this->hasta;
+    }
 
+    public function setHasta(\DateTimeInterface $hasta): self
+    {
+        $this->hasta = $hasta;
+
+        return $this;
+    }
     public function getTitulo(): ?string
     {
         return $this->titulo;

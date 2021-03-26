@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\PublicacionEmprendimientos;
+use App\Entity\Publicacion;
+use App\Entity\PublicacionServicios;
 use App\Entity\Paquete;
 use App\Entity\User;
 use App\Entity\Contratos;
@@ -148,16 +151,7 @@ class ContratosController extends AbstractFOSRestController
      *     description="usuario",
      *         schema={
      *     }
-     * )    
-     *  @SWG\Parameter(
-     *     name="desde",
-     * required=true,
-     *       in="body",
-     *     type="string",
-     *     description="fecha desde  ",
-     *      schema={
-     *     }
-     * )    
+     * )       
      *    @SWG\Parameter(
      *     name="paquete",
      * required=true,
@@ -181,16 +175,16 @@ class ContratosController extends AbstractFOSRestController
     public function add_contrato(EntityManagerInterface $em, Request $request)
     {
         $usuarioID = $request->request->get("usuario");
-        $desde = $request->request->get("desde");
-        $desde = new Datetime($desde);
+ 
+        $desde = new Datetime();
         $fecha_actual = date("d-m-Y");
         $hasta = date("d-m-Y", strtotime($fecha_actual . "+ 1 month"));
         $hasta = new Datetime($hasta);
-        $paqueteID = $request->request->get("paquete");  
-        
-        $pago = $request->request->get("pago");  
-        if ($pago == NULL){
-            $pago=0;
+        $paqueteID = $request->request->get("paquete");
+
+        $pago = $request->request->get("pago");
+        if ($pago == NULL) {
+            $pago = 0;
         }
         try {
             $code = 200;
@@ -199,7 +193,7 @@ class ContratosController extends AbstractFOSRestController
             if ($paqueteID != NULL) {
                 $paqueteOBJ = $em->getRepository(Paquete::class)->find($paqueteID);
             }
-            
+
             $contratosUser = $em->getRepository(Contratos::class)->findBy(['pago' => '1', 'usuario' =>  $usuarioID]);
             if ($contratosUser != null) {
                 $array = array_map(function ($item) {
@@ -214,6 +208,7 @@ class ContratosController extends AbstractFOSRestController
                 $contrato->setPago($pago);
                 $em->persist($contrato);
                 $em->flush();
+                $this->renovarPublicacionesUsuario($usuario, $em);
                 $message = $contrato->getId();
             } else {
                 $nuevoContrato = new Contratos();
@@ -245,6 +240,33 @@ class ContratosController extends AbstractFOSRestController
         return new JsonResponse(
             $response
         );
+    }
+    private function renovarPublicacionesUsuario($usuario, $em)
+    {
+        if ($usuario->getGrupos()[0]  == 'EMPRENDEDOR') {
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->findBy(['idusuariId' =>  $usuario->getId()]);
+            foreach ($publicaciones as $publicacion) {
+                $publicacion->actualizarmespublicacion();
+                $em->persist($publicacion);
+                $em->flush();
+            }
+        }
+        if ($usuario->getGrupos()[0]  == 'PROFESIONAL') {
+            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['idusuario' =>  $usuario->getId()]);            
+            foreach ($publicaciones as $publicacion) { 
+                $publicacion->actualizarmespublicacion();
+                $em->persist($publicacion);
+                $em->flush();
+            }
+        }
+        if ($usuario->getGrupos()[0]  == 'EMPRESA' || $usuario->getGrupos()[0]  == 'COMERCIO') {
+            $publicaciones = $em->getRepository(Publicacion::class)->findBy(['IDusuario' =>  $usuario->getId()]);
+            foreach ($publicaciones as $publicacion) {
+                $publicacion->actualizarmespublicacion();
+                $em->persist($publicacion);
+                $em->flush();
+            }
+        }
     }
 
     /**
@@ -293,7 +315,7 @@ class ContratosController extends AbstractFOSRestController
             $response
         );
     }
-     /**
+    /**
      * Retorna el listado de los contratos
      * @Rest\Get("/get_contratos", name="get_contratos")
      *
@@ -316,7 +338,7 @@ class ContratosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $paquetes = $em->getRepository(Contratos::class)->findBy(['pago' => '1'],[ 'hasta' => 'ASC']);
+            $paquetes = $em->getRepository(Contratos::class)->findBy(['pago' => '1'], ['hasta' => 'ASC']);
 
             $array = array_map(function ($item) {
                 return $item->getArray();

@@ -2,6 +2,7 @@
 
 
 namespace App\AbstractClass;
+use \Datetime;
 abstract class PublicacionAbstract
 {
     public function getArray()
@@ -34,7 +35,8 @@ abstract class PublicacionAbstract
     $categoria,
     $categoriaHija,
     $destacada,
-    $pago     ){                  
+    $pago ,
+    $hasta   ){                  
                 $this->setIDusuario($usuario);         
                 $this->setFecha($fecha);               
                 $this->setTitulo($titulo);     
@@ -42,7 +44,8 @@ abstract class PublicacionAbstract
                 $this->setCategoria($categoria);
                 $this->setCategoriaHija($categoriaHija);  
                 $this->setDestacada($destacada);  
-                $this->setPago($pago);               
+                $this->setPago($pago);     
+                $this->setHasta($hasta);
                 if($observaciones == NULL){  
                     $this->setdescripcion('SN');
                 } else{
@@ -51,7 +54,14 @@ abstract class PublicacionAbstract
 
     }
 
-    
+    public function actualizarmespublicacion(){
+        $desde = new Datetime();
+        $fecha_actual = date("d-m-Y");
+        $hasta = date("d-m-Y", strtotime($fecha_actual . "+ 1 month"));
+        $hasta = new Datetime($hasta);
+        $this->setHasta($hasta);
+        $this->setFecha($desde); 
+    }
 
      
 }

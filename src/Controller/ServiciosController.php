@@ -215,12 +215,14 @@ class ServiciosController extends AbstractFOSRestController
      */
     public function search_publicaciones_servicios(EntityManagerInterface $em, Request $request)
     {
-        $id = $request->request->get("id");     
+        $id = $request->request->get("id");
         try {
             $code = 200;
             $error = false;
-            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(['servicioId' => $id],
-                                                                                       ['fecha' => 'DESC']);
+            $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(
+                ['servicioId' => $id],
+                ['fecha' => 'DESC']
+            );
             $array = array_map(function ($item) {
                 return $item->getArray();
             }, $publicaciones);
@@ -330,27 +332,30 @@ class ServiciosController extends AbstractFOSRestController
         $fecha = new Datetime();
         $usuarioID = $request->request->get("usuarioID");
         $destacada = $request->request->get("destacada");
+        $date_now = date('d-m-Y');
+        $hasta = strtotime('+30 day', strtotime($date_now));
+        $hasta = date('d-m-Y', $hasta);
+        $hasta = new Datetime($hasta);
         try {
             $code = 200;
             $error = false;
             $usuario = $em->getRepository(User::class)->find($usuarioID);
-            if ($usuarioID != null){
+            if ($usuarioID != null) {
                 $contratoOBJ = $em->getRepository(Contratos::class)->findOneBy(['usuario' =>  $usuarioID]);
-                if ($contratoOBJ != null){
-                    if ($destacada){
-                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()){
-                                $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() -1);
-                        }                    
-                    }else{
-                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()){
-                                    $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() -1);   
-                        }                    
+                if ($contratoOBJ != null) {
+                    if ($destacada) {
+                        if ($contratoOBJ->getCantDestacadas() <= $contratoOBJ->getPaquete()->getCantDestacada()) {
+                            $contratoOBJ->setCantDestacadas($contratoOBJ->getCantDestacadas() - 1);
+                        }
+                    } else {
+                        if ($contratoOBJ->getCantPublicaciones() <= $contratoOBJ->getPaquete()->getCantNormal()) {
+                            $contratoOBJ->setCantPublicaciones($contratoOBJ->getCantPublicaciones() - 1);
+                        }
                     }
-                    $em->persist($contratoOBJ);
-                    $em->flush();
                 }
 
-                
+                $em->persist($contratoOBJ);
+                $em->flush();
             }
             if ($servicio != NULL) {
                 $servicioOBJ = $em->getRepository(Servicios::class)->find($servicio);
@@ -367,7 +372,8 @@ class ServiciosController extends AbstractFOSRestController
                 $usuario,
                 $servicioOBJ,
                 $servicioHijoOBJ,
-                $destacada
+                $destacada,
+                $hasta
             );
             $em->persist($nuevaPublicacion);
             $em->flush();
@@ -414,7 +420,7 @@ class ServiciosController extends AbstractFOSRestController
             $response
         );
     }
-     /**
+    /**
      *Setea la publicacion de servicio pasada por el parametro como pagada, DESDE QUE ESTA CONTRATOS NO SE USA MAS 
      * @Rest\Route(
      *    "/set_pago_publicacion_servicio/{publicacion}", 

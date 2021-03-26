@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\AbstractClass\PublicacionEmprendimientoAbstract;
+
 /**
  * @ORM\Entity(repositoryClass="App\Repository\PublicacionEmprendimientosRepository")
  */
@@ -26,7 +27,10 @@ class PublicacionEmprendimientos extends PublicacionEmprendimientoAbstract
      * @ORM\Column(type="datetime")
      */
     private $fecha;
-
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $hasta;
     /**
      * @ORM\Column(type="string", length=100)
      */
@@ -82,6 +86,17 @@ class PublicacionEmprendimientos extends PublicacionEmprendimientoAbstract
     public function setFecha(\DateTimeInterface $fecha): self
     {
         $this->fecha = $fecha;
+
+        return $this;
+    }
+    public function getHasta(): ?\DateTimeInterface
+    {
+        return $this->hasta;
+    }
+
+    public function setHasta(\DateTimeInterface $hasta): self
+    {
+        $this->hasta = $hasta;
 
         return $this;
     }

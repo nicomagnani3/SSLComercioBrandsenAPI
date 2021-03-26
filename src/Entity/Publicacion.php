@@ -26,7 +26,10 @@ class Publicacion extends PublicacionAbstract
      * @ORM\Column(type="datetime")
      */
     private $fecha;
-
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $hasta;
     /**
      * @ORM\Column(type="string", length=255)
      */
@@ -66,7 +69,7 @@ class Publicacion extends PublicacionAbstract
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $destacada;
-    
+
     /**
      * @ORM\Column(type="boolean", nullable=true)
      */
@@ -100,7 +103,17 @@ class Publicacion extends PublicacionAbstract
 
         return $this;
     }
+    public function getHasta(): ?\DateTimeInterface
+    {
+        return $this->hasta;
+    }
 
+    public function setHasta(\DateTimeInterface $hasta): self
+    {
+        $this->hasta = $hasta;
+
+        return $this;
+    }
     public function getTitulo(): ?string
     {
         return $this->titulo;
