@@ -338,11 +338,11 @@ class ContratosController extends AbstractFOSRestController
         try {
             $code = 200;
             $error = false;
-            $paquetes = $em->getRepository(Contratos::class)->findBy(['pago' => '1'], ['hasta' => 'ASC']);
+            $contratos = $em->getRepository(Contratos::class)->findBy(['pago' => '1'], ['hasta' => 'ASC']);
 
             $array = array_map(function ($item) {
                 return $item->getArray();
-            }, $paquetes);
+            }, $contratos);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
