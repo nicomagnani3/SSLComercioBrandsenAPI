@@ -69,6 +69,9 @@ security:
         get_empresas:
             pattern: ^/api/get_empresas
             anonymous: true              
+        get_publicidades:
+            pattern: ^/api/get_publicidades
+            anonymous: true    
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -106,7 +109,8 @@ security:
         - { path: ^/api/get_productos_rubro, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
         - { path: ^/api/tipos_usuarios, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
         - { path: ^/api/get_empresas, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
-
+        - { path: ^/api/get_publicidades, roles: IS_AUTHENTICATED_ANONYMOUSLY }          
+        
         # login:
         #     pattern:  ^/api/login
         #     stateless: true
