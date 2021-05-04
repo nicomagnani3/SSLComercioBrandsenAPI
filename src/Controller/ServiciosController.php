@@ -153,21 +153,28 @@ class ServiciosController extends AbstractFOSRestController
      *
      * @SWG\Tag(name="Servicios")
      */
-    public function Publicaciones(EntityManagerInterface $em, Request $request)
+    public function get_publicaciones_servicios_destacados(EntityManagerInterface $em, Request $request)
     {
 
         $errors = [];
         try {
             $code = 200;
             $error = false;
+
             $publicaciones = $em->getRepository(PublicacionServicios::class)->findBy(
                 ['destacada' => 1],
                 ['fecha' => 'DESC']
             );
-
-            $array = array_map(function ($item) {
-                return $item->getArray();
-            }, $publicaciones);
+            $hoy = new Datetime();
+            $publiObj=[];
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->getHasta() >=  $hoy) {
+                    array_push($publiObj,$publicacion);
+                }              
+             }
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;

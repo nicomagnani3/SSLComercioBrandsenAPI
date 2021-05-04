@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
+use \DateTimeZone;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 
 /**
@@ -81,10 +82,16 @@ class PublicacionController extends AbstractFOSRestController
                 ],
                 ['fecha' => 'DESC']
             );
-
-            $array = array_map(function ($item) {
-                return $item->getArray();
-            }, $publicaciones);
+            $hoy = new Datetime();
+            $publiObj=[];
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->getHasta() >=  $hoy) {
+                    array_push($publiObj,$publicacion);
+                }              
+             }
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -218,7 +225,9 @@ class PublicacionController extends AbstractFOSRestController
         $categoria = $request->request->get("categoria");
         $categoriasHija = $request->request->get("categoriasHija");
         $destacada = $request->request->get("destacada");
-        $fecha = new Datetime();
+        
+        $dtz = new DateTimeZone("America/Argentina/Jujuy");
+        $fecha= new Datetime("now",$dtz);
         $usuarioID = $request->request->get("usuarioID");
         $yapublico = $request->request->get("yapublico");
         $date_now = date('d-m-Y');
@@ -255,8 +264,11 @@ class PublicacionController extends AbstractFOSRestController
                     $em->flush();
                 }
             }
-            if (!$yapublico) {
+            if (!$yapublico) {                
                 $pago = 1;
+                $usuario->setPublico(1);
+                $em->persist($usuario);
+                $em->flush();
             }
             $nuevaPublicacion = new Publicacion();
             $nuevaPublicacion->crearPublicacion(

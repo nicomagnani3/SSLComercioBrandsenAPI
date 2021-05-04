@@ -19,32 +19,39 @@ class ContratosRepository extends ServiceEntityRepository
         parent::__construct($registry, Contratos::class);
     }
 
-    // /**
-    //  * @return Contratos[] Returns an array of Contratos objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function listadoContratosClientes()
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $conn = $this->getEntityManager()->getConnection();
 
-    /*
-    public function findOneBySomeField($value): ?Contratos
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $query =    "SELECT c.id,c.desde,c.hasta,p.nombre as paquete,c.cant_destacadas as cantDestacada, c.cant_publicaciones as cantnormal, c.pago, u.email as userMail, u.telefono as userCel,tu.descripcion as userTipo
+     	,CONCAT (cli.apellido ,+ ' ' +cli.nombre) as nombre
+        FROM Contratos	c	
+        inner join Cliente cli on cli.usuarios_id= c.usuario_id
+        inner join usuarios u on u.id = c.usuario_id
+        inner join tipos_usuarios tu on tu.id = u.tipousuario_id_id
+        inner join Paquete p on p.id = c.paquete_id
+        where pago = 1
+        order by  c.hasta ASC";
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
-    */
+    public function listadoContratosEmpresas()
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $query =    "SELECT c.id,c.desde,c.hasta,p.nombre as paquete,c.cant_destacadas as cantDestacada, c.cant_publicaciones as cantnormal, c.pago, u.email as userMail, u.telefono as userCel,tu.descripcion as userTipo
+       	, cli.nombre as nombre
+        FROM Contratos	c	    
+
+        inner join empresa cli on cli.usuarios_id= c.usuario_id
+        inner join usuarios u on u.id = c.usuario_id
+        inner join tipos_usuarios tu on tu.id = u.tipousuario_id_id
+        inner join Paquete p on p.id = c.paquete_id
+        where pago = 1
+        order by  c.hasta ASC";
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use App\AbstractClass\PublicacionServicioAbstract;
 
+use \Datetime;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\PublicacionServiciosRepository")
  */
@@ -186,4 +187,5 @@ class PublicacionServicios extends PublicacionServicioAbstract
 
         return $this;
     }
+
 }

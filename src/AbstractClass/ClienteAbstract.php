@@ -13,7 +13,8 @@ abstract class ClienteAbstract
             'usuario'=> $this->getUsuarios()->getId(),
             'email'=> $this->getUsuarios()->getEmail(),
             'tipo'=>$this->getUsuarios()->getGrupos(),
-            'tipoPaquete'=> 2
+            'tipoPaquete'=> 2,
+            'rol'=> $this->getUsuarios()->getTipousuarioId() == NULL ? 'No asignado' :  $this->getUsuarios()->getTipousuarioId()->getNombre(),
            
         ];  
     }

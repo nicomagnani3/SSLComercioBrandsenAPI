@@ -23,7 +23,9 @@ abstract class PublicacionEmprendimientoAbstract
             'telefono'=>$this->getIdusuariId()->getTelefono(),
             'padre'=>$this->getEmprendimiento()->getNombre(),
             'tipo'=>'EMPRENDIMIENTO',
-            'email'=> $this->getIdusuariId()->getEmail()
+            'email'=> $this->getIdusuariId()->getEmail(),
+            'web'=>$this->getIdusuariId()->getWeb(),
+
 
         ];  
     }
