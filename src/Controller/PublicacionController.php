@@ -874,4 +874,70 @@ class PublicacionController extends AbstractFOSRestController
             $response
         );
     }
+     /**
+     * Ultimas 10 publicaciones no destacadas
+     * @Rest\Route(
+     *    "/get_ultimas_publicaciones", 
+     *    name="get_ultimas_publicaciones",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_ultimas_publicaciones(EntityManagerInterface $em, Request $request)
+    {
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(Publicacion::class)->findBy(
+                [
+                    'pago' => '1',                    
+                ],
+                ['fecha' => 'DESC']
+            );
+            $hoy = new Datetime();
+            $publiObj=[];            
+            $pos=0;
+            $cantPublicaciones=0;
+            while ($pos < count($publicaciones) && $cantPublicaciones <= 10) {
+                if ($publicaciones[$pos]->getDestacada() == NULL || $publicaciones[$pos]->getDestacada() == 0 ){
+                    if ($publicaciones[$pos]->getHasta() >=  $hoy ) {
+                        array_push($publiObj,$publicaciones[$pos]);
+                        $cantPublicaciones++;
+                    }    
+                }
+                $pos++;
+            }
+                     
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
 }

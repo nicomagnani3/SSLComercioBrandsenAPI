@@ -77,7 +77,10 @@ security:
             anonymous: true        
         set_pago_contrato:
             pattern: ^/api/set_pago_contrato
-            anonymous: true       
+            anonymous: true 
+        get_ultimas_publicaciones:
+            pattern: ^/api/get_ultimas_publicaciones
+            anonymous: true             
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -117,7 +120,9 @@ security:
         - { path: ^/api/get_empresas, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
         - { path: ^/api/get_publicidades, roles: IS_AUTHENTICATED_ANONYMOUSLY }  
         - { path: ^/api/set_pago_publicacion_producto, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
-        - { path: ^/api/set_pago_contrato, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
+        - { path: ^/api/set_pago_contrato, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_ultimas_publicaciones, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
+         
         
         # login:
         #     pattern:  ^/api/login
