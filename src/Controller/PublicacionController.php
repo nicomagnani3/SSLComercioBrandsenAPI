@@ -30,7 +30,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
 use \DateTimeZone;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
-
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 /**
  * Class PublicacionController
  *
@@ -70,7 +70,7 @@ class PublicacionController extends AbstractFOSRestController
      */
     public function Publicaciones(EntityManagerInterface $em, Request $request)
     {
-
+        
         $errors = [];
         try {
             $code = 200;
@@ -84,6 +84,16 @@ class PublicacionController extends AbstractFOSRestController
             );
             $hoy = new Datetime();
             $publiObj=[];
+            $filepath = "imagenes/1155-0.png";
+$filename = "1155-0.png";
+
+$response = new Response();
+$disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $filename);
+$response->headers->set('Content-Disposition', $disposition);
+$response->headers->set('Content-Type', 'image/png');
+$response->setContent(file_get_contents($filepath));
+
+return $response;
             foreach ($publicaciones as $publicacion) {
                 if ($publicacion->getHasta() >=  $hoy) {
                     array_push($publiObj,$publicacion);
