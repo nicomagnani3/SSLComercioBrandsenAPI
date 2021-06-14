@@ -362,7 +362,7 @@ class UserController extends AbstractFOSRestController
      */
     public function get_productosUser(EntityManagerInterface $em, Request $request)
     {
-        $id = $request->request->get("idUsuario");
+        $id = $request->request->get("ggi");
 
 
         $errors = [];

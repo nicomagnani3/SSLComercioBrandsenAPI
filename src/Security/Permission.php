@@ -64,7 +64,8 @@ class Permission {
         'ADMINISTRADOR',
         'CAMBIAR_CLAVE',
         'ASIGNAR_CONTRATO',
-        'VENCIMIENTO_CONTRATO'
+        'VENCIMIENTO_CONTRATO',
+        'CREAR_GUIA'
     ];
     public const GRUPOS = [
         'GENERAL' => self::GENERAL,

@@ -80,6 +80,9 @@ security:
             anonymous: true 
         get_ultimas_publicaciones:
             pattern: ^/api/get_ultimas_publicaciones
+            anonymous: true     
+        get_guia_comercial:
+            pattern: ^/api/get_guia_comercial
             anonymous: true             
         swagger:
             pattern: ^/api/doc
@@ -122,7 +125,7 @@ security:
         - { path: ^/api/set_pago_publicacion_producto, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
         - { path: ^/api/set_pago_contrato, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/get_ultimas_publicaciones, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
-         
+        - { path: ^/api/get_guia_comercial, roles: IS_AUTHENTICATED_ANONYMOUSLY }    
         
         # login:
         #     pattern:  ^/api/login
