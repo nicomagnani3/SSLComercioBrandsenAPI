@@ -7,7 +7,7 @@ abstract class PublicacionAbstract
 {
     public function getArray()
     {
-         $ubicacion='imagenes/'.$this->getId().'-0.png';     
+        $ubicacion='imagenes/'.$this->getId().'-0.png';     
         $img = file_get_contents( 
             $ubicacion); 
             $data = base64_encode($img);  
