@@ -7,10 +7,10 @@ abstract class PublicacionAbstract
 {
     public function getArray()
     {
-        /* $ubicacion='imagenes/'.$this->getId().'-0.png';     
+        $ubicacion='imagenes/'.$this->getId().'-0.png';     
         $img = file_get_contents( 
             $ubicacion); 
-            $data = base64_encode($img);  */
+            $data = base64_encode($img);  
         return [
             'id'=>$this->getId(),
             'fecha' => $this->getFecha()->format('Y-m-d H:i:s'),
@@ -18,8 +18,8 @@ abstract class PublicacionAbstract
             'titulo'=>$this->getTitulo(),
             'descripcion'=>$this->getdescripcion(),
             'destacado'=>$this->getDestacada(),
-/*             'imagen'=>$data,
- */            'telefono'=>$this->getIDusuario()->getTelefono(),
+            'imagen'=>$data,
+             'telefono'=>$this->getIDusuario()->getTelefono(),
             'padre'=>$this->getCategoria()->getNombre(),
             'hijo'=>$this->getCategoriaHija()->getDescripcion(),
             'tipo'=>'PRODUCTO',
