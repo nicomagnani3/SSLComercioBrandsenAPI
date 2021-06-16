@@ -46,6 +46,68 @@ class PublicacionController extends AbstractFOSRestController
     {
         $this->permission = $permission;
     }
+    
+    /**
+     * Retorna el listado de publicaciones destacadas ordenadas por fecha de publicacion HOME
+     * @Rest\Route(
+     *    "/get_destacadas_publicacion", 
+     *    name="get_destacadas_publicacion",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_destacadas_publicacion(EntityManagerInterface $em, Request $request)
+    {
+        
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(Publicacion::class)->findBy(
+                [
+                    'pago' => '1',
+                    'destacada' => 1
+                ],
+                ['fecha' => 'DESC']
+            );
+            $hoy = new Datetime();
+            $publiObj=[];
+
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->getHasta() >=  $hoy) {
+                    array_push($publiObj,$publicacion);
+                }              
+             }
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
 
     /**
      * Retorna el listado de publicaciones destacadas ordenadas por fecha de publicacion HOME
@@ -84,16 +146,7 @@ class PublicacionController extends AbstractFOSRestController
             );
             $hoy = new Datetime();
             $publiObj=[];
-            $filepath = "imagenes/1155-0.png";
-$filename = "1155-0.png";
 
-$response = new Response();
-$disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $filename);
-$response->headers->set('Content-Disposition', $disposition);
-$response->headers->set('Content-Type', 'image/png');
-$response->setContent(file_get_contents($filepath));
-
-return $response;
             foreach ($publicaciones as $publicacion) {
                 if ($publicacion->getHasta() >=  $hoy) {
                     array_push($publiObj,$publicacion);
