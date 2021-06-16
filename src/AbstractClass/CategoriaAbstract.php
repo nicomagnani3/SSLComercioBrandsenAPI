@@ -9,7 +9,8 @@ abstract class CategoriaAbstract
         return [
             'id'=>$this->getId(),
             'nombre' => $this->getNombre(),
-            
+            'imagen' => $this->getImagen(),
+
            
         ];  
     }

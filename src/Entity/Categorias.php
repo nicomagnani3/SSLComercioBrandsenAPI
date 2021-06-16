@@ -20,6 +20,10 @@ class Categorias extends CategoriaAbstract
      * @ORM\Column(type="string", length=100)
      */
     private $nombre;
+     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $imagen;
 
     public function getId(): ?int
     {
@@ -37,4 +41,16 @@ class Categorias extends CategoriaAbstract
 
         return $this;
     }
+    public function getImagen(): ?string
+    {
+        return $this->imagen;
+    }
+
+    public function setImagen(?string $imagen): self
+    {
+        $this->imagen = $imagen;
+
+        return $this;
+    }
+
 }
