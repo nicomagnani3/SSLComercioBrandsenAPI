@@ -1003,4 +1003,76 @@ class PublicacionController extends AbstractFOSRestController
             $response
         );
     }
+
+  /**
+     * Ultimas 15 publicaciones paginadas
+     * @Rest\Route(
+     *    "/get_ultimas_publicaciones_paginate/{page}", 
+     *    name="get_ultimas_publicaciones_paginate/{page",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_ultimas_publicaciones_paginate(EntityManagerInterface $em, Request $request,$page)
+    {
+      
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(Publicacion::class)->getpubliacionpaginate($page);
+   
+            $arrayCompleto=[];            
+           
+            foreach ($publicaciones as $value) {
+                $usuario = $em->getRepository(User::class)->find($value["idusuari_id_id"]);
+                $ubicacion = 'imagenes/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [
+                    'id' => $value["id"],
+                    'fecha' => $value["fecha"],
+                    'precio' => $value["precio"],
+                    'titulo' => $value["titulo"],
+                    'descripcion' => $value["descripcion"],
+                    'imagen' => $data,
+                    'destacado' => $value["destacada"],
+                    'telefono' => $usuario->getTelefono(),                    
+                    'email' => $usuario->getEmail(),
+                    'tipo' => "PUBLICACION"
+                ];
+                array_push($arrayCompleto, $array_new);
+            }
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $arrayCompleto : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+
+
+    
 }

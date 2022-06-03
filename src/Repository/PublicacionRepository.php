@@ -48,4 +48,20 @@ class PublicacionRepository extends ServiceEntityRepository
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    public function getpubliacionpaginate($page){
+        $conn = $this->getEntityManager()->getConnection();
+        $query="SELECT * FROM Publicacion
+                WHERE destacada IS NULL
+                AND pago = 1
+                ORDER BY fecha DESC
+                OFFSET ($page-1)*15 ROWS
+                FETCH NEXT 15 ROWS ONLY";
+                  $stmt = $conn->prepare($query);
+                  $stmt->execute();
+                  return $stmt->fetchAll();
+
+
+
+    }
 }
