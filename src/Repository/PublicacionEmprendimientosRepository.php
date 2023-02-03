@@ -47,4 +47,32 @@ class PublicacionEmprendimientosRepository extends ServiceEntityRepository
         $stmt->execute();
         return $stmt->fetchAll();
     }
+	   public function getpubliacionpaginateemprendedor($page){		
+				$page= intval($page);
+				$conn = $this->getEntityManager()->getConnection();
+				$query="DECLARE @PageNumber AS INT
+				DECLARE @RowsOfPage AS INT
+				SET @PageNumber=$page
+				SET @RowsOfPage=20
+				SELECT * FROM Publicacion_emprendimientos
+				WHERE pago = 1
+				and hasta >= DATEADD(day,-1, GETDATE()) 
+				ORDER BY fecha DESC
+				OFFSET ((@PageNumber-1)*@RowsOfPage) ROWS
+				FETCH NEXT @RowsOfPage ROWS ONLY";
+			
+                  $stmt = $conn->prepare($query);
+                  $stmt->execute();
+        return $stmt->fetchAll();
+    }
+	public function cantidadPublicacionesNormalesemprendedor(){
+			$conn = $this->getEntityManager()->getConnection();
+			$query="SELECT count(*) as cantidad
+				from Publicacion_emprendimientos
+				WHERE pago = 1
+				and hasta >= DATEADD(day,-1, GETDATE())";
+			$stmt = $conn->prepare($query);
+            $stmt->execute();
+        return $stmt->fetchAll();	
+	}
 }

@@ -29,7 +29,7 @@ class EmpresaRepository extends ServiceEntityRepository
            INNER JOIN Contratos C on E.usuarios_id = c.usuario_id
            INNER JOIN usuarios u on u.id = E.usuarios_id 
            INNER JOIN Categorias cat on cat.id = p.categoria_id
-           where e.usuarios_id = '$empresa' and c.pago = 1 and c.hasta > GETDATE()
+           where e.usuarios_id = '$empresa' and c.pago = 1 
            order by p.fecha desc";
         $stmt = $conn->prepare($query);
         $stmt->execute();

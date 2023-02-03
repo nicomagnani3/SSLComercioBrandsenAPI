@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
+use Exception;
 /**
  * Class RubrosController
  *
@@ -150,6 +151,71 @@ class RubrosController extends AbstractFOSRestController
             'code' => $code,
             'error' => $error,
             'data' => $code == 200 ? $arrayCompleto : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+
+      
+    /**
+     * Genera un rubro nuevo
+     * @Rest\Route(
+     *    "/nuevo_rubro", 
+     *    name="nuevo_rubro",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se genero u rubro"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo generar un rubro"
+     * )     
+     *    @SWG\Parameter(
+     *     name="nombre",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="nombre de rubro ",
+     *         schema={
+     *     }
+     * )
+     * @SWG\Tag(name="Rubros")
+     */
+    public function nuevo_rubro(EntityManagerInterface $em, Request $request)
+    {
+        $nombre = $request->request->get("nombre");
+   
+        
+        try {
+            $code = 200;
+            $error = false;      
+            if ($nombre == NULL){
+                throw new Exception('No se ingreso nombre de rubro.');
+            }
+            $rubroNew = new Rubros();
+            $rubroNew->crearRubro(
+                $nombre
+             
+            );
+            $em->persist($rubroNew);
+            $em->flush();          
+            $message ="Se creo con exito el rubro!";
+        } catch (Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio un error - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $message,
         ];
         return new JsonResponse(
             $response

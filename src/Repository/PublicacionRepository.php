@@ -27,8 +27,10 @@ class PublicacionRepository extends ServiceEntityRepository
         FROM Publicacion P 
            inner join categorias C on p.categoria_id = c.id
            inner join categorias_hijas CH on p.categoria_hija_id =ch.id
+		   left join Empresa e on p.idusuario_id = e.usuarios_id 
            where p.pago is not null and ( p.titulo COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
            or c.nombre COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
+		   or e.nombre COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
            or ch.descripcion COLLATE SQL_Latin1_General_Cp1_CI_AI LIKE CONCAT('%','$titulo','%')
            or p.titulo LIKE '%$titulo%')
             order by p.fecha DESC   
@@ -48,4 +50,32 @@ class PublicacionRepository extends ServiceEntityRepository
         $stmt->execute();
         return $stmt->fetchAll();
     }
+	public function getpubliacionpaginate($page){		
+				$page= intval($page);
+				$conn = $this->getEntityManager()->getConnection();
+				$query="DECLARE @PageNumber AS INT
+				DECLARE @RowsOfPage AS INT
+				SET @PageNumber=$page
+				SET @RowsOfPage=20
+				SELECT * FROM Publicacion
+				WHERE (destacada IS NULL or destacada = 0)
+				AND pago = 1
+				ORDER BY fecha DESC
+				OFFSET ((@PageNumber-1)*@RowsOfPage) ROWS
+				FETCH NEXT @RowsOfPage ROWS ONLY";
+			
+                  $stmt = $conn->prepare($query);
+                  $stmt->execute();
+        return $stmt->fetchAll();
+    }
+	public function cantidadPublicacionesNormales(){
+			$conn = $this->getEntityManager()->getConnection();
+			$query="SELECT count(*) as cantidad
+				from Publicacion 
+				WHERE (destacada IS NULL or destacada = 0)
+				AND pago = 1";
+			$stmt = $conn->prepare($query);
+            $stmt->execute();
+        return $stmt->fetchAll();	
+	}
 }

@@ -23,8 +23,8 @@ abstract class PublicacionServicioAbstract
             'telefono'=>$this->getIdusuario()->getTelefono(),
             'padre'=>$this->getServicioId()->getNombre(),
             'tipo'=>'SERVICIO',
-            'email'=> $this->getIdusuario()->getEmail()
-
+            'email'=> $this->getIdusuario()->getEmail(),
+			'web'=>$this->getIdusuario()->getWeb(),
             
           
         ];  

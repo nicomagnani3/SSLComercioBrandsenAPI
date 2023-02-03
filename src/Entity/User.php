@@ -94,7 +94,11 @@ class User implements UserInterface
      * @ORM\Column(name="web", type="string", length=255, unique=true)
      */
     protected $web;
-
+	
+	/**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $publico;
  
     public function __construct()
     {
@@ -424,6 +428,18 @@ class User implements UserInterface
     public function getWeb()
     {
         return $this->web;
+    }
+	
+	  public function getPublico(): ?bool
+    {
+        return $this->publico;
+    }
+
+    public function setPublico(?bool $publico): self
+    {
+        $this->publico = $publico;
+
+        return $this;
     }
  
  

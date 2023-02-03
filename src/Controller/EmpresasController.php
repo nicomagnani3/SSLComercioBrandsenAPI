@@ -22,7 +22,8 @@ use App\Entity\Rubros;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
-
+use App\Entity\GuiaComercial;
+use App\Entity\Novedades;
 /**
  * Class EmpresasController
  *
@@ -134,7 +135,12 @@ class EmpresasController extends AbstractFOSRestController
                 throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
                 $error = true;
             }
-
+			if ($celular == ""){
+				$celular=NULL;
+			}
+			if ($web == ""){
+				$web=NULL;
+			}
             $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);
 
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
@@ -288,6 +294,274 @@ class EmpresasController extends AbstractFOSRestController
             'code' => $code,
             'error' => $error,
             'data' => $code == 200 ? $arrayCompleto : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	
+    /**
+     * Retorna el listado de Novedades
+     * @Rest\Route(
+     *    "/get_novedades", 
+     *    name="get_novedades",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de novedades"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de novedades"
+     * )
+     *
+     * @SWG\Tag(name="Publicidades")
+     */
+    public function get_novedades(EntityManagerInterface $em, Request $request)
+    {
+      
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicidad = $em->getRepository(Novedades::class)->findAll();
+        
+            $array = array_map(function ($item) {               
+                    return $item->getArray();               
+               
+            }, $publicidad);
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+       /**
+     * Borrar de la guia comercial
+     * @Rest\Route(
+     *    "/delete_guia_comercial", 
+     *    name="delete_guia_comercial",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )
+     *   @SWG\Parameter(
+     *     name="id",
+     *       in="body",
+     *     type="array",
+     *     description="id de la guia a borrar ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se borro"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo borrar"
+     * )
+     *
+     * @SWG\Tag(name="Publicidades")
+     */
+    public function delete_guia_comercial(EntityManagerInterface $em, Request $request)
+    {
+      
+        $errors = [];
+        $id = $request->request->get("id");
+
+        try {
+            $code = 200;
+            $error = false;
+            if ($id != null ){
+                $imagen = $em->getRepository(GuiaComercial::class)->borrarDeLaGuia($id);
+                $respuesta = "Se borro con exito la publicacion";
+
+            }          
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $respuesta : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    
+    /**
+     * Genera una nueva  novedad
+     * @Rest\Route(
+     *    "/nueva_novedad", 
+     *    name="nueva_novedad",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se genero una publicacion"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo generar publicacion"
+     * )     
+     *    @SWG\Parameter(
+     *     name="nombre",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="nombre de empresa o comercio (no esta registrado en malambo y es nuevo) ",
+     *         schema={
+     *     }
+     * )
+     *   @SWG\Parameter(
+     *     name="imagen",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="imagen url ",
+     *         schema={
+     *     }
+     * )    
+     *  @SWG\Parameter(
+     *     name="observaciones",
+     * required=true,
+     *       in="body",
+     *     type="string",
+     *     description="observaciones  ",
+     *      schema={
+     *     }
+     * )      
+     *    @SWG\Parameter(
+     *     name="idGuia",
+     *       in="body",
+     *     type="string",
+     *     description="id de la empresa o comercio que se quiere sumar  ",
+     *      schema={
+     *     }
+     * )
+   
+     * @SWG\Tag(name="Publicidades")
+     */
+    public function nueva_novedad(EntityManagerInterface $em, Request $request)
+    {
+        $nombre = $request->request->get("nombre");
+        $imagen = $request->request->get("imagen");
+        //$fecha = $request->request->get("fecha");
+        $observaciones = $request->request->get("observaciones");
+        $idEmpresa = $request->request->get("idGuia");         
+            
+        
+        try {
+            $code = 200;
+            $error = false; 
+            $empresaOBJ=NULL;  
+             if ($idEmpresa != NULL) {
+                $empresaOBJ = $em->getRepository(GuiaComercial::class)->find($idEmpresa);               
+            }   
+            $nuevaGuia = new Novedades();
+            $nuevaGuia->crearNovedad(
+                $nombre,
+                $imagen,
+                 $observaciones,
+                $empresaOBJ            
+            );
+            $em->persist($nuevaGuia);
+            $em->flush();          
+            $message ="Se creo con exito la Novedad!";
+        } catch (Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio un error - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+    /**
+     * Borrar novedad
+     * @Rest\Route(
+     *    "/delete_novedad", 
+     *    name="delete_novedad",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )
+     *   @SWG\Parameter(
+     *     name="id",
+     *       in="body",
+     *     type="array",
+     *     description="id de la guia a borrar ",
+     *      schema={
+     *     }
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se borro"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo borrar"
+     * )
+     *
+     * @SWG\Tag(name="Publicidades")
+     */
+    public function delete_novedad(EntityManagerInterface $em, Request $request)
+    {
+      
+        $errors = [];
+        $id = $request->request->get("id");
+
+        try {
+            $code = 200;
+            $error = false;
+            if ($id != null ){
+                $imagen = $em->getRepository(Novedades::class)->borrar($id);
+                $respuesta = "Se borro con exito la Novedad";
+
+            }          
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $respuesta : $message,
         ];
         return new JsonResponse(
             $response

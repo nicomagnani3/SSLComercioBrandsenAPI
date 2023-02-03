@@ -22,7 +22,7 @@ class RubrosRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        $query =  "SELECT p.id, p.fecha,p.precio,p.titulo,p.descripcion,p.destacada ,u.telefono, cat.nombre as padre, u.email, u.web
+        $query =  "SELECT DISTINCT p.id, p.fecha,p.precio,p.titulo,p.descripcion,p.destacada ,u.telefono, cat.nombre as padre, u.email, u.web
         FROM  Contratos c
         INNER JOIN usuarios u on u.id = c.usuario_id
         INNER JOIN Empresa e on e.usuarios_id = u.id

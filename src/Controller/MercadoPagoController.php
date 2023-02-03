@@ -103,8 +103,8 @@ class MercadoPagoController extends AbstractController
         
   
       
-        //MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
-        MercadoPago\SDK::setAccessToken('  TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
+        MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
+        //MercadoPago\SDK::setAccessToken('  TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
         $preference = new MercadoPago\Preference();
         $preference->payment_methods = array(
             "excluded_payment_types" => array(
@@ -117,7 +117,7 @@ class MercadoPagoController extends AbstractController
         $item->unit_price = $precioPublicacion;
         $item->currency_id = "ARS";
         $item->description = $observaciones;
-        $url= "http://localhost:8080/crearPublicacion/publicacion$publicacion";
+        $url= "https://malambobrandsen.com.ar/crearPublicacion/publicacion$publicacion";		
         $preference->items = array($item);
            $preference->back_urls = array(
             "success" => $url,  
@@ -190,8 +190,8 @@ class MercadoPagoController extends AbstractController
         $precioPublicacion   = $request->request->get("precioPublicacion");
         $publicacion = $request->request->get("idPublicacion");;
 
-        //MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
-        MercadoPago\SDK::setAccessToken('  TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
+        MercadoPago\SDK::setAccessToken('APP_USR-4738881901662940-030314-794137e8a4316766efe26047e2e1a3bc-46221740');
+        //MercadoPago\SDK::setAccessToken('  TEST-2514124411818500-011422-d22e8b5914eed6985697778bb51cf2e4-202574647');
         $preference = new MercadoPago\Preference();
         $preference->payment_methods = array(
             "excluded_payment_types" => array(
@@ -203,7 +203,7 @@ class MercadoPagoController extends AbstractController
         $item->quantity = 1;
         $item->unit_price = $precioPublicacion;
         $item->currency_id = "ARS";        
-        $url= "http://localhost:8080/crearContrato/publicacion$publicacion";
+        $url= "https://malambobrandsen.com.ar/crearContrato/publicacion$publicacion";
         $preference->items = array($item);
            $preference->back_urls = array(
             "success" => $url,  

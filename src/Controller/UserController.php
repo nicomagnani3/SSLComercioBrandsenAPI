@@ -22,7 +22,8 @@ use App\Entity\Rubros;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
-
+use \Datetime;
+use \DateTimeZone;
 /**
  * Class UserController
  *
@@ -35,6 +36,11 @@ class UserController extends AbstractFOSRestController
     {
         $this->permission = $permission;
     }
+	
+	
+	
+	
+	
     /**
      *registro  de usuario comun
      * @Rest\Route(
@@ -126,6 +132,9 @@ class UserController extends AbstractFOSRestController
         $apellido   = $request->request->get("apellido");
         $DNI   = $request->request->get("DNI");
         $celular   = $request->request->get("celular");
+        $web   = $request->request->get("web");
+      
+     
         $code = 200;
         $error = false;
         try {
@@ -133,6 +142,12 @@ class UserController extends AbstractFOSRestController
             if ($existeUser != NULL) {
                 throw new \InvalidArgumentException('Ya existe un usuario con el mail provisto');
                 $error = true;
+            }
+            if ($celular == ""){
+                $celular=NULL;
+            }
+            if ($web == ""){
+                $web=NULL; 
             }
             $tipoUsuario = $em->getRepository(TiposUsuarios::class)->find($grupo);
             $encodedPassword = $passwordEncoder->encodePassword($user, $password);
@@ -142,6 +157,8 @@ class UserController extends AbstractFOSRestController
             $user->addGrupos(strtoupper($tipoUsuario->getDescripcion()));
             $user->setTelefono($celular);
             $user->setTipousuarioId($tipoUsuario);
+            $user->setWeb($web);
+
             $em->persist($user);
             $em->flush();
             $cliente = new Cliente();
@@ -286,7 +303,7 @@ class UserController extends AbstractFOSRestController
         $email      = $request->request->get("email");
         $password   = $request->request->get("password");
         $errors = [];
-
+  
         $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
         if (!$user) {
             $errors[] = "Usuario o contraseña incorrecta";
@@ -615,6 +632,11 @@ class UserController extends AbstractFOSRestController
             if ($publicaciones != null){
                 $publico = true;
             }
+            $user = $em->getRepository(User::class)->find($id);
+
+            if ($user->getPublico() == true){
+                $publico = true;
+            }
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -630,5 +652,6 @@ class UserController extends AbstractFOSRestController
             $response
         );
     }
+	
     
 }

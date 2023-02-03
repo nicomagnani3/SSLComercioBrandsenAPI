@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
-
+use \DateTimeZone;
 /**
  * Class ContratosController
  *
@@ -175,8 +175,8 @@ class ContratosController extends AbstractFOSRestController
     public function add_contrato(EntityManagerInterface $em, Request $request)
     {
         $usuarioID = $request->request->get("usuario");
- 
-        $desde = new Datetime();
+		$dtz = new DateTimeZone("America/Argentina/Jujuy");
+         $desde= new Datetime("now",$dtz);        
         $fecha_actual = date("d-m-Y");
         $hasta = date("d-m-Y", strtotime($fecha_actual . "+ 1 month"));
         $hasta = new Datetime($hasta);
@@ -187,7 +187,7 @@ class ContratosController extends AbstractFOSRestController
             $pago = 0;
         }
         try {
-            $code = 200;
+             $code = 200;
             $error = false;
             $usuario = $em->getRepository(User::class)->find($usuarioID);
             if ($paqueteID != NULL) {
@@ -201,10 +201,22 @@ class ContratosController extends AbstractFOSRestController
                 }, $contratosUser);
                 $contrato = $em->getRepository(Contratos::class)->find($array[0]["id"]);
                 $contrato->setDesde($desde);
-                $contrato->setHasta($hasta);
-                $contrato->setPaquete($paqueteOBJ);
-                $contrato->setCantPublicaciones($paqueteOBJ->getCantNormal());
-                $contrato->setCantDestacadas($paqueteOBJ->getCantDestacada());
+                $contrato->setHasta($hasta);   
+                if ($contrato->getPaquete()->getId() != $paqueteOBJ->getId() ){
+                    $cantNormalDisp= $contrato->getPaquete()->getCantNormal() - $contrato->getCantPublicaciones();
+                    $cantDestacadaDisp =  $contrato->getPaquete()->getCantDestacada() - $contrato->getCantDestacadas();        
+                    $cantDestacad=  $paqueteOBJ->getCantDestacada()-  $cantDestacadaDisp ; 
+                   $cantNormal  =$paqueteOBJ->getCantNormal() - $cantNormalDisp;
+                   if ($cantNormal < 0 ){
+                       $cantNormal=0;
+                   }
+                   if ($cantDestacad < 0 ){
+                    $cantDestacad=0;
+                }
+                    $contrato->setCantPublicaciones(  $cantNormal  );
+                    $contrato->setCantDestacadas($cantDestacad); 
+                }                            
+             $contrato->setPaquete($paqueteOBJ);
                 $contrato->setPago($pago);
                 $em->persist($contrato);
                 $em->flush();
@@ -353,6 +365,88 @@ class ContratosController extends AbstractFOSRestController
             'code' => $code,
             'error' => $error,
             'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+       /**
+     * Retorna el listado de los contratos de clientes
+     * @Rest\Get("/get_contratos_clientes", name="get_contratos_clientes")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de los contratos de clientes"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de CONTRATOS"
+     * )
+     *
+     * @SWG\Tag(name="Contratos")
+     */
+    public function get_contratos_clientes(EntityManagerInterface $em, Request $request)
+    {
+
+
+        try {
+            $code = 200;
+            $error = false;
+            $contratos = $em->getRepository(Contratos::class)->listadoContratosClientes();
+
+          
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $contratos : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+       /**
+     * Retorna el listado de los contratos de clientes
+     * @Rest\Get("/get_contratos_empresa", name="get_contratos_empresa")
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de los contratos de clientes"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de CONTRATOS"
+     * )
+     *
+     * @SWG\Tag(name="Contratos")
+     */
+    public function get_contratos_empresa(EntityManagerInterface $em, Request $request)
+    {
+
+
+        try {
+            $code = 200;
+            $error = false;
+            $contratos = $em->getRepository(Contratos::class)->listadoContratosEmpresas();
+
+          
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $contratos : $message,
         ];
         return new JsonResponse(
             $response

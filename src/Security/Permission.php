@@ -34,6 +34,7 @@ class Permission {
     public const COMERCIO = [
         'CREAR', 
         'CREAR_PRODUCTO',  
+		'CREAR_EMPRENDIMIENTO',   
         'MIS_PRODUCTOS',       
         'MIS_CONTRATOS',      
         'VER_CONTRATO',
@@ -64,7 +65,8 @@ class Permission {
         'ADMINISTRADOR',
         'CAMBIAR_CLAVE',
         'ASIGNAR_CONTRATO',
-        'VENCIMIENTO_CONTRATO'
+        'VENCIMIENTO_CONTRATO',
+        'CREAR_GUIA'
     ];
     public const GRUPOS = [
         'GENERAL' => self::GENERAL,

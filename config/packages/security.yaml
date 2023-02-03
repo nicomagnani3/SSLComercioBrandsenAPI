@@ -71,7 +71,47 @@ security:
             anonymous: true              
         get_publicidades:
             pattern: ^/api/get_publicidades
+            anonymous: true 
+        set_pago_publicacion_producto:
+            pattern: ^/api/set_pago_publicacion_producto
+            anonymous: true        
+        set_pago_contrato:
+            pattern: ^/api/set_pago_contrato
+            anonymous: true 
+        get_ultimas_publicaciones:
+            pattern: ^/api/get_ultimas_publicaciones
+            anonymous: true     
+        get_guia_comercial:
+            pattern: ^/api/get_guia_comercial
+            anonymous: true
+        get_novedades:
+            pattern: ^/api/get_novedades
+            anonymous: true   
+        get_precios_publicaciones:
+            pattern: ^/api/get_precios_publicaciones
+            anonymous: true  
+        get_publico_usuario:
+            pattern: ^/api/get_publico_usuario
+            anonymous: true     
+        get_ultimas_emprendimientos_paginate:
+            pattern: ^/api/get_ultimas_emprendimientos_paginate
+            anonymous: true
+        get_ultimas_servicios_paginate:
+            pattern: ^/api/get_ultimas_servicios_paginate
+            anonymous: true
+        nuevo_curriculum:
+            pattern: ^/api/nuevo_curriculum
+            anonymous: true
+        get_alquileres:
+            pattern: ^/api/get_alquileres
+            anonymous: true
+        nuevo_alquiler:
+            pattern: ^/api/nuevo_alquiler
             anonymous: true    
+        get_utilidades:
+            pattern: ^/api/get_utilidades
+            anonymous: true    
+            
         swagger:
             pattern: ^/api/doc
             security: false    
@@ -109,8 +149,20 @@ security:
         - { path: ^/api/get_productos_rubro, roles: IS_AUTHENTICATED_ANONYMOUSLY } 
         - { path: ^/api/tipos_usuarios, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
         - { path: ^/api/get_empresas, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
-        - { path: ^/api/get_publicidades, roles: IS_AUTHENTICATED_ANONYMOUSLY }          
-        
+        - { path: ^/api/get_publicidades, roles: IS_AUTHENTICATED_ANONYMOUSLY }  
+        - { path: ^/api/set_pago_publicacion_producto, roles: IS_AUTHENTICATED_ANONYMOUSLY }   
+        - { path: ^/api/set_pago_contrato, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_ultimas_publicaciones, roles: IS_AUTHENTICATED_ANONYMOUSLY }         
+        - { path: ^/api/get_guia_comercial, roles: IS_AUTHENTICATED_ANONYMOUSLY }    
+        - { path: ^/api/get_novedades, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_precios_publicaciones, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_publico_usuario, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_ultimas_emprendimientos_paginate, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_ultimas_servicios_paginate, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/nuevo_curriculum, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_alquileres, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/nuevo_alquiler, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/get_utilidades, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         # login:
         #     pattern:  ^/api/login
         #     stateless: true

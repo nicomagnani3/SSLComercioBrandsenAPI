@@ -13,4 +13,8 @@ abstract class RubrosAbstract
            
         ];  
     }
+
+    public function crearRubro($nombre){
+        $this->setNombre($nombre);
+    }
 }

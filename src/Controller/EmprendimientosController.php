@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
-
+use \DateTimeZone;
 /**
  * Class EmprendimientosController
  *
@@ -32,6 +32,77 @@ class EmprendimientosController extends AbstractFOSRestController
     public function __construct(Permission $permission)
     {
         $this->permission = $permission;
+    }
+	/**
+     * Ultimas 15 emprendimientos paginadas
+     * @Rest\Route(
+     *    "/get_ultimas_emprendimientos_paginate/{page}", 
+     *    name="get_ultimas_emprendimientos_paginate/{page}",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="User")
+     */
+    public function get_ultimas_emprendimientos_paginate(EntityManagerInterface $em, Request $request,$page)
+    {
+      
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(PublicacionEmprendimientos::class)->getpubliacionpaginateemprendedor($page);
+			$cantidadPublicaciones = $em->getRepository(PublicacionEmprendimientos::class)->cantidadPublicacionesNormalesemprendedor();
+            $arrayCompleto=[];            
+         
+            foreach ($publicaciones as $value) {
+				
+                $usuario = $em->getRepository(User::class)->find($value["idusuari_id_id"]);
+                $ubicacion = 'imagenesEmprendimientos/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [				
+                    'id' => $value["id"],
+                    'fecha' => $value["fecha"],
+                    'precio' => $value["precio"],
+                    'titulo' => $value["titulo"],
+                    'descripcion' => $value["descripcion"],
+                    'imagen' => $data,
+                    'destacado' => $value["destacada"],
+                    'telefono' => $usuario->getTelefono(),                    
+                    'email' => $usuario->getEmail(),
+					'web' =>$usuario->getWeb(),
+                    'tipo' => "EMPRENDIMIENTO"
+                ];
+                array_push($arrayCompleto, $array_new);
+            }
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+			'cantidad'=> $cantidadPublicaciones[0]["cantidad"],
+            'data' => $code == 200 ? $arrayCompleto : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
     }
 
     /**
@@ -163,9 +234,16 @@ class EmprendimientosController extends AbstractFOSRestController
                 ['fecha' => 'DESC']
             );
 
-            $array = array_map(function ($item) {
-                return $item->getArray();
-            }, $publicaciones);
+      $hoy = new Datetime();
+            $publiObj=[];
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->getHasta() >=  $hoy) {
+                    array_push($publiObj,$publicacion);
+                }              
+             }
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -221,9 +299,16 @@ class EmprendimientosController extends AbstractFOSRestController
                 ['emprendimiento' => $id],
                 ['fecha' => 'DESC']
             );
-            $array = array_map(function ($item) {
-                return $item->getArray();
-            }, $publicaciones);
+              $hoy = new Datetime();
+            $publiObj=[];
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->getHasta() >=  $hoy) {
+                    array_push($publiObj,$publicacion);
+                }              
+             }
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -322,17 +407,19 @@ class EmprendimientosController extends AbstractFOSRestController
      */
     public function nueva_publicacion(EntityManagerInterface $em, Request $request)
     {
+		
         $titulo = $request->request->get("titulo");
         $importe = $request->request->get("importe");
         $observaciones = $request->request->get("observaciones");
         $imagenes = $request->request->get("imagenes");
         $imgPrimera = $request->request->get("imgPrimera");
-        $emprendimiento = $request->request->get("emprendimiento");
-        $fecha = new Datetime();
+        $emprendimiento = $request->request->get("emprendimiento");        
+		$dtz = new DateTimeZone("America/Argentina/Jujuy");
+		$fecha= new Datetime("now",$dtz);
         $usuarioID = $request->request->get("usuarioID");
         $destacada = $request->request->get("destacada");
         $date_now = date('d-m-Y');
-        $hasta = strtotime('+30 day', strtotime($date_now));
+        $hasta = strtotime('+90 day', strtotime($date_now));
         $hasta = date('d-m-Y', $hasta);
         $hasta = new Datetime($hasta);
 

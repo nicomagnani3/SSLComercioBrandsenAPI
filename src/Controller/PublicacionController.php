@@ -7,6 +7,10 @@ use App\Entity\PreciosPublicaciones;
 use App\Entity\Publicacion;
 use App\Entity\User;
 use App\Entity\Contratos;
+use App\Entity\Curriculum;
+use App\Entity\Alquiler;
+use App\Entity\Utilidades;
+use App\Entity\ImagenesAlquiler;
 use App\Entity\PublicacionServicios;
 use App\Entity\PublicacionEmprendimientos;
 use App\Entity\CategoriasHijas;
@@ -28,7 +32,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use \Datetime;
+use \DateTimeZone;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Class PublicacionController
@@ -44,6 +53,76 @@ class PublicacionController extends AbstractFOSRestController
     public function __construct(Permission $permission)
     {
         $this->permission = $permission;
+    }
+	/**
+     * Ultimas 15 publicaciones paginadas
+     * @Rest\Route(
+     *    "/get_ultimas_publicaciones_paginate/{page}", 
+     *    name="get_ultimas_publicaciones_paginate/{page}",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="User")
+     */
+    public function get_ultimas_publicaciones_paginate(EntityManagerInterface $em, Request $request,$page)
+    {
+      
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(Publicacion::class)->getpubliacionpaginate($page);
+			$cantidadPublicaciones = $em->getRepository(Publicacion::class)->cantidadPublicacionesNormales();
+            $arrayCompleto=[];            
+         
+            foreach ($publicaciones as $value) {
+				
+                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);
+                $ubicacion = 'imagenes/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [
+                    'id' => $value["id"],
+                    'fecha' => $value["fecha"],
+                    'precio' => $value["precio"],
+                    'titulo' => $value["titulo"],
+                    'descripcion' => $value["descripcion"],
+                    'imagen' => $data,
+                    'destacado' => $value["destacada"],
+                    'telefono' => $usuario->getTelefono(),                    
+                    'email' => $usuario->getEmail(),
+                    'tipo' => "PUBLICACION"
+                ];
+                array_push($arrayCompleto, $array_new);
+            }
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+			'cantidad'=> $cantidadPublicaciones[0]["cantidad"],
+            'data' => $code == 200 ? $arrayCompleto : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
     }
 
     /**
@@ -69,7 +148,7 @@ class PublicacionController extends AbstractFOSRestController
      */
     public function Publicaciones(EntityManagerInterface $em, Request $request)
     {
-
+        
         $errors = [];
         try {
             $code = 200;
@@ -81,10 +160,17 @@ class PublicacionController extends AbstractFOSRestController
                 ],
                 ['fecha' => 'DESC']
             );
+            $hoy = new Datetime();
+            $publiObj=[];
 
-            $array = array_map(function ($item) {
-                return $item->getArray();
-            }, $publicaciones);
+            foreach ($publicaciones as $publicacion) {
+                if ($publicacion->getHasta() >=  $hoy) {
+                    array_push($publiObj,$publicacion);
+                }              
+             }
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -218,11 +304,13 @@ class PublicacionController extends AbstractFOSRestController
         $categoria = $request->request->get("categoria");
         $categoriasHija = $request->request->get("categoriasHija");
         $destacada = $request->request->get("destacada");
-        $fecha = new Datetime();
+        
+        $dtz = new DateTimeZone("America/Argentina/Jujuy");
+        $fecha= new Datetime("now",$dtz);
         $usuarioID = $request->request->get("usuarioID");
         $yapublico = $request->request->get("yapublico");
         $date_now = date('d-m-Y');
-        $hasta = strtotime('+30 day', strtotime($date_now));
+        $hasta = strtotime('+90 day', strtotime($date_now));
         $hasta = date('d-m-Y', $hasta);
         $hasta = new Datetime($hasta);
        
@@ -255,8 +343,11 @@ class PublicacionController extends AbstractFOSRestController
                     $em->flush();
                 }
             }
-            if (!$yapublico) {
+            if (!$yapublico) {                
                 $pago = 1;
+                $usuario->setPublico(1);
+                $em->persist($usuario);
+                $em->flush();
             }
             $nuevaPublicacion = new Publicacion();
             $nuevaPublicacion->crearPublicacion(
@@ -631,6 +722,30 @@ class PublicacionController extends AbstractFOSRestController
                     array_push($arrayCompleto, $array_new);
                 }
             }
+			   if ($tipo == 'ALQUILER') {
+				  
+					$imagenes = $em->getRepository(ImagenesAlquiler::class)->findBy(['alquilerId' => $idPublicacion]);
+					 
+					$array = array_map(function ($item) {
+						return $item->getArray();
+					}, $imagenes);
+					$cantidadElementos = count($array);
+					$array_new = [];
+					$arrayCompleto = [];
+					for ($i = 0; $i < $cantidadElementos; $i++) {
+						$ubicacion = 'alquiler/' . $idPublicacion . '-' . $i . '.png';
+						$img = file_get_contents(
+							$ubicacion
+						);
+						$data = base64_encode($img);
+						$array_new = [
+							'id' => $idPublicacion,
+							'imagen' => $data,
+							'numero' => $i
+						];
+						array_push($arrayCompleto, $array_new);
+					}
+				}
         } catch (\Exception $ex) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
             $error = true;
@@ -862,4 +977,634 @@ class PublicacionController extends AbstractFOSRestController
             $response
         );
     }
+     /**
+     * Ultimas 10 publicaciones no destacadas
+     * @Rest\Route(
+     *    "/get_ultimas_publicaciones", 
+     *    name="get_ultimas_publicaciones",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_ultimas_publicaciones(EntityManagerInterface $em, Request $request)
+    {
+
+        $errors = [];
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(Publicacion::class)->findBy(
+                [
+                    'pago' => '1',                    
+                ],
+                ['fecha' => 'DESC']
+            );
+            $hoy = new Datetime();
+            $publiObj=[];            
+            $pos=0;
+            $cantPublicaciones=0;
+            while ($pos < count($publicaciones) && $cantPublicaciones <= 10) {
+                if ($publicaciones[$pos]->getDestacada() == NULL || $publicaciones[$pos]->getDestacada() == 0 ){
+                    if ($publicaciones[$pos]->getHasta() >=  $hoy ) {
+                        array_push($publiObj,$publicaciones[$pos]);
+                        $cantPublicaciones++;
+                    }    
+                }
+                $pos++;
+            }
+                     
+            $array = array_map(function ($item) {           
+                    return $item->getArray();                
+            }, $publiObj);
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	   /**
+     * Genera un nuevo curriculum
+     * @Rest\Route(
+     *    "/nuevo_curriculum", 
+     *    name="nuevo_curriculum",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se genero una publicacion"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo generar publicacion"
+     * )     
+     *    @SWG\Parameter(
+     *     name="nombre",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="nombre de la persona",
+     *         schema={
+     *     }
+     * )
+     *   @SWG\Parameter(
+     *     name="curriculum",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="titulo",
+     *         schema={
+     *     }
+     * )    
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function nuevo_curriculum(EntityManagerInterface $em, Request $request)
+    {
+        $nombre = $request->request->get("nombre");
+        $curriculum = $request->request->get("curriculum");
+		$tipo = $request->request->get("tipo");		
+        try {
+		if ($tipo == 'pdf'){
+			$file = str_replace('data:application/pdf;base64,', '', $curriculum);
+			$data = base64_decode($file);
+		}else{
+			$file = str_replace('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,', '', $curriculum);
+			$data = base64_decode($file);
+		}		
+		$nuevaPublicacion = new Curriculum();
+        $nuevaPublicacion->crearPublicacion(
+                $nombre,                
+                $tipo);
+		$em->persist($nuevaPublicacion);
+        $em->flush();
+		$filepath = "curriculum/" . $nuevaPublicacion->getId(). "." .$tipo; 		
+        file_put_contents($filepath, $data);
+		$curriculumObj = $em->getRepository(Curriculum::class)->find($nuevaPublicacion->getId());
+		$curriculumObj->setUbicacion($filepath);
+		$em->persist($curriculumObj);
+        $em->flush();
+        $code = 200;
+        $error = false;    
+		$message='Se guardo con exito el Curriculum';
+        } catch (Exception $ex) {
+			var_dump($ex);
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio un error - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+			'data'=>$message
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	
+ /**
+     * Genera una nueva nuevo alquiler
+     * @Rest\Route(
+     *    "/nuevo_alquiler", 
+     *    name="nuevo_alquiler",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se genero una publicacion"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo generar publicacion"
+     * )     
+     *    @SWG\Parameter(
+     *     name="usuarioID",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="usuarioID ID del usuario",
+     *         schema={
+     *     }
+     * )
+     *   @SWG\Parameter(
+     *     name="propiedad",
+     *       in="body",
+     *      required=true,
+     *     type="integer",
+     *     description="propiedad",
+     *         schema={
+     *     }
+     * )    
+     *  @SWG\Parameter(
+     *     name="operacion",
+     * required=true,
+     *       in="body",
+     *     type="string",
+     *     description="operacion  ",
+     *      schema={
+     *     }
+     * )      
+     *    @SWG\Parameter(
+     *     name="observaciones",
+     *       in="body",
+     *     type="string",
+     *     description="observaciones  ",
+     *      schema={
+     *     }
+     * )
+     *   @SWG\Parameter(
+     *     name="imagenes",     * 
+     *       in="body",
+     *     type="Array",
+     *     description="imagenes secundarias  ",
+     *      schema={
+     *     }
+     * )  
+     *   @SWG\Parameter(
+     *     name="imgPrimera",
+     * required=true,
+     *       in="body",
+     *     type="Array",
+     *     description="imgPrimera en base64  ",
+     *      schema={
+     *     }
+     * )  
+     *   @SWG\Parameter(
+     *     name="coordenadas",
+     * required=true,
+     *       in="body",
+     *     type="array",
+     *     description="coordinates ",
+     *      schema={
+     *     }
+     * )      
+     * 
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function nuevo_alquiler(EntityManagerInterface $em, Request $request)
+    {
+        $propiedad = $request->request->get("propiedad");
+        $operacion = $request->request->get("operacion");
+        //$fecha = $request->request->get("fecha");
+        $observaciones = $request->request->get("observaciones");
+        $imagenes = $request->request->get("imagenes");
+        $imgPrimera = $request->request->get("imgPrimera");
+        $cordenadas = $request->request->get("cordenadas");  
+       
+        $dtz = new DateTimeZone("America/Argentina/Jujuy");
+        $fecha= new Datetime("now",$dtz);
+        $usuarioID = $request->request->get("usuarioID");     
+        try {
+            $code = 200;
+            $error = false;
+            $usuario = $em->getRepository(User::class)->find($usuarioID); 
+			$cord='';
+			if ($cordenadas != ''){				
+				$cord=$cordenadas["lat"] .','. $cordenadas["lng"];
+			}
+            $nuevaPublicacion = new Alquiler();
+			
+            $nuevaPublicacion->crearPublicacion(
+                $propiedad,
+                $operacion,
+                $observaciones,
+                $cord,
+                $usuario,
+             
+            );
+            $em->persist($nuevaPublicacion);
+            $em->flush();
+            if ($imgPrimera != NULL) {
+                $img = str_replace('data:image/jpeg;base64,', '', $imgPrimera);
+                $data = base64_decode($img);
+                $filepath = "alquiler/" . $nuevaPublicacion->getId() . "-0"  . ".png";
+                file_put_contents($filepath, $data);
+                $imagenesPublicacion = new ImagenesAlquiler();
+                $imagenesPublicacion->setAlquilerId($nuevaPublicacion);
+                $imagenesPublicacion->setUbicacion($nuevaPublicacion->getId() . "-0"  . ".png");
+                $em->persist($imagenesPublicacion);
+                $em->flush();
+            }
+            if ($imagenes != NULL) {
+                $index = 1;
+                foreach ($imagenes as $clave => $valor) {
+                    /* if ($valor["file"]["type"] == "image/jpeg"){
+                     $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]);    
+                  }else{
+                    $img = str_replace('data:image/png;base64,', '', $valor["base64"]);  
+                  }  */				
+				  if (array_key_exists('base64', $valor)){
+                    $img = str_replace('data:image/jpeg;base64,', '', $valor["base64"]);
+                    $data = base64_decode($img);
+                    $filepath = "alquiler/" . $nuevaPublicacion->getId() . "-" . $index . ".png";
+                    file_put_contents($filepath, $data);
+                    $imagenesPublicacion = new ImagenesAlquiler();
+                    $imagenesPublicacion->setAlquilerId($nuevaPublicacion);
+                    $imagenesPublicacion->setUbicacion($nuevaPublicacion->getId() . "-" . $index . ".png");
+                    $index = $index + 1;
+                    $em->persist($imagenesPublicacion);
+                    $em->flush();
+				  }
+                }
+            }
+            $message = $nuevaPublicacion->getId();
+        } catch (Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio un error - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	
+  /**
+     * Ultimas 15 alquileres paginadas
+     * @Rest\Route(
+     *    "/get_alquileres/{page}", 
+     *    name="get_alquileres/{page",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_alquileres(EntityManagerInterface $em, Request $request,$page)
+    {
+      
+        try {
+            $code = 200;
+            $error = false;
+            $publicaciones = $em->getRepository(Alquiler::class)->getpubliacionpaginate($page);
+			$cantidadPublicaciones = $em->getRepository(Alquiler::class)->cantidadPublicacionesNormales();			
+            $arrayCompleto=[];            
+           
+            foreach ($publicaciones as $value) {
+                $usuario = $em->getRepository(User::class)->find($value["idusuario_id"]);
+                $ubicacion = 'alquiler/' . $value["id"] . '-0.png';
+                $img = file_get_contents(
+                    $ubicacion
+                );
+                $data = base64_encode($img);
+                $array_new = [
+                    'id' => $value["id"],
+                    'propiedad' => $value["propiedad"],
+                    'operacion' => $value["operacion"],
+                    'observaciones' => $value["observaciones"],
+                    'coordenadas' => $value["coordenadas"],
+                    'imagen' => $data,                    
+                    'telefono' => $usuario->getTelefono(),                    
+                    'email' => $usuario->getEmail(), 
+                ];
+                array_push($arrayCompleto, $array_new);
+            }
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+			'cantidad'=> $cantidadPublicaciones[0]["cantidad"],
+            'data' => $code == 200 ? $arrayCompleto : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+		
+    }
+	   /**
+     * retorna los curriculums
+     * @Rest\Route(
+     *    "/get_curriculum/", 
+     *    name="get_curriculum/",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de cv"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de cv"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_curriculum(EntityManagerInterface $em, Request $request)
+    {
+      
+        try {
+            $code = 200;
+            $error = false;
+            $curriculum = $em->getRepository(Curriculum::class)->findBy(array(),array('id' => 'DESC'));  
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $curriculum);
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+		
+    }
+	
+	 /**
+     * descargar cv
+     * @Rest\Route(
+     *    "/descargarcurriculum/{id}", 
+     *    name="descargarcurriculum/{id}",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function descargarcurriculum(EntityManagerInterface $em, Request $request,$id)
+    {
+      
+        try {			
+            $code = 200;
+            $error = false;
+            $curriculumOBJ = $em->getRepository(Curriculum::class)->find($id);        
+            $ubicacion = 'curriculum/' . $curriculumOBJ->getId().'.' .$curriculumOBJ->getTipo();			
+			$file = new File($ubicacion);
+			return $this->file($file);           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $data : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	 /**
+     * Elimina el cv pasado por ID
+     * @Rest\Route(
+     *    "/delete_curriculum/{id}", 
+     *    name="delete_curriculum/{id}",
+     *    methods = {
+     *      Request::METHOD_DELETE,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado de publicaciones"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado de publicaciones"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function delete_curriculum(EntityManagerInterface $em, Request $request,$id)
+    {
+      
+        try {			
+            $code = 200;
+            $error = false;
+            $curriculumOBJ = $em->getRepository(Curriculum::class)->find($id);  
+            $ubicacion = 'curriculum/' . $curriculumOBJ->getId().'.' .$curriculumOBJ->getTipo();			
+			$filesystem = new Filesystem();
+
+			$filesystem->remove(['symlink', $ubicacion, 'activity.log']);
+
+            $em->remove($curriculumOBJ);
+			$em->flush();
+			$data= "Se elimino con exito";			
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $data : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	
+	  /**
+     * retorna las utilidades
+     * @Rest\Route(
+     *    "/get_utilidades/", 
+     *    name="get_utilidades/",
+     *    methods = {
+     *      Request::METHOD_GET,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se obtuvo el listado "
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo obtener el listado"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function get_utilidades(EntityManagerInterface $em, Request $request)
+    {
+      
+        try {
+            $code = 200;
+            $error = false;
+            $curriculum = $em->getRepository(Utilidades::class)->findBy(array(),array('id' => 'DESC'));  
+            $array = array_map(function ($item) {
+                return $item->getArray();
+            }, $curriculum);
+           
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $array : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+		
+    }
+	     /**
+     *cambia la imagen de la utilidad
+     * @Rest\Route(
+     *    "/cambiar_imagen_utilidad", 
+     *    name="cambiar_imagen_utilidad",
+     *    methods = {
+     *      Request::METHOD_POST,
+     *    }
+     * )     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Secambio la imagen"
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se pudo cambiar"
+     * )
+     *
+     * @SWG\Tag(name="Publicaciones")
+     */
+    public function cambiar_imagen_utilidad(EntityManagerInterface $em, Request $request)
+    {
+
+        try {
+            $code = 200;
+            $error = false;
+            $id = $request->request->get("id");
+            $url = $request->request->get("url");
+            $publicacionObj = $em->getRepository(Utilidades::class)->find($id);
+            $publicacionObj->setImagen($url);
+            $em->persist($publicacionObj);
+            $em->flush();
+        } catch (\Exception $ex) {
+            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $error = true;
+            $message = "Ocurrio una excepcion - Error: {$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? 'Se cambio la imagen' : $message,
+        ];
+        return new JsonResponse(
+            $response
+        );
+    }
+	
+    
 }
+
+	
+
